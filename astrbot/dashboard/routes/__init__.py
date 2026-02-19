@@ -43,5 +43,5 @@ __all__ = [
     "ToolsRoute",
     "SkillsRoute",
     "UpdateRoute",
-    "LangRoute"
+    "LangRoute",
 ]

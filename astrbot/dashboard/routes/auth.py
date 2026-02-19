@@ -49,11 +49,7 @@ class AuthRoute(Route):
 
     async def edit_account(self):
         if DEMO_MODE:
-            return (
-                Response()
-                .error(t("dashboard-auth-demo-mode-denied"))
-                .__dict__
-            )
+            return Response().error(t("dashboard-auth-demo-mode-denied")).__dict__
 
         password = self.config["dashboard"]["password"]
         post_data = await request.json
@@ -64,9 +60,7 @@ class AuthRoute(Route):
         new_pwd = post_data.get("new_password", None)
         new_username = post_data.get("new_username", None)
         if not new_pwd and not new_username:
-            return (
-                Response().error(t("dashboard-auth-empty-fields")).__dict__
-            )
+            return Response().error(t("dashboard-auth-empty-fields")).__dict__
 
         if new_pwd:
             self.config["dashboard"]["password"] = new_pwd
