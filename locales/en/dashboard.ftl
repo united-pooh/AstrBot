@@ -41,3 +41,12 @@ dashboard-server-ssl-cert-not-found = SSL certificate file does not exist: { $pa
 dashboard-server-ssl-key-not-found = SSL private key file does not exist: { $path }
 dashboard-server-ssl-ca-not-found = SSL CA certificate file does not exist: { $path }
 dashboard-server-shutdown = AstrBot WebUI has been gracefully shut down
+
+### routes/auth.py
+dashboard-auth-default-pwd-tip = For security reasons, please change your default password as soon as possible.
+dashboard-auth-invalid-creds = Invalid username or password.
+dashboard-auth-demo-mode-denied = You are not permitted to do this operation in demo mode.
+dashboard-auth-wrong-old-pwd = Incorrect old password.
+dashboard-auth-empty-fields = New username and new password cannot both be empty.
+dashboard-auth-edit-success = Account information updated successfully.
+dashboard-auth-jwt-secret-not-found = JWT secret is not set in the cmd_config.
