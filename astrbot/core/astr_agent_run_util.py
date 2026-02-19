@@ -89,9 +89,9 @@ async def run_agent(
                         await astr_event.send(resp.data["chain"])
                     elif show_tool_use:
                         if tool_info:
-                            m = f"🔨 调用工具: {tool_info.get('name', 'unknown')}"
+                            m = t("agent-tool-call",tool_name = tool_info.get('name', 'unknown'))
                         else:
-                            m = "🔨 调用工具..."
+                            m = t("agent-tool-call-unknown")
                         chain = MessageChain(type="tool_call").message(m)
                         await astr_event.send(chain)
                     continue
