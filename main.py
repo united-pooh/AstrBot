@@ -42,7 +42,7 @@ logo_tmpl = r"""
 
 def check_env() -> None:
     if not (sys.version_info.major == 3 and sys.version_info.minor >= 10):
-        logger.error(t("main_python_version_error"))
+        logger.error(t("main-python-version-error"))
         exit()
 
     astrbot_root = get_astrbot_root()
@@ -70,9 +70,9 @@ async def check_dashboard_files(webui_dir: str | None = None):
     # 指定webui目录
     if webui_dir:
         if os.path.exists(webui_dir):
-            logger.info(t("main_use_specified_webui", main_use_specified_webui=webui_dir))
+            logger.info(t("main-use-specified-webui", main_use_specified_webui=webui_dir))
             return webui_dir
-        logger.warning(t("main_webui_not_found"), main_webui_not_found=webui_dir)
+        logger.warning(t("main-webui-not-found"), main_webui_not_found=webui_dir)
 
     data_dist_path = os.path.join(get_astrbot_data_path(), "dist")
     if os.path.exists(data_dist_path):
@@ -80,22 +80,22 @@ async def check_dashboard_files(webui_dir: str | None = None):
         if v is not None:
             # 存在文件
             if v == f"v{VERSION}":
-                logger.info(t("main_webui_latest"))
+                logger.info(t("main-webui-latest"))
             else:
                 logger.warning(
-                    t("main_webui_version_mismatch", main_webui_version_mismatch=v),
+                    t("main-webui-version-mismatch", main_webui_version_mismatch=v),
                 )
         return data_dist_path
 
-    logger.info(t("main_downloading_dashboard"))
+    logger.info(t("main-downloading-dashboard"))
 
     try:
         await download_dashboard(version=f"v{VERSION}", latest=False)
     except Exception as e:
-        logger.critical(t("main_download_dashboard_failed", main_download_dashboard_failed=e))
+        logger.critical(t("main-download-dashboard-failed", main_download_dashboard_failed=e))
         return None
 
-    logger.info(t("main_download_dashboard_success"))
+    logger.info(t("main-download-dashboard-success"))
     return data_dist_path
 
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--webui-dir",
         type=str,
-        help=t("main_argparse_webui_dir_help"),
+        help=t("main-argparse-webui-dir-help"),
         default=None,
     )
     args = parser.parse_args()

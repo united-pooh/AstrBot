@@ -41,3 +41,12 @@ dashboard-server-ssl-cert-not-found = SSL 证书文件不存在: { $path }
 dashboard-server-ssl-key-not-found = SSL 私钥文件不存在: { $path }
 dashboard-server-ssl-ca-not-found = SSL CA 证书文件不存在: { $path }
 dashboard-server-shutdown = AstrBot WebUI 已经被优雅地关闭
+
+### routes/auth.py
+dashboard-auth-default-pwd-tip = 为了保证安全，请尽快修改默认密码。
+dashboard-auth-invalid-creds = 用户名或密码错误。
+dashboard-auth-demo-mode-denied = 演示模式下不允许此操作。
+dashboard-auth-wrong-old-pwd = 原密码错误。
+dashboard-auth-empty-fields = 新用户名和新密码不能同时为空，你改了个寂寞。
+dashboard-auth-edit-success = 修改成功。
+dashboard-auth-jwt-secret-not-found = 配置文件中未设置 JWT 秘钥。
