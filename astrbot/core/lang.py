@@ -5,12 +5,15 @@ from astrbot.core.utils.astrbot_path import get_astrbot_path
 
 
 class Lang:
-    def __init__(self, locale="zh-cn", files=None):
+    def __init__(self, locale = "zh-cn", files = None):
+
         self.locale = locale
         self.files = files
         self.load_locale(self.locale, self.files)
 
-    def load_locale(self, locale="zh-cn", files=None):
+
+    def load_locale(self, locale = "zh-cn", files = None):
+
         # 1. 定位 locales 文件夹
         base_dir = Path(get_astrbot_path()) / "locales"
 
