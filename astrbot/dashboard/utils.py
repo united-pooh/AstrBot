@@ -56,7 +56,9 @@ async def generate_tsne_visualization(
 
         # 读取 FAISS 索引
         if not os.path.exists(index_path):
-            logger.warning(t("dashboard-utils-faiss-index-not-found", index_path=index_path))
+            logger.warning(
+                t("dashboard-utils-faiss-index-not-found", index_path=index_path)
+            )
             return None
 
         index = faiss.read_index(index_path)
@@ -142,7 +144,12 @@ async def generate_tsne_visualization(
 
         plt.colorbar(scatter, label=t("dashboard-utils-vector-index-label"))
         plt.title(
-            t("dashboard-utils-tsne-title", n=index.ntotal, d=index.d, kb_name=kb.kb_name),
+            t(
+                "dashboard-utils-tsne-title",
+                n=index.ntotal,
+                d=index.d,
+                kb_name=kb.kb_name,
+            ),
             fontsize=14,
             pad=20,
         )

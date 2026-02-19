@@ -22,13 +22,13 @@ from astrbot.core.utils.io import get_local_ip_addresses
 
 from .routes import *
 from .routes.backup import BackupRoute
+from .routes.lang_route import LangRoute
 from .routes.live_chat import LiveChatRoute
 from .routes.platform import PlatformRoute
 from .routes.route import Response, RouteContext
 from .routes.session_management import SessionManagementRoute
 from .routes.subagent import SubAgentRoute
 from .routes.t2i import T2iRoute
-from .routes.lang_route import LangRoute
 
 
 class _AddrWithPort(Protocol):
@@ -190,7 +190,10 @@ class AstrBotDashboard:
                             t("dashboard-server-pid", pid=process.pid),
                             t("dashboard-server-exec-path", exe=process.exe()),
                             t("dashboard-server-work-dir", cwd=process.cwd()),
-                            t("dashboard-server-cmd-line", cmd=" ".join(process.cmdline())),
+                            t(
+                                "dashboard-server-cmd-line",
+                                cmd=" ".join(process.cmdline()),
+                            ),
                         ]
                         return "\n           ".join(proc_info)
                     except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
@@ -257,9 +260,13 @@ class AstrBotDashboard:
             raise Exception(f"端口 {port} 已被占用")
 
         parts = [t("dashboard-server-started-banner", version=VERSION)]
-        parts.append(t("dashboard-server-local-url", url=f"{scheme}://localhost:{port}"))
+        parts.append(
+            t("dashboard-server-local-url", url=f"{scheme}://localhost:{port}")
+        )
         for ip in ip_addr:
-            parts.append(t("dashboard-server-network-url", url=f"{scheme}://{ip}:{port}"))
+            parts.append(
+                t("dashboard-server-network-url", url=f"{scheme}://{ip}:{port}")
+            )
         parts.append(t("dashboard-server-default-creds"))
         display = "".join(parts)
 
@@ -293,7 +300,9 @@ class AstrBotDashboard:
             if not cert_file or not key_file:
                 raise ValueError(t("dashboard-server-ssl-config-required"))
             if not cert_path.is_file():
-                raise ValueError(t("dashboard-server-ssl-cert-not-found", path=cert_path))
+                raise ValueError(
+                    t("dashboard-server-ssl-cert-not-found", path=cert_path)
+                )
             if not key_path.is_file():
                 raise ValueError(t("dashboard-server-ssl-key-not-found", path=key_path))
 
@@ -303,7 +312,9 @@ class AstrBotDashboard:
             if ca_certs:
                 ca_path = Path(ca_certs).expanduser()
                 if not ca_path.is_file():
-                    raise ValueError(t("dashboard-server-ssl-ca-not-found", path=ca_path))
+                    raise ValueError(
+                        t("dashboard-server-ssl-ca-not-found", path=ca_path)
+                    )
                 config.ca_certs = str(ca_path.resolve())
 
         # 根据配置决定是否禁用访问日志
