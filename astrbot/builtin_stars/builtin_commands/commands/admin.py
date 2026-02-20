@@ -1,6 +1,6 @@
 from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageChain, MessageEventResult
-from astrbot.core import t
+from astrbot.core.lang import t
 from astrbot.core.config.default import VERSION
 from astrbot.core.utils.io import download_dashboard
 

@@ -23,7 +23,7 @@ from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
 from astrbot.core.star.star import star_map
 from astrbot.core.star.star_handler import StarHandlerMetadata, star_handlers_registry
-from astrbot.core import t
+from astrbot.core.lang import t
 
 from .client import DiscordBotClient
 from .discord_platform_event import DiscordPlatformEvent

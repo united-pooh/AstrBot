@@ -3,7 +3,7 @@ from astrbot.core.astrbot_config_mgr import AstrBotConfigManager
 from astrbot.core.db import BaseDatabase
 from astrbot.core.db.po import Persona, PersonaFolder, Personality
 from astrbot.core.platform.message_session import MessageSession
-from astrbot.core import t
+from astrbot.core.lang import t
 
 DEFAULT_PERSONALITY = Personality(
     prompt="You are a helpful and friendly assistant.",

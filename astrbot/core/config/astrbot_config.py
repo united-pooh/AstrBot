@@ -3,7 +3,7 @@ import json
 import logging
 import os
 
-from astrbot.core import t
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
 from .default import DEFAULT_CONFIG, DEFAULT_VALUE_MAP

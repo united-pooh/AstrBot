@@ -1,4 +1,4 @@
-from astrbot.core import t
+from astrbot.core.lang import t
 try:
     import faiss
 except ModuleNotFoundError:

@@ -4,7 +4,7 @@ import platform
 import time
 import uuid
 from urllib.parse import unquote, urlparse
-from astrbot.core import t
+from astrbot.core.lang import t
 
 class FileTokenService:
     """维护一个简单的基于令牌的文件下载服务，支持超时和懒清除。"""

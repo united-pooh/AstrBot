@@ -2,7 +2,7 @@ import aiohttp
 
 from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageEventResult
-from astrbot.core import t
+from astrbot.core.lang import t
 from astrbot.core.config.default import VERSION
 from astrbot.core.star import command_management
 from astrbot.core.utils.io import get_dashboard_version

@@ -4,7 +4,7 @@
 """
 
 from astrbot.core.knowledge_base.parsers.base import BaseParser, ParseResult
-from astrbot.core import t
+from astrbot.core.lang import t
 
 class TextParser(BaseParser):
     """TXT/MD 文本解析器

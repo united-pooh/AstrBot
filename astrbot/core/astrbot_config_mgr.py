@@ -9,7 +9,7 @@ from astrbot.core.platform.message_session import MessageSession
 from astrbot.core.umop_config_router import UmopConfigRouter
 from astrbot.core.utils.astrbot_path import get_astrbot_config_path
 from astrbot.core.utils.shared_preferences import SharedPreferences
-from astrbot.core import t
+from astrbot.core.lang import t
 
 _VT = TypeVar("_VT")
 

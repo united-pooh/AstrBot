@@ -1,5 +1,5 @@
 from .base import BaseParser
-from astrbot.core import t
+from astrbot.core.lang import t
 
 
 async def select_parser(ext: str) -> BaseParser:

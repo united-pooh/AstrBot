@@ -7,7 +7,7 @@ from astrbot.core.message.message_event_result import CommandResult, MessageEven
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 from astrbot.core.star.star import star_map
 from astrbot.core.star.star_handler import EventType, star_handlers_registry
-from astrbot.core import t
+from astrbot.core.lang import t
 
 
 async def call_handler(

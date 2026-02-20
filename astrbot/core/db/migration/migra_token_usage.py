@@ -10,7 +10,7 @@ from sqlalchemy import text
 
 from astrbot.api import logger, sp
 from astrbot.core.db import BaseDatabase
-from astrbot.core import t
+from astrbot.core.lang import t
 
 async def migrate_token_usage(db_helper: BaseDatabase) -> None:
     """Add token_usage column to conversations table.

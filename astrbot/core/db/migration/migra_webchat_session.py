@@ -15,7 +15,7 @@ from sqlmodel import col
 from astrbot.api import logger, sp
 from astrbot.core.db import BaseDatabase
 from astrbot.core.db.po import ConversationV2, PlatformMessageHistory, PlatformSession
-from astrbot.core import t
+from astrbot.core.lang import t
 
 async def migrate_webchat_session(db_helper: BaseDatabase) -> None:
     """Create PlatformSession records from platform_message_history.

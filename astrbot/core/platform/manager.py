@@ -11,7 +11,7 @@ from astrbot.core.utils.webhook_utils import ensure_platform_webhook_config
 from .platform import Platform, PlatformStatus
 from .register import platform_cls_map
 from .sources.webchat.webchat_adapter import WebChatAdapter
-from astrbot.core import t
+from astrbot.core.lang import t
 
 
 @dataclass

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from astrbot.core.db.po import Platform, Stats
-from astrbot.core import t
+from astrbot.core.lang import t
 
 @dataclass
 class Conversation:

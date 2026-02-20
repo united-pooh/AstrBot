@@ -27,7 +27,7 @@ from astrbot.core.provider.entities import (
 from astrbot.core.star.star_handler import EventType
 from astrbot.core.utils.metrics import Metric
 from astrbot.core.utils.session_lock import session_lock_manager
-from astrbot.core import t
+from astrbot.core.lang import t
 
 from .....astr_agent_run_util import run_agent, run_live_agent
 from ....context import PipelineContext, call_event_hook

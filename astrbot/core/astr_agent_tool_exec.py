@@ -29,7 +29,7 @@ from astrbot.core.platform.message_session import MessageSession
 from astrbot.core.provider.entites import ProviderRequest
 from astrbot.core.provider.register import llm_tools
 from astrbot.core.utils.history_saver import persist_agent_history
-from astrbot.core import t
+from astrbot.core.lang import t
 
 
 class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):

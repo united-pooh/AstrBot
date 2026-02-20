@@ -5,7 +5,7 @@ import astrbot.api.message_components as Comp
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star
-from astrbot.core import t
+from astrbot.core.lang import t
 from astrbot.core.utils.session_waiter import (
     FILTERS,
     USER_SESSIONS,

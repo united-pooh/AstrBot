@@ -23,7 +23,7 @@ from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.message_session import MessageSession
 from astrbot.core.star.context import Context
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
-from astrbot.core import t
+from astrbot.core.lang import t
 
 LLM_SAFETY_MODE_SYSTEM_PROMPT = """You are running in Safe Mode.
 

@@ -11,7 +11,7 @@ from astrbot.core.utils.active_event_registry import active_event_registry
 from . import STAGES_ORDER
 from .context import PipelineContext
 from .stage import registered_stages
-from astrbot.core import t
+from astrbot.core.lang import t
 
 
 class PipelineScheduler:

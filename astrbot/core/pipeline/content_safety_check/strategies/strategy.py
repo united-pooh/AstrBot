@@ -2,7 +2,7 @@ from astrbot import logger
 
 from . import ContentSafetyStrategy
 
-from astrbot.core import t
+from astrbot.core.lang import t
 
 class StrategySelector:
     def __init__(self, config: dict) -> None:

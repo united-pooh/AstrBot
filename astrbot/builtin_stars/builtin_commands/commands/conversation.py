@@ -2,7 +2,7 @@ import datetime
 
 from astrbot.api import sp, star
 from astrbot.api.event import AstrMessageEvent, MessageEventResult
-from astrbot.core import t
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.message_type import MessageType
 from astrbot.core.utils.active_event_registry import active_event_registry

@@ -9,7 +9,7 @@ from astrbot.core.config import AstrBotConfig
 from astrbot.core.config.default import DB_PATH
 from astrbot.core.db.po import ConversationV2, PlatformMessageHistory
 from astrbot.core.platform.astr_message_event import MessageSesion
-from astrbot.core import t
+from astrbot.core.lang import t
 
 from .. import BaseDatabase
 from .shared_preferences_v3 import sp as sp_v3

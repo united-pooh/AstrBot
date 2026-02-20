@@ -34,7 +34,7 @@ if sys.version_info >= (3, 14):
 else:
     from pydantic.v1 import BaseModel
 
-from astrbot.core import t
+from astrbot.core.lang import t
 from astrbot.core import astrbot_config, file_token_service, logger
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.io import download_file, download_image_by_url, file_to_base64

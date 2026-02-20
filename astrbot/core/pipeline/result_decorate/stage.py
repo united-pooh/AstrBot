@@ -13,7 +13,7 @@ from astrbot.core.platform.message_type import MessageType
 from astrbot.core.star.session_llm_manager import SessionServiceManager
 from astrbot.core.star.star import star_map
 from astrbot.core.star.star_handler import EventType, star_handlers_registry
-from astrbot.core import t
+from astrbot.core.lang import t
 
 from ..context import PipelineContext
 from ..stage import Stage, register_stage, registered_stages

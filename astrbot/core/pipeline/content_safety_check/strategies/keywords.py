@@ -2,7 +2,7 @@ import re
 
 from . import ContentSafetyStrategy
 
-from astrbot.core import t
+from astrbot.core.lang import t
 
 class KeywordsStrategy(ContentSafetyStrategy):
     def __init__(self, extra_keywords: list) -> None:

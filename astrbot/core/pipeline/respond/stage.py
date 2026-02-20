@@ -10,7 +10,7 @@ from astrbot.core.message.message_event_result import MessageChain, ResultConten
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 from astrbot.core.star.star_handler import EventType
 from astrbot.core.utils.path_util import path_Mapping
-from astrbot.core import t
+from astrbot.core.lang import t
 
 from ..context import PipelineContext, call_event_hook
 from ..stage import Stage, register_stage

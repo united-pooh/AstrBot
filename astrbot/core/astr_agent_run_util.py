@@ -16,7 +16,7 @@ from astrbot.core.message.message_event_result import (
 )
 from astrbot.core.provider.entities import LLMResponse
 from astrbot.core.provider.provider import TTSProvider
-from astrbot.core import t
+from astrbot.core.lang import t
 
 AgentRunner = ToolLoopAgentRunner[AstrAgentContext]
 

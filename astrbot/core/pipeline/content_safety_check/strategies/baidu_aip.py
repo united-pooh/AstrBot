@@ -6,7 +6,7 @@ from aip import AipContentCensor
 
 from . import ContentSafetyStrategy
 
-from astrbot.core import t
+from astrbot.core.lang import t
 
 class BaiduAipStrategy(ContentSafetyStrategy):
     def __init__(self, appid: str, ak: str, sk: str) -> None:
