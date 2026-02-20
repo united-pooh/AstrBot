@@ -6,7 +6,8 @@
 import time
 from dataclasses import dataclass
 
-from astrbot import logger, t
+from astrbot import logger
+from astrbot.core.lang import t
 from astrbot.core.db.vec_db.base import Result
 from astrbot.core.db.vec_db.faiss_impl import FaissVecDB
 from astrbot.core.knowledge_base.kb_db_sqlite import KBSQLiteDatabase
