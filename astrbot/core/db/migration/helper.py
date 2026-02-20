@@ -4,6 +4,7 @@ from astrbot.api import logger, sp
 from astrbot.core.config import AstrBotConfig
 from astrbot.core.db import BaseDatabase
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
+from astrbot.core import t
 
 from .migra_3_to_4 import (
     migration_conversation_table,

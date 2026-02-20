@@ -10,7 +10,7 @@ from dashscope import Application
 from dashscope.app.application_response import ApplicationResponse
 
 import astrbot.core.message.components as Comp
-from astrbot.core import logger, sp
+from astrbot.core import logger, sp, t
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.provider.entities import (
     LLMResponse,

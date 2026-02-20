@@ -15,6 +15,7 @@ from mcp.types import (
 )
 
 from astrbot import logger
+from astrbot.core import t
 from astrbot.core.agent.message import ImageURLPart, TextPart, ThinkPart
 from astrbot.core.agent.tool import ToolSet
 from astrbot.core.agent.tool_image_cache import tool_image_cache

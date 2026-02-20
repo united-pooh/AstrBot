@@ -5,7 +5,7 @@ import typing as T
 
 import astrbot.core.message.components as Comp
 from astrbot import logger
-from astrbot.core import sp
+from astrbot.core import sp, t
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.provider.entities import (
     LLMResponse,

@@ -7,7 +7,7 @@
 import json
 from collections.abc import Awaitable, Callable
 
-from astrbot.core import sp
+from astrbot.core import sp, t
 from astrbot.core.agent.message import AssistantMessageSegment, UserMessageSegment
 from astrbot.core.db import BaseDatabase
 from astrbot.core.db.po import Conversation, ConversationV2

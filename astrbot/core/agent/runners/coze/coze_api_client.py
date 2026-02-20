@@ -6,7 +6,7 @@ from typing import Any
 
 import aiohttp
 
-from astrbot.core import logger
+from astrbot.core import logger, t
 
 
 class CozeAPIClient:
