@@ -426,7 +426,6 @@ platform-sources-discord-client-client_ready = [Discord] 客户端已准备就�
 platform-sources-discord-client-ready_callback_failed = [Discord] on_ready_once_callback 执行失败: {e}
 platform-sources-discord-client-received_raw_message = [Discord] 收到原始消息 from {message.author.name}: {message.content}
 platform-sources-discord-discord_platform_adapter-client_not_ready_send = [Discord] 客户端未就绪 (self.client.user is None)，无法发送消息
-platform-sources-discord-discord_platform_adapter-adapter_name = Discord 适配器
 platform-sources-discord-discord_platform_adapter-message_received_debug = [Discord] 收到消息: {message_data}
 platform-sources-discord-discord_platform_adapter-token_not_configured = [Discord] Bot Token 未配置。请在配置文件中正确设置 token。
 platform-sources-discord-discord_platform_adapter-login_failed = [Discord] 登录失败。请检查你的 Bot Token 是否正确。

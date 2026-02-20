@@ -426,7 +426,6 @@ platform-sources-discord-client-client_ready = [Discord] Client is ready.
 platform-sources-discord-client-ready_callback_failed = [Discord] on_ready_once_callback execution failed: {e}
 platform-sources-discord-client-received_raw_message = [Discord] Received raw message from {message.author.name}: {message.content}
 platform-sources-discord-discord_platform_adapter-client_not_ready_send = [Discord] Client not ready (self.client.user is None), unable to send message
-platform-sources-discord-discord_platform_adapter-adapter_name = Discord Adapter
 platform-sources-discord-discord_platform_adapter-message_received_debug = [Discord] Received message: {message_data}
 platform-sources-discord-discord_platform_adapter-token_not_configured = [Discord] Bot Token not configured. Please set the token correctly in the configuration file.
 platform-sources-discord-discord_platform_adapter-login_failed = [Discord] Login failed. Please check if your Bot Token is correct.

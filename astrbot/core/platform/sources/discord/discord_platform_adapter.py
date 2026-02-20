@@ -116,7 +116,7 @@ class DiscordPlatformAdapter(Platform):
         """返回平台元数据"""
         return PlatformMetadata(
             "discord",
-            t('platform-sources-discord-discord_platform_adapter-adapter_name'),
+            "Discord 适配器",
             id=cast(str, self.config.get("id")),
             default_config_tmpl=self.config,
             support_streaming_message=False,
