@@ -17,6 +17,7 @@ from astrbot.api.message_components import (
 )
 from astrbot.api.platform import Group, MessageMember
 
+from astrbot.core import t
 
 class AiocqhttpMessageEvent(AstrMessageEvent):
     def __init__(

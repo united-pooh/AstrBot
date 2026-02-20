@@ -4,6 +4,7 @@ from collections.abc import Awaitable, Callable
 import discord
 
 from astrbot import logger
+from astrbot.core import t
 
 if sys.version_info >= (3, 12):
     from typing import override

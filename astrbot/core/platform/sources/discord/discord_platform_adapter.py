@@ -23,6 +23,7 @@ from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
 from astrbot.core.star.star import star_map
 from astrbot.core.star.star_handler import StarHandlerMetadata, star_handlers_registry
+from astrbot.core import t
 
 from .client import DiscordBotClient
 from .discord_platform_event import DiscordPlatformEvent
@@ -35,7 +36,7 @@ else:
 
 # 注册平台适配器
 @register_platform_adapter(
-    "discord", t('platform-sources-discord-discord_platform_adapter-adapter_description'), support_streaming_message=False
+    "discord", "Discord 适配器 (基于 Pycord)", support_streaming_message=False
 )
 class DiscordPlatformAdapter(Platform):
     def __init__(

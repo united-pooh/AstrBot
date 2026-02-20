@@ -2,7 +2,7 @@ from typing import Any
 
 from astrbot import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
-
+from astrbot.core import t
 
 class DingtalkMessageEvent(AstrMessageEvent):
     def __init__(

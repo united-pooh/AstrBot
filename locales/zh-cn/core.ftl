@@ -425,7 +425,6 @@ platform-sources-discord-client-login_success = [Discord] 已作为 {self.user} 
 platform-sources-discord-client-client_ready = [Discord] 客户端已准备就绪。
 platform-sources-discord-client-ready_callback_failed = [Discord] on_ready_once_callback 执行失败: {e}
 platform-sources-discord-client-received_raw_message = [Discord] 收到原始消息 from {message.author.name}: {message.content}
-platform-sources-discord-discord_platform_adapter-adapter_description = Discord 适配器 (基于 Pycord)
 platform-sources-discord-discord_platform_adapter-client_not_ready_send = [Discord] 客户端未就绪 (self.client.user is None)，无法发送消息
 platform-sources-discord-discord_platform_adapter-adapter_name = Discord 适配器
 platform-sources-discord-discord_platform_adapter-message_received_debug = [Discord] 收到消息: {message_data}

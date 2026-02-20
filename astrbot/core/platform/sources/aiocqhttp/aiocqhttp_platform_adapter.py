@@ -20,6 +20,7 @@ from astrbot.api.platform import (
     PlatformMetadata,
 )
 from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core import t
 
 from ...register import register_platform_adapter
 from .aiocqhttp_message_event import *
