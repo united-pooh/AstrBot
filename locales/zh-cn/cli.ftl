@@ -1,0 +1,24 @@
+### astrbot\cli\commands\cmd_conf.py
+invalid-log-level = 日志级别必须是 {valid_levels} 之一"
+invalid-dashboard-port = 端口必须在 {min}-{max} 范围内
+invalid-dashboard-port-value = 端口必须是数字
+invalid-dashboard-username = 用户名不能为空
+invalid-dashboard-password = 密码不能为空
+invalid-timezone = 无效的时区: {value}，请使用有效的 IANA 时区名称
+invalid-callback-api-base = 回调接口基址必须以 http:// 或 https:// 开头
+invalid-astrbot-root = {root}不是有效的 AstrBot 根目录，如需初始化请使用 astrbot init
+config-parse-failed = 配置文件解析失败：{error}
+config-path-conflict = 配置路径冲突: {path} 不是字典
+invalid-config-key = 不支持的配置项: {k}\
+config-updated = 配置已更新: {k}
+value-remains-intact-for-security =  原值: ********
+config-restart-reminder =     新值: ********
+value-remains-intact =   原值: {old_value}
+config-restart-reminder =   新值: {validated_value}
+unknown-config-key = 未知的配置项: {k}
+set-config-failed = 设置配置失败: {error}
+invalid-config-value = 不支持的配置值: {k}
+get-config-value = {key}: {value}
+unknown-config-key = 未知的配置项: {k}
+get-config-failed = 获取配置失败: {error}
+get-config-value = {k}: {value}
