@@ -515,7 +515,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             self.run_context.messages.append(
                 Message(
                     role="user",
-                    content=t('agent-runners-tool_loop_agent_runner-tool_call_limit_reached_message'),
+                    content="工具调用次数已达到上限，请停止使用工具，并根据已经收集到的信息，对你的任务和发现进行总结，然后直接回复用户。",
                 )
             )
             # 再执行最后一步

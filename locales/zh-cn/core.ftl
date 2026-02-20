@@ -114,7 +114,6 @@ agent-runners-dify-dify_api_client-workflows_run_request_failed = Dify /workflow
 agent-runners-dify-dify_api_client-file_params_both_none = file_path 和 file_data 不能同时为 None
 agent-runners-dify-dify_api_client-file_upload_failed = Dify 文件上传失败：{resp.status}. {text}
 agent-runners-tool_loop_agent_runner-llm_response_error = LLM 响应错误: {llm_resp.completion_text or '未知错误'}
-agent-runners-tool_loop_agent_runner-tool_call_limit_reached_message = "工具调用次数已达到上限，请停止使用工具，并根据已经收集到的信息，对你的任务和发现进行总结，然后直接回复用户。",
 agent-runners-tool_loop_agent_runner-agent_using_tool = Agent 使用工具: {llm_response.tools_call_name}
 agent-runners-tool_loop_agent_runner-using_tool_with_params = 使用工具：{func_tool_name}，参数：{func_tool_args}
 agent-runners-tool_loop_agent_runner-tool_not_found_warning = 未找到指定的工具: {func_tool_name}，将跳过。

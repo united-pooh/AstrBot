@@ -114,7 +114,6 @@ agent-runners-dify-dify_api_client-workflows_run_request_failed = Dify /workflow
 agent-runners-dify-dify_api_client-file_params_both_none = file_path and file_data cannot both be None
 agent-runners-dify-dify_api_client-file_upload_failed = Dify file upload failed: {resp.status}. {text}
 agent-runners-tool_loop_agent_runner-llm_response_error = LLM response error: {llm_resp.completion_text or 'unknown error'}
-agent-runners-tool_loop_agent_runner-tool_call_limit_reached_message = "The number of tool calls has reached the limit. Please stop using tools, summarize your task and findings based on the information already collected, and then reply directly to the user.",
 agent-runners-tool_loop_agent_runner-agent_using_tool = Agent using tool: {llm_response.tools_call_name}
 agent-runners-tool_loop_agent_runner-using_tool_with_params = Using tool: {func_tool_name}, parameters: {func_tool_args}
 agent-runners-tool_loop_agent_runner-tool_not_found_warning = Specified tool not found: {func_tool_name}, will skip.
