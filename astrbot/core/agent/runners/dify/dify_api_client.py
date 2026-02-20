@@ -143,7 +143,7 @@ class DifyAPIClient:
                     content_type=mime_type or "application/octet-stream",
                 )
         else:
-            raise ValueError("file_path 和 file_data 不能同时为 None")
+            raise ValueError(t('agent-runners-dify-dify_api_client-file_params_both_none'))
 
         async with self.session.post(
             url,

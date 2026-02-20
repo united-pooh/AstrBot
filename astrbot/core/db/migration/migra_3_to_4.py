@@ -51,7 +51,7 @@ async def migration_conversation_table(
         page=1,
         page_size=10000000,
     )
-    logger.info(f"迁移 {total_cnt} 条旧的会话数据到新的表中...")
+    logger.info(t('db-migration-migra_3_to_4-migrating_old_sessions', total_cnt=total_cnt))
 
     async with db_helper.get_db() as dbsession:
         dbsession: AsyncSession
@@ -68,7 +68,7 @@ async def migration_conversation_table(
                     )
                     if not conv:
                         logger.info(
-                            f"未找到该条旧会话对应的具体数据: {conversation}, 跳过。",
+                            t('db-migration-migra_3_to_4-old_session_data_not_found', conversation=conversation),
                         )
                         continue
                     if ":" not in conv.user_id:

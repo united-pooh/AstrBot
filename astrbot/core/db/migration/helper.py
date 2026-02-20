@@ -46,7 +46,7 @@ async def do_migration_v4(
     if not await check_migration_needed_v4(db_helper):
         return
 
-    logger.info("开始执行数据库迁移...")
+    logger.info(t('db-migration-helper-starting_migration'))
 
     # 执行会话表迁移
     await migration_conversation_table(db_helper, platform_id_map)
@@ -66,4 +66,4 @@ async def do_migration_v4(
     # 标记迁移完成
     await sp.put_async("global", "global", "migration_done_v4", True)
 
-    logger.info("数据库迁移完成。")
+    logger.info(t('db-migration-helper-migration_completed'))

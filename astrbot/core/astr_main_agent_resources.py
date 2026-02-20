@@ -387,7 +387,7 @@ async def retrieve_knowledge_base(
 
         # 如果配置为空列表，明确表示不使用知识库
         if not kb_ids:
-            logger.info(f"[知识库] 会话 {umo} 已被配置为不使用知识库")
+            logger.info(t('astr_main_agent_resources-info_session_disabled_knowledge', umo=umo))
             return
 
         top_k = session_config.get("top_k", 5)
@@ -400,12 +400,12 @@ async def retrieve_knowledge_base(
             if kb_helper:
                 kb_names.append(kb_helper.kb.kb_name)
             else:
-                logger.warning(f"[知识库] 知识库不存在或未加载: {kb_id}")
+                logger.warning(t('astr_main_agent_resources-warn_knowledge_base_not_found_or_unloaded', kb_id=kb_id))
                 invalid_kb_ids.append(kb_id)
 
         if invalid_kb_ids:
             logger.warning(
-                f"[知识库] 会话 {umo} 配置的以下知识库无效: {invalid_kb_ids}",
+                t('astr_main_agent_resources-invalid_kb_ids_in_session_config', umo=umo, invalid_kb_ids=invalid_kb_ids),
             )
 
         if not kb_names:

@@ -53,7 +53,7 @@ class ConversationManager:
                 from astrbot.core import logger
 
                 logger.error(
-                    f"会话删除回调执行失败 (session: {unified_msg_origin}): {e}",
+                    t('conversation_mgr-session_deletion_callback_failed', unified_msg_origin=unified_msg_origin, e=e),
                 )
 
     def _convert_conv_from_v2_to_v1(self, conv_v2: ConversationV2) -> Conversation:

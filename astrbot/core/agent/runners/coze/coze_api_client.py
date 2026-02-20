@@ -66,7 +66,7 @@ class CozeAPIClient:
                 timeout=aiohttp.ClientTimeout(total=60),
             ) as response:
                 if response.status == 401:
-                    raise Exception("Coze API 认证失败，请检查 API Key 是否正确")
+                    raise Exception(t('agent-runners-coze-coze_api_client-coze_api_auth_failed'))
 
                 response_text = await response.text()
                 logger.debug(
@@ -81,18 +81,18 @@ class CozeAPIClient:
                 try:
                     result = await response.json()
                 except json.JSONDecodeError:
-                    raise Exception(f"文件上传响应解析失败: {response_text}")
+                    raise Exception(t('agent-runners-coze-coze_api_client-file_upload_response_parse_failed', response_text=response_text))
 
                 if result.get("code") != 0:
                     raise Exception(f"文件上传失败: {result.get('msg', '未知错误')}")
 
                 file_id = result["data"]["id"]
-                logger.debug(f"[Coze] 图片上传成功，file_id: {file_id}")
+                logger.debug(t('agent-runners-coze-coze_api_client-image_upload_success', file_id=file_id))
                 return file_id
 
         except asyncio.TimeoutError:
-            logger.error("文件上传超时")
-            raise Exception("文件上传超时")
+            logger.error(t('agent-runners-coze-coze_api_client-file_upload_timeout'))
+            raise Exception(t('agent-runners-coze-coze_api_client-file_upload_timeout_error'))
         except Exception as e:
             logger.error(f"文件上传失败: {e!s}")
             raise Exception(f"文件上传失败: {e!s}")
@@ -169,7 +169,7 @@ class CozeAPIClient:
                 timeout=aiohttp.ClientTimeout(total=timeout),
             ) as response:
                 if response.status == 401:
-                    raise Exception("Coze API 认证失败，请检查 API Key 是否正确")
+                    raise Exception(t('agent-runners-coze-coze_api_client-api_auth_failed'))
 
                 if response.status != 200:
                     raise Exception(f"Coze API 流式请求失败，状态码: {response.status}")
@@ -204,7 +204,7 @@ class CozeAPIClient:
                                         event_data = {"content": data_str}
 
         except asyncio.TimeoutError:
-            raise Exception(f"Coze API 流式请求超时 ({timeout}秒)")
+            raise Exception(t('agent-runners-coze-coze_api_client-stream_request_timeout', timeout=timeout))
         except Exception as e:
             raise Exception(f"Coze API 流式请求失败: {e!s}")
 
@@ -226,7 +226,7 @@ class CozeAPIClient:
                 response_text = await response.text()
 
                 if response.status == 401:
-                    raise Exception("Coze API 认证失败，请检查 API Key 是否正确")
+                    raise Exception(t('agent-runners-coze-coze_api_client-api_auth_failed'))
 
                 if response.status != 200:
                     raise Exception(f"Coze API 请求失败，状态码: {response.status}")
@@ -234,10 +234,10 @@ class CozeAPIClient:
                 try:
                     return json.loads(response_text)
                 except json.JSONDecodeError:
-                    raise Exception("Coze API 返回非JSON格式")
+                    raise Exception(t('agent-runners-coze-coze_api_client-api_response_not_json'))
 
         except asyncio.TimeoutError:
-            raise Exception("Coze API 请求超时")
+            raise Exception(t('agent-runners-coze-coze_api_client-api_request_timeout'))
         except aiohttp.ClientError as e:
             raise Exception(f"Coze API 请求失败: {e!s}")
 

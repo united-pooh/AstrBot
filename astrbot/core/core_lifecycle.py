@@ -294,7 +294,7 @@ class AstrBotCoreLifecycle:
         用load加载事件总线和任务并初始化, 执行启动完成事件钩子
         """
         self._load()
-        logger.info("AstrBot 启动完成。")
+        logger.info(t('core_lifecycle-startup_completed'))
 
         # 执行启动完成事件钩子
         handlers = star_handlers_registry.get_handlers_by_event_type(
@@ -397,7 +397,7 @@ class AstrBotCoreLifecycle:
         """
         ab_config = self.astrbot_config_mgr.confs.get(conf_id)
         if not ab_config:
-            raise ValueError(f"配置文件 {conf_id} 不存在")
+            raise ValueError(t('core_lifecycle-config_file_not_found', conf_id=conf_id))
         scheduler = PipelineScheduler(
             PipelineContext(ab_config, self.plugin_manager, conf_id),
         )

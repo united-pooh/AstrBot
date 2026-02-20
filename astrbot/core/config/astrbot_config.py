@@ -101,7 +101,7 @@ class AstrBotConfig(dict):
             if key not in conf:
                 # 配置项不存在，插入默认值
                 path_ = path + "." + key if path else key
-                logger.info(f"检查到配置项 {path_} 不存在，已插入默认值 {value}")
+                logger.info(t('config-astrbot_config-inserted_default_value', path_=path_, value=value))
                 new_conf[key] = value
                 has_new = True
             elif conf[key] is None:
@@ -131,15 +131,15 @@ class AstrBotConfig(dict):
         for key in list(conf.keys()):
             if key not in refer_conf:
                 path_ = path + "." + key if path else key
-                logger.info(f"检查到配置项 {path_} 不存在，将从当前配置中删除")
+                logger.info(t('config-astrbot_config-removed_missing_config_item', path_=path_))
                 has_new = True
 
         # 顺序不一致也算作变更
         if list(conf.keys()) != list(new_conf.keys()):
             if path:
-                logger.info(f"检查到配置项 {path} 的子项顺序不一致，已重新排序")
+                logger.info(t('config-astrbot_config-resorted_sub_items', path=path))
             else:
-                logger.info("检查到配置项顺序不一致，已重新排序")
+                logger.info(t('config-astrbot_config-resorted_config_order'))
             has_new = True
 
         # 更新原始配置
@@ -169,7 +169,7 @@ class AstrBotConfig(dict):
             del self[key]
             self.save_config()
         except KeyError:
-            raise AttributeError(f"没有找到 Key: '{key}'")
+            raise AttributeError(t('config-astrbot_config-key_not_found', key=key))
 
     def __setattr__(self, key, value) -> None:
         self[key] = value

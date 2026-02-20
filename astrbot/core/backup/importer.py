@@ -183,7 +183,7 @@ class AstrBotImporter:
         result.current_version = VERSION
 
         if not os.path.exists(zip_path):
-            result.error = f"备份文件不存在: {zip_path}"
+            result.error = t('backup-importer-backup_file_not_exist', zip_path=zip_path)
             return result
 
         try:
@@ -193,15 +193,15 @@ class AstrBotImporter:
                     manifest_data = zf.read("manifest.json")
                     manifest = json.loads(manifest_data)
                 except KeyError:
-                    result.error = "备份文件缺少 manifest.json，不是有效的 AstrBot 备份"
+                    result.error = t('backup-importer-missing_manifest_invalid_backup')
                     return result
                 except json.JSONDecodeError as e:
-                    result.error = f"manifest.json 格式错误: {e}"
+                    result.error = t('backup-importer-manifest_format_error', e=e)
                     return result
 
                 # 提取基本信息
-                result.backup_version = manifest.get("astrbot_version", "未知")
-                result.backup_time = manifest.get("exported_at", "未知")
+                result.backup_version = manifest.get("astrbot_version", t('backup-importer-backup_version_fallback_unknown'))
+                result.backup_time = manifest.get("exported_at", t('backup-importer-backup_time_fallback_unknown'))
                 result.valid = True
 
                 # 构建备份摘要
@@ -224,10 +224,10 @@ class AstrBotImporter:
                 return result
 
         except zipfile.BadZipFile:
-            result.error = "无效的 ZIP 文件"
+            result.error = t('backup-importer-invalid_zip_file')
             return result
         except Exception as e:
-            result.error = f"检查备份文件失败: {e}"
+            result.error = t('backup-importer-failed_check_backup_file', e=e)
             return result
 
     def _check_version_compatibility(self, backup_version: str) -> dict:
@@ -244,7 +244,7 @@ class AstrBotImporter:
             return {
                 "status": "major_diff",
                 "can_import": False,
-                "message": "备份文件缺少版本信息",
+                "message": t('backup-importer-missing_version_info'),
             }
 
         # 提取主版本（前两位）进行比较
@@ -257,8 +257,8 @@ class AstrBotImporter:
                 "status": "major_diff",
                 "can_import": False,
                 "message": (
-                    f"主版本不兼容: 备份版本 {backup_version}, 当前版本 {VERSION}。"
-                    f"跨主版本导入可能导致数据损坏，请使用相同主版本的 AstrBot。"
+                    t('backup-importer-major_version_incompatible', backup_version=backup_version, VERSION=VERSION) +
+                    t('backup-importer-major_version_mismatch_warning')
                 ),
             }
 
@@ -269,14 +269,14 @@ class AstrBotImporter:
                 "status": "minor_diff",
                 "can_import": True,
                 "message": (
-                    f"小版本差异: 备份版本 {backup_version}, 当前版本 {VERSION}。"
+                    t('backup-importer-minor_version_difference', backup_version=backup_version, VERSION=VERSION)
                 ),
             }
 
         return {
             "status": "match",
             "can_import": True,
-            "message": "版本匹配",
+            "message": t('backup-importer-version_matches'),
         }
 
     async def import_all(
@@ -298,25 +298,25 @@ class AstrBotImporter:
         result = ImportResult()
 
         if not os.path.exists(zip_path):
-            result.add_error(f"备份文件不存在: {zip_path}")
+            result.add_error(t('backup-importer-add_error_backup_not_exist', zip_path=zip_path))
             return result
 
-        logger.info(f"开始从 {zip_path} 导入备份")
+        logger.info(t('backup-importer-start_import_from_zip', zip_path=zip_path))
 
         try:
             with zipfile.ZipFile(zip_path, "r") as zf:
                 # 1. 读取并验证 manifest
                 if progress_callback:
-                    await progress_callback("validate", 0, 100, "正在验证备份文件...")
+                    await progress_callback("validate", 0, 100, t('backup-importer-validate_start'))
 
                 try:
                     manifest_data = zf.read("manifest.json")
                     manifest = json.loads(manifest_data)
                 except KeyError:
-                    result.add_error("备份文件缺少 manifest.json")
+                    result.add_error(t('backup-importer-error_missing_manifest'))
                     return result
                 except json.JSONDecodeError as e:
-                    result.add_error(f"manifest.json 格式错误: {e}")
+                    result.add_error(t('backup-importer-error_manifest_format', e=e))
                     return result
 
                 # 版本校验
@@ -327,11 +327,11 @@ class AstrBotImporter:
                     return result
 
                 if progress_callback:
-                    await progress_callback("validate", 100, 100, "验证完成")
+                    await progress_callback("validate", 100, 100, t('backup-importer-validate_complete'))
 
                 # 2. 导入主数据库
                 if progress_callback:
-                    await progress_callback("main_db", 0, 100, "正在导入主数据库...")
+                    await progress_callback("main_db", 0, 100, t('backup-importer-main_db_start'))
 
                 try:
                     main_data_content = zf.read("databases/main_db.json")
@@ -343,16 +343,16 @@ class AstrBotImporter:
                     imported = await self._import_main_database(main_data)
                     result.imported_tables.update(imported)
                 except Exception as e:
-                    result.add_error(f"导入主数据库失败: {e}")
+                    result.add_error(t('backup-importer-error_main_db_import', e=e))
                     return result
 
                 if progress_callback:
-                    await progress_callback("main_db", 100, 100, "主数据库导入完成")
+                    await progress_callback("main_db", 100, 100, t('backup-importer-main_db_complete'))
 
                 # 3. 导入知识库
                 if self.kb_manager and "databases/kb_metadata.json" in zf.namelist():
                     if progress_callback:
-                        await progress_callback("kb", 0, 100, "正在导入知识库...")
+                        await progress_callback("kb", 0, 100, t('backup-importer-kb_start'))
 
                     try:
                         kb_meta_content = zf.read("databases/kb_metadata.json")
@@ -363,14 +363,14 @@ class AstrBotImporter:
 
                         await self._import_knowledge_bases(zf, kb_meta_data, result)
                     except Exception as e:
-                        result.add_warning(f"导入知识库失败: {e}")
+                        result.add_warning(t('backup-importer-warning_kb_import_failed', e=e))
 
                     if progress_callback:
-                        await progress_callback("kb", 100, 100, "知识库导入完成")
+                        await progress_callback("kb", 100, 100, t('backup-importer-kb_complete'))
 
                 # 4. 导入配置文件
                 if progress_callback:
-                    await progress_callback("config", 0, 100, "正在导入配置文件...")
+                    await progress_callback("config", 0, 100, t('backup-importer-config_start'))
 
                 if "config/cmd_config.json" in zf.namelist():
                     try:
@@ -384,14 +384,14 @@ class AstrBotImporter:
                             f.write(config_content)
                         result.imported_files["config"] = 1
                     except Exception as e:
-                        result.add_warning(f"导入配置文件失败: {e}")
+                        result.add_warning(t('backup-importer-warning_config_import_failed', e=e))
 
                 if progress_callback:
-                    await progress_callback("config", 100, 100, "配置文件导入完成")
+                    await progress_callback("config", 100, 100, t('backup-importer-config_complete'))
 
                 # 5. 导入附件文件
                 if progress_callback:
-                    await progress_callback("attachments", 0, 100, "正在导入附件...")
+                    await progress_callback("attachments", 0, 100, t('backup-importer-attachments_start'))
 
                 attachment_count = await self._import_attachments(
                     zf, main_data.get("attachments", [])
@@ -399,28 +399,28 @@ class AstrBotImporter:
                 result.imported_files["attachments"] = attachment_count
 
                 if progress_callback:
-                    await progress_callback("attachments", 100, 100, "附件导入完成")
+                    await progress_callback("attachments", 100, 100, t('backup-importer-attachments_complete'))
 
                 # 6. 导入插件和其他目录
                 if progress_callback:
                     await progress_callback(
-                        "directories", 0, 100, "正在导入插件和数据目录..."
+                        "directories", 0, 100, t('backup-importer-directories_start')
                     )
 
                 dir_stats = await self._import_directories(zf, manifest, result)
                 result.imported_directories = dir_stats
 
                 if progress_callback:
-                    await progress_callback("directories", 100, 100, "目录导入完成")
+                    await progress_callback("directories", 100, 100, t('backup-importer-directories_complete'))
 
             logger.info(f"备份导入完成: {result.to_dict()}")
             return result
 
         except zipfile.BadZipFile:
-            result.add_error("无效的 ZIP 文件")
+            result.add_error(t('backup-importer-error_invalid_zip'))
             return result
         except Exception as e:
-            result.add_error(f"导入失败: {e}")
+            result.add_error(t('backup-importer-import_failed', e=e))
             return result
 
     def _validate_version(self, manifest: dict) -> None:
@@ -431,7 +431,7 @@ class AstrBotImporter:
         """
         backup_version = manifest.get("astrbot_version")
         if not backup_version:
-            raise ValueError("备份文件缺少版本信息")
+            raise ValueError(t('backup-importer-missing_version_info_dup2'))
 
         # 使用新的版本兼容性检查
         version_check = self._check_version_compatibility(backup_version)
@@ -450,9 +450,9 @@ class AstrBotImporter:
                 for table_name, model_class in MAIN_DB_MODELS.items():
                     try:
                         await session.execute(delete(model_class))
-                        logger.debug(f"已清空表 {table_name}")
+                        logger.debug(t('backup-importer-table_cleared', table_name=table_name))
                     except Exception as e:
-                        logger.warning(f"清空表 {table_name} 失败: {e}")
+                        logger.warning(t('backup-importer-clear_table_failed', table_name=table_name, e=e))
 
     async def _clear_kb_data(self) -> None:
         """清空知识库数据"""
@@ -465,9 +465,9 @@ class AstrBotImporter:
                 for table_name, model_class in KB_METADATA_MODELS.items():
                     try:
                         await session.execute(delete(model_class))
-                        logger.debug(f"已清空知识库表 {table_name}")
+                        logger.debug(t('backup-importer-kb_table_cleared', table_name=table_name))
                     except Exception as e:
-                        logger.warning(f"清空知识库表 {table_name} 失败: {e}")
+                        logger.warning(t('backup-importer-clear_kb_table_failed', table_name=table_name, e=e))
 
         # 删除知识库文件目录
         for kb_id in list(self.kb_manager.kb_insts.keys()):
@@ -477,7 +477,7 @@ class AstrBotImporter:
                 if kb_helper.kb_dir.exists():
                     shutil.rmtree(kb_helper.kb_dir)
             except Exception as e:
-                logger.warning(f"清理知识库 {kb_id} 失败: {e}")
+                logger.warning(t('backup-importer-clean_kb_failed', kb_id=kb_id, e=e))
 
         self.kb_manager.kb_insts.clear()
 
@@ -492,7 +492,7 @@ class AstrBotImporter:
                 for table_name, rows in data.items():
                     model_class = MAIN_DB_MODELS.get(table_name)
                     if not model_class:
-                        logger.warning(f"未知的表: {table_name}")
+                        logger.warning(t('backup-importer-unknown_table', table_name=table_name))
                         continue
 
                     count = 0
@@ -504,10 +504,10 @@ class AstrBotImporter:
                             session.add(obj)
                             count += 1
                         except Exception as e:
-                            logger.warning(f"导入记录到 {table_name} 失败: {e}")
+                            logger.warning(t('backup-importer-import_records_failed', table_name=table_name, e=e))
 
                     imported[table_name] = count
-                    logger.debug(f"导入表 {table_name}: {count} 条记录")
+                    logger.debug(t('backup-importer-table_imported', table_name=table_name, count=count))
 
         return imported
 
@@ -537,7 +537,7 @@ class AstrBotImporter:
                             session.add(obj)
                             count += 1
                         except Exception as e:
-                            logger.warning(f"导入知识库记录到 {table_name} 失败: {e}")
+                            logger.warning(t('backup-importer-import_kb_records_failed', table_name=table_name, e=e))
 
                     result.imported_tables[f"kb_{table_name}"] = count
 
@@ -561,7 +561,7 @@ class AstrBotImporter:
                     # 导入到文档存储数据库
                     await self._import_kb_documents(kb_id, doc_data)
                 except Exception as e:
-                    result.add_warning(f"导入知识库 {kb_id} 的文档失败: {e}")
+                    result.add_warning(t('backup-importer-import_kb_docs_failed', kb_id=kb_id, e=e))
 
             # 导入 FAISS 索引
             faiss_path = f"databases/kb_{kb_id}/index.faiss"
@@ -571,7 +571,7 @@ class AstrBotImporter:
                     with zf.open(faiss_path) as src, open(target_path, "wb") as dst:
                         dst.write(src.read())
                 except Exception as e:
-                    result.add_warning(f"导入知识库 {kb_id} 的 FAISS 索引失败: {e}")
+                    result.add_warning(t('backup-importer-import_kb_faiss_failed', kb_id=kb_id, e=e))
 
             # 导入媒体文件
             media_prefix = f"files/kb_media/{kb_id}/"
@@ -584,7 +584,7 @@ class AstrBotImporter:
                         with zf.open(name) as src, open(target_path, "wb") as dst:
                             dst.write(src.read())
                     except Exception as e:
-                        result.add_warning(f"导入媒体文件 {name} 失败: {e}")
+                        result.add_warning(t('backup-importer-import_media_failed', name=name, e=e))
 
         # 3. 重新加载知识库实例
         await self.kb_manager.load_kbs()
@@ -610,7 +610,7 @@ class AstrBotImporter:
                         metadata=json.loads(doc.get("metadata", "{}")),
                     )
                 except Exception as e:
-                    logger.warning(f"导入文档块失败: {e}")
+                    logger.warning(t('backup-importer-import_chunks_failed', e=e))
         finally:
             await doc_storage.close()
 
@@ -647,7 +647,7 @@ class AstrBotImporter:
                         dst.write(src.read())
                     count += 1
                 except Exception as e:
-                    logger.warning(f"导入附件 {name} 失败: {e}")
+                    logger.warning(t('backup-importer-import_attachment_failed', name=name, e=e))
 
         return count
 
@@ -672,7 +672,7 @@ class AstrBotImporter:
         # 检查备份版本是否支持目录备份（需要版本 >= 1.1）
         backup_version = manifest.get("version", "1.0")
         if VersionComparator.compare_version(backup_version, "1.1") < 0:
-            logger.info("备份版本不支持目录备份，跳过目录导入")
+            logger.info(t('backup-importer-skip_dir_import_unsupported'))
             return dir_stats
 
         backed_up_dirs = manifest.get("directories", [])
@@ -680,7 +680,7 @@ class AstrBotImporter:
 
         for dir_name in backed_up_dirs:
             if dir_name not in backup_directories:
-                result.add_warning(f"未知的目录类型: {dir_name}")
+                result.add_warning(t('backup-importer-unknown_dir_type', dir_name=dir_name))
                 continue
 
             target_dir = Path(backup_directories[dir_name])
@@ -705,7 +705,7 @@ class AstrBotImporter:
                     if backup_path.exists():
                         shutil.rmtree(backup_path)
                     shutil.move(str(target_dir), str(backup_path))
-                    logger.debug(f"已备份现有目录 {target_dir} 到 {backup_path}")
+                    logger.debug(t('backup-importer-existing_dir_backed_up', target_dir=target_dir, backup_path=backup_path))
 
                 # 创建目标目录
                 target_dir.mkdir(parents=True, exist_ok=True)
@@ -725,13 +725,13 @@ class AstrBotImporter:
                             dst.write(src.read())
                         file_count += 1
                     except Exception as e:
-                        result.add_warning(f"导入文件 {name} 失败: {e}")
+                        result.add_warning(t('backup-importer-failed_to_import_file', name=name, e=e))
 
                 dir_stats[dir_name] = file_count
-                logger.debug(f"导入目录 {dir_name}: {file_count} 个文件")
+                logger.debug(t('backup-importer-importing_directory_files', dir_name=dir_name, file_count=file_count))
 
             except Exception as e:
-                result.add_warning(f"导入目录 {dir_name} 失败: {e}")
+                result.add_warning(t('backup-importer-failed_to_import_directory', dir_name=dir_name, e=e))
                 dir_stats[dir_name] = 0
 
         return dir_stats

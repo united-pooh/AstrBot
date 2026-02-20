@@ -515,7 +515,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             self.run_context.messages.append(
                 Message(
                     role="user",
-                    content="工具调用次数已达到上限，请停止使用工具，并根据已经收集到的信息，对你的任务和发现进行总结，然后直接回复用户。",
+                    content=t('agent-runners-tool_loop_agent_runner-tool_call_limit_reached_message'),
                 )
             )
             # 再执行最后一步
@@ -566,10 +566,10 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                 else:
                     func_tool = req.func_tool.get_tool(func_tool_name)
 
-                logger.info(f"使用工具：{func_tool_name}，参数：{func_tool_args}")
+                logger.info(t('agent-runners-tool_loop_agent_runner-using_tool_with_params', func_tool_name=func_tool_name, func_tool_args=func_tool_args))
 
                 if not func_tool:
-                    logger.warning(f"未找到指定的工具: {func_tool_name}，将跳过。")
+                    logger.warning(t('agent-runners-tool_loop_agent_runner-tool_not_found_warning', func_tool_name=func_tool_name))
                     tool_call_result_blocks.append(
                         ToolCallMessageSegment(
                             role="tool",
@@ -601,7 +601,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                     )
                     if ignored_params:
                         logger.warning(
-                            f"工具 {func_tool_name} 忽略非期望参数: {ignored_params}",
+                            t('agent-runners-tool_loop_agent_runner-ignoring_unexpected_params', func_tool_name=func_tool_name, ignored_params=ignored_params),
                         )
                 else:
                     # 如果没有 handler（如 MCP 工具），使用所有参数
@@ -711,7 +711,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                         # 这里我们将直接结束 Agent Loop
                         # 发送消息逻辑在 ToolExecutor 中处理了
                         logger.warning(
-                            f"{func_tool_name} 没有返回值，或者已将结果直接发送给用户。"
+                            t('agent-runners-tool_loop_agent_runner-tool_no_return_or_direct', func_tool_name=func_tool_name)
                         )
                         self._transition_state(AgentState.DONE)
                         self.stats.end_time = time.time()

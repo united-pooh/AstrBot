@@ -188,7 +188,7 @@ class AstrBotConfigManager:
 
         """
         if conf_id == "default":
-            raise ValueError("不能删除默认配置文件")
+            raise ValueError(t('astrbot_config_mgr-error_cannot_delete_default_config'))
 
         # 从映射中移除
         abconf_data = self.sp.get(
@@ -198,7 +198,7 @@ class AstrBotConfigManager:
             scope_id="global",
         )
         if conf_id not in abconf_data:
-            logger.warning(f"配置文件 {conf_id} 不存在于映射中")
+            logger.warning(t('astrbot_config_mgr-warn_config_not_in_mapping', conf_id=conf_id))
             return False
 
         # 获取配置文件路径
@@ -211,9 +211,9 @@ class AstrBotConfigManager:
         try:
             if os.path.exists(conf_path):
                 os.remove(conf_path)
-                logger.info(f"已删除配置文件: {conf_path}")
+                logger.info(t('astrbot_config_mgr-info_config_file_deleted', conf_path=conf_path))
         except Exception as e:
-            logger.error(f"删除配置文件 {conf_path} 失败: {e}")
+            logger.error(t('astrbot_config_mgr-error_delete_config_failed', conf_path=conf_path, e=e))
             return False
 
         # 从内存中移除
@@ -225,7 +225,7 @@ class AstrBotConfigManager:
         self.sp.put("abconf_mapping", abconf_data, scope="global", scope_id="global")
         self.abconf_data = abconf_data
 
-        logger.info(f"成功删除配置文件 {conf_id}")
+        logger.info(t('astrbot_config_mgr-info_config_deleted_success', conf_id=conf_id))
         return True
 
     def update_conf_info(self, conf_id: str, name: str | None = None) -> bool:
@@ -240,7 +240,7 @@ class AstrBotConfigManager:
 
         """
         if conf_id == "default":
-            raise ValueError("不能更新默认配置文件的信息")
+            raise ValueError(t('astrbot_config_mgr-error_cannot_update_default_config'))
 
         abconf_data = self.sp.get(
             "abconf_mapping",
@@ -249,7 +249,7 @@ class AstrBotConfigManager:
             scope_id="global",
         )
         if conf_id not in abconf_data:
-            logger.warning(f"配置文件 {conf_id} 不存在于映射中")
+            logger.warning(t('astrbot_config_mgr-warn_config_not_found_in_mapping', conf_id=conf_id))
             return False
 
         # 更新名称
@@ -259,7 +259,7 @@ class AstrBotConfigManager:
         # 保存更新
         self.sp.put("abconf_mapping", abconf_data, scope="global", scope_id="global")
         self.abconf_data = abconf_data
-        logger.info(f"成功更新配置文件 {conf_id} 的信息")
+        logger.info(t('astrbot_config_mgr-info_config_updated_success', conf_id=conf_id))
         return True
 
     def g(
