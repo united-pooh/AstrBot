@@ -35,7 +35,7 @@ else:
 
 # 注册平台适配器
 @register_platform_adapter(
-    "discord", "Discord 适配器 (基于 Pycord)", support_streaming_message=False
+    "discord", t('platform-sources-discord-discord_platform_adapter-adapter_description'), support_streaming_message=False
 )
 class DiscordPlatformAdapter(Platform):
     def __init__(
@@ -64,7 +64,7 @@ class DiscordPlatformAdapter(Platform):
         """通过会话发送消息"""
         if self.client.user is None:
             logger.error(
-                "[Discord] 客户端未就绪 (self.client.user is None)，无法发送消息"
+                t('platform-sources-discord-discord_platform_adapter-client_not_ready_send')
             )
             return
 
@@ -115,7 +115,7 @@ class DiscordPlatformAdapter(Platform):
         """返回平台元数据"""
         return PlatformMetadata(
             "discord",
-            "Discord 适配器",
+            t('platform-sources-discord-discord_platform_adapter-adapter_name'),
             id=cast(str, self.config.get("id")),
             default_config_tmpl=self.config,
             support_streaming_message=False,
@@ -127,7 +127,7 @@ class DiscordPlatformAdapter(Platform):
 
         # 初始化回调函数
         async def on_received(message_data) -> None:
-            logger.debug(f"[Discord] 收到消息: {message_data}")
+            logger.debug(t('platform-sources-discord-discord_platform_adapter-message_received_debug', message_data=message_data))
             if self.client_self_id is None:
                 self.client_self_id = message_data.get("bot_id")
             abm = await self.convert_message(data=message_data)
@@ -136,7 +136,7 @@ class DiscordPlatformAdapter(Platform):
         # 初始化 Discord 客户端
         token = str(self.config.get("discord_token"))
         if not token:
-            logger.error("[Discord] Bot Token 未配置。请在配置文件中正确设置 token。")
+            logger.error(t('platform-sources-discord-discord_platform_adapter-token_not_configured'))
             return
 
         proxy = self.config.get("discord_proxy") or None
@@ -158,11 +158,11 @@ class DiscordPlatformAdapter(Platform):
             self._polling_task = asyncio.create_task(self.client.start_polling())
             await self.shutdown_event.wait()
         except discord.errors.LoginFailure:
-            logger.error("[Discord] 登录失败。请检查你的 Bot Token 是否正确。")
+            logger.error(t('platform-sources-discord-discord_platform_adapter-login_failed'))
         except discord.errors.ConnectionClosed:
-            logger.warning("[Discord] 与 Discord 的连接已关闭。")
+            logger.warning(t('platform-sources-discord-discord_platform_adapter-connection_closed'))
         except Exception as e:
-            logger.error(f"[Discord] 适配器运行时发生意外错误: {e}", exc_info=True)
+            logger.error(t('platform-sources-discord-discord_platform_adapter-unexpected_runtime_error', e=e), exc_info=True)
 
     def _get_message_type(
         self,
@@ -264,7 +264,7 @@ class DiscordPlatformAdapter(Platform):
 
         if self.client.user is None:
             logger.error(
-                "[Discord] 客户端未就绪 (self.client.user is None)，无法处理消息"
+                t('platform-sources-discord-discord_platform_adapter-client_not_ready_process')
             )
             return
 
@@ -325,7 +325,7 @@ class DiscordPlatformAdapter(Platform):
     @override
     async def terminate(self) -> None:
         """终止适配器"""
-        logger.info("[Discord] 正在终止适配器... (step 1: cancel polling task)")
+        logger.info(t('platform-sources-discord-discord_platform_adapter-terminating_step1'))
         self.shutdown_event.set()
         # 优先 cancel polling_task
         if self._polling_task:
@@ -333,7 +333,7 @@ class DiscordPlatformAdapter(Platform):
             try:
                 await asyncio.wait_for(self._polling_task, timeout=10)
             except asyncio.CancelledError:
-                logger.info("[Discord] polling_task 已取消。")
+                logger.info(t('platform-sources-discord-discord_platform_adapter-polling_task_cancelled'))
             except Exception as e:
                 logger.warning(f"[Discord] polling_task 取消异常: {e}")
         logger.info("[Discord] 正在清理已注册的斜杠指令... (step 2)")

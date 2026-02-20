@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator
 from astrbot.core import logger
 from astrbot.core.message.components import Image, Plain, Record
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
+from astrbot.core import t
 
 from ..context import PipelineContext
 from ..stage import Stage, register_stage
@@ -44,7 +45,7 @@ class PreProcessStage(Stage):
             try:
                 await event.react(random.choice(emojis))
             except Exception as e:
-                logger.warning(f"{platform} 预回应表情发送失败: {e}")
+                logger.warning(t('pipeline-preprocess_stage-stage-pre_emoji_send_failed', platform=platform, e=e))
 
         # 路径映射
         if mappings := self.platform_settings.get("path_mapping", []):
@@ -83,7 +84,7 @@ class PreProcessStage(Stage):
                         try:
                             result = await stt_provider.get_text(audio_url=path)
                             if result:
-                                logger.info("语音转文本结果: " + result)
+                                logger.info(t('pipeline-preprocess_stage-stage-speech_to_text_result') + result)
                                 message_chain[idx] = Plain(result)
                                 event.message_str += result
                                 event.message_obj.message_str += result
@@ -96,5 +97,5 @@ class PreProcessStage(Stage):
                             continue
                         except BaseException as e:
                             logger.error(traceback.format_exc())
-                            logger.error(f"语音转文本失败: {e}")
+                            logger.error(t('pipeline-preprocess_stage-stage-speech_to_text_failed', e=e))
                             break

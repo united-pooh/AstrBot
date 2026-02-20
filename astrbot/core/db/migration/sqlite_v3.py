@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from astrbot.core.db.po import Platform, Stats
-
+from astrbot.core import t
 
 @dataclass
 class Conversation:
@@ -369,7 +369,7 @@ class SQLiteDatabase:
                     {
                         "user_id": user_id or "",
                         "cid": safe_cid,
-                        "title": title or f"对话 {display_cid}",
+                        "title": title or t('db-migration-sqlite_v3-default_conversation_title', display_cid=display_cid),
                         "persona_id": persona_id or "",
                         "created_at": created_at or 0,
                         "updated_at": updated_at or 0,
@@ -485,7 +485,7 @@ class SQLiteDatabase:
                     {
                         "user_id": user_id or "",
                         "cid": safe_cid,
-                        "title": title or f"对话 {display_cid}",
+                        "title": title or t('db-migration-sqlite_v3-default_conversation_title_2', display_cid=display_cid),
                         "persona_id": persona_id or "",
                         "created_at": created_at or 0,
                         "updated_at": updated_at or 0,

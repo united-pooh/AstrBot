@@ -103,7 +103,7 @@ class AiocqhttpAdapter(Platform):
 
         @self.bot.on_websocket_connection
         def on_websocket_connection(_) -> None:
-            logger.info("aiocqhttp(OneBot v11) 适配器已连接。")
+            logger.info(t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-adapter_connected'))
 
     async def send_by_session(
         self,
@@ -234,7 +234,7 @@ class AiocqhttpAdapter(Platform):
             try:
                 await self.bot.send(event, err)
             except BaseException as e:
-                logger.error(f"回复消息失败: {e}")
+                logger.error(t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-reply_message_failed', e=e))
             raise ValueError(err)
 
         # 按消息段类型类型适配
@@ -289,12 +289,12 @@ class AiocqhttpAdapter(Platform):
                                 a = File(name=file_name, url=file_url)
                                 abm.message.append(a)
                             else:
-                                logger.error(f"获取文件失败: {ret}")
+                                logger.error(t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-get_file_failed_ret', ret=ret))
 
                         except ActionFailed as e:
-                            logger.error(f"获取文件失败: {e}，此消息段将被忽略。")
+                            logger.error(t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-get_file_failed_ignore', e=e))
                         except BaseException as e:
-                            logger.error(f"获取文件失败: {e}，此消息段将被忽略。")
+                            logger.error(t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-get_file_failed_ignore_2', e=e))
 
             elif t == "reply":
                 for m in m_group:
@@ -312,7 +312,7 @@ class AiocqhttpAdapter(Platform):
                             new_event = Event.from_payload(reply_event_data)
                             if not new_event:
                                 logger.error(
-                                    f"无法从回复消息数据构造 Event 对象: {reply_event_data}",
+                                    t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-cannot_construct_reply_event', reply_event_data=reply_event_data),
                                 )
                                 continue
                             abm_reply = await self._convert_handle_message_event(
@@ -333,7 +333,7 @@ class AiocqhttpAdapter(Platform):
 
                             abm.message.append(reply_seg)
                         except BaseException as e:
-                            logger.error(f"获取引用消息失败: {e}。")
+                            logger.error(t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-get_quoted_message_failed', e=e))
                             a = ComponentTypes[t](**m["data"])
                             abm.message.append(a)
             elif t == "at":
@@ -383,9 +383,9 @@ class AiocqhttpAdapter(Platform):
                         else:
                             abm.message.append(At(qq=str(m["data"]["qq"]), name=""))
                     except ActionFailed as e:
-                        logger.error(f"获取 @ 用户信息失败: {e}，此消息段将被忽略。")
+                        logger.error(t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-get_at_user_info_failed_ignore', e=e))
                     except BaseException as e:
-                        logger.error(f"获取 @ 用户信息失败: {e}，此消息段将被忽略。")
+                        logger.error(t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-get_at_user_info_failed_ignore_2', e=e))
 
                 message_str += "".join(at_parts)
             elif t == "markdown":
@@ -418,7 +418,7 @@ class AiocqhttpAdapter(Platform):
     def run(self) -> Awaitable[Any]:
         if not self.host or not self.port:
             logger.warning(
-                "aiocqhttp: 未配置 ws_reverse_host 或 ws_reverse_port，将使用默认值：http://0.0.0.0:6199",
+                t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-ws_reverse_not_configured'),
             )
             self.host = "0.0.0.0"
             self.port = 6199
@@ -440,7 +440,7 @@ class AiocqhttpAdapter(Platform):
 
     async def shutdown_trigger_placeholder(self) -> None:
         await self.shutdown_event.wait()
-        logger.info("aiocqhttp 适配器已被关闭")
+        logger.info(t('platform-sources-aiocqhttp-aiocqhttp_platform_adapter-adapter_closed'))
 
     def meta(self) -> PlatformMetadata:
         return self.metadata

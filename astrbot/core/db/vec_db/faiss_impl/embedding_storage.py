@@ -1,8 +1,9 @@
+from astrbot.core import t
 try:
     import faiss
 except ModuleNotFoundError:
     raise ImportError(
-        "faiss 未安装。请使用 'pip install faiss-cpu' 或 'pip install faiss-gpu' 安装。",
+        t('db-vec_db-faiss_impl-embedding_storage-faiss_not_installed'),
     )
 import os
 

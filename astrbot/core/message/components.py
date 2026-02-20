@@ -34,6 +34,7 @@ if sys.version_info >= (3, 14):
 else:
     from pydantic.v1 import BaseModel
 
+from astrbot.core import t
 from astrbot.core import astrbot_config, file_token_service, logger
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.io import download_file, download_image_by_url, file_to_base64
@@ -209,13 +210,13 @@ class Record(BaseMessageComponent):
         callback_host = astrbot_config.get("callback_api_base")
 
         if not callback_host:
-            raise Exception("未配置 callback_api_base，文件服务不可用")
+            raise Exception(t('message-components-callback_api_base_missing'))
 
         file_path = await self.convert_to_file_path()
 
         token = await file_token_service.register_file(file_path)
 
-        logger.debug(f"已注册：{callback_host}/api/file/{token}")
+        logger.debug(t('message-components-file_callback_registered', callback_host=callback_host, token=token))
 
         return f"{callback_host}/api/file/{token}"
 
@@ -276,13 +277,13 @@ class Video(BaseMessageComponent):
         callback_host = astrbot_config.get("callback_api_base")
 
         if not callback_host:
-            raise Exception("未配置 callback_api_base，文件服务不可用")
+            raise Exception(t('message-components-callback_api_base_missing'))
 
         file_path = await self.convert_to_file_path()
 
         token = await file_token_service.register_file(file_path)
 
-        logger.debug(f"已注册：{callback_host}/api/file/{token}")
+        logger.debug(t('message-components-file_callback_registered', callback_host=callback_host, token=token))
 
         return f"{callback_host}/api/file/{token}"
 
@@ -501,13 +502,13 @@ class Image(BaseMessageComponent):
         callback_host = astrbot_config.get("callback_api_base")
 
         if not callback_host:
-            raise Exception("未配置 callback_api_base，文件服务不可用")
+            raise Exception(t('message-components-callback_api_base_missing'))
 
         file_path = await self.convert_to_file_path()
 
         token = await file_token_service.register_file(file_path)
 
-        logger.debug(f"已注册：{callback_host}/api/file/{token}")
+        logger.debug(t('message-components-file_callback_registered', callback_host=callback_host, token=token))
 
         return f"{callback_host}/api/file/{token}"
 
@@ -679,9 +680,9 @@ class File(BaseMessageComponent):
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     logger.warning(
-                        "不可以在异步上下文中同步等待下载! "
-                        "这个警告通常发生于某些逻辑试图通过 <File>.file 获取文件消息段的文件内容。"
-                        "请使用 await get_file() 代替直接获取 <File>.file 字段",
+                        t('message-components-cannot_wait_sync_in_async') +
+                        t('message-components-warning_file_dot_file_access') +
+                        t('message-components-use_await_get_file'),
                     )
                     return ""
                 # 等待下载完成
@@ -690,7 +691,7 @@ class File(BaseMessageComponent):
                 if self.file_ and os.path.exists(self.file_):
                     return os.path.abspath(self.file_)
             except Exception as e:
-                logger.error(f"文件下载失败: {e}")
+                logger.error(t('message-components-file_download_failed_log', e=e))
 
         return ""
 
@@ -757,13 +758,13 @@ class File(BaseMessageComponent):
         callback_host = astrbot_config.get("callback_api_base")
 
         if not callback_host:
-            raise Exception("未配置 callback_api_base，文件服务不可用")
+            raise Exception(t('message-components-callback_api_not_configured'))
 
         file_path = await self.get_file()
 
         token = await file_token_service.register_file(file_path)
 
-        logger.debug(f"已注册：{callback_host}/api/file/{token}")
+        logger.debug(t('message-components-registered_file_endpoint_log', callback_host=callback_host, token=token))
 
         return f"{callback_host}/api/file/{token}"
 

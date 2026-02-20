@@ -10,6 +10,7 @@ from astrbot.core.message.message_event_result import MessageChain, ResultConten
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 from astrbot.core.star.star_handler import EventType
 from astrbot.core.utils.path_util import path_Mapping
+from astrbot.core import t
 
 from ..context import PipelineContext, call_event_hook
 from ..stage import Stage, register_stage
@@ -85,7 +86,7 @@ class RespondStage(Stage):
             try:
                 self.interval = [float(t) for t in interval_str_ls]
             except BaseException as e:
-                logger.error(f"解析分段回复的间隔时间失败。{e}")
+                logger.error(t('pipeline-respond-stage-parse_interval_failed', e=e))
             logger.info(f"分段回复间隔时间：{self.interval}")
 
     async def _word_cnt(self, text: str) -> int:
@@ -187,7 +188,7 @@ class RespondStage(Stage):
 
         if result.result_content_type == ResultContentType.STREAMING_RESULT:
             if result.async_stream is None:
-                logger.warning("async_stream 为空，跳过发送。")
+                logger.warning(t('pipeline-respond-stage-empty_stream_skip_send'))
                 return
             # 流式结果直接交付平台适配器处理
             realtime_segmenting = (
@@ -212,10 +213,10 @@ class RespondStage(Stage):
             # 检查消息链是否为空
             try:
                 if await self._is_empty_message_chain(result.chain):
-                    logger.info("消息为空，跳过发送阶段")
+                    logger.info(t('pipeline-respond-stage-empty_message_skip_send'))
                     return
             except Exception as e:
-                logger.warning(f"空内容检查异常: {e}")
+                logger.warning(t('pipeline-respond-stage-empty_content_check_exception', e=e))
 
             # 将 Plain 为空的消息段移除
             result.chain = [
@@ -277,7 +278,7 @@ class RespondStage(Stage):
                         await event.send(chain)
                     except Exception as e:
                         logger.error(
-                            f"发送消息链失败: chain = {chain}, error = {e}",
+                            t('pipeline-respond-stage-send_message_chain_failed', chain=chain, e=e),
                             exc_info=True,
                         )
                 chain = MessageChain(result.chain)
@@ -286,7 +287,7 @@ class RespondStage(Stage):
                         await event.send(chain)
                     except Exception as e:
                         logger.error(
-                            f"发送消息链失败: chain = {chain}, error = {e}",
+                            t('pipeline-respond-stage-send_chain_error', chain=chain, e=e),
                             exc_info=True,
                         )
 

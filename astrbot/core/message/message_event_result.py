@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from typing_extensions import deprecated
 
+from astrbot.core import t
 from astrbot.core.message.components import (
     At,
     AtAll,
@@ -63,7 +64,7 @@ class MessageChain:
         self.chain.append(AtAll())
         return self
 
-    @deprecated("请使用 message 方法代替。")
+    @deprecated(t('message-message_event_result-deprecated_use_message'))
     def error(self, message: str):
         """添加一条错误消息到消息链 `chain` 中
 

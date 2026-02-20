@@ -86,7 +86,7 @@ class AiocqhttpMessageEvent(AstrMessageEvent):
             await bot.send(event=event, message=messages)
         else:
             raise ValueError(
-                f"无法发送消息：缺少有效的数字 session_id({session_id}) 或 event({event})",
+                t('platform-sources-aiocqhttp-aiocqhttp_message_event-missing_session_or_event', session_id=session_id, event=event),
             )
 
     @classmethod

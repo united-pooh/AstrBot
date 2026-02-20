@@ -1,4 +1,5 @@
 from .base import BaseParser
+from astrbot.core import t
 
 
 async def select_parser(ext: str) -> BaseParser:
@@ -10,4 +11,4 @@ async def select_parser(ext: str) -> BaseParser:
         from .pdf_parser import PDFParser
 
         return PDFParser()
-    raise ValueError(f"暂时不支持的文件格式: {ext}")
+    raise ValueError(t('knowledge_base-parsers-util-unsupported_format', ext=ext))

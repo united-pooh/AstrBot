@@ -1,4 +1,4 @@
-from astrbot.core import logger
+from astrbot.core import logger, t
 
 from .platform_metadata import PlatformMetadata
 
@@ -28,7 +28,7 @@ def register_platform_adapter(
     def decorator(cls):
         if adapter_name in platform_cls_map:
             raise ValueError(
-                f"平台适配器 {adapter_name} 已经注册过了，可能发生了适配器命名冲突。",
+                t('platform-register-adapter_already_registered', adapter_name=adapter_name),
             )
 
         # 添加必备选项
@@ -57,7 +57,7 @@ def register_platform_adapter(
         )
         platform_registry.append(pm)
         platform_cls_map[adapter_name] = cls
-        logger.debug(f"平台适配器 {adapter_name} 已注册")
+        logger.debug(t('platform-register-adapter_registered', adapter_name=adapter_name))
         return cls
 
     return decorator

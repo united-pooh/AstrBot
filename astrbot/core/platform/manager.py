@@ -11,6 +11,7 @@ from astrbot.core.utils.webhook_utils import ensure_platform_webhook_config
 from .platform import Platform, PlatformStatus
 from .register import platform_cls_map
 from .sources.webchat.webchat_adapter import WebChatAdapter
+from astrbot.core import t
 
 
 @dataclass
@@ -76,7 +77,7 @@ class PlatformManager:
                     raise
                 except Exception as e:
                     logger.error(
-                        "终止平台适配器失败: client_id=%s, error=%s",
+                        t('platform-manager-terminate_adapter_failed'),
                         client_id,
                         e,
                     )
@@ -92,7 +93,7 @@ class PlatformManager:
                     self.astrbot_config.save_config()
                 await self.load_platform(platform)
             except Exception as e:
-                logger.error(f"初始化 {platform} 平台适配器失败: {e}")
+                logger.error(t('platform-manager-init_adapter_failed', platform=platform, e=e))
 
         # 网页聊天
         webchat_inst = WebChatAdapter({}, self.settings, self.event_queue)
@@ -110,7 +111,7 @@ class PlatformManager:
                 sanitized_id, changed = self._sanitize_platform_id(platform_id)
                 if sanitized_id and changed:
                     logger.warning(
-                        "平台 ID %r 包含非法字符 ':' 或 '!'，已替换为 %r。",
+                        t('platform-manager-invalid_platform_id_char'),
                         platform_id,
                         sanitized_id,
                     )
@@ -252,7 +253,7 @@ class PlatformManager:
 
     async def terminate_platform(self, platform_id: str) -> None:
         if platform_id in self._inst_map:
-            logger.info(f"正在尝试终止 {platform_id} 平台适配器 ...")
+            logger.info(t('platform-manager-attempting_to_terminate_adapter', platform_id=platform_id))
 
             # client_id = self._inst_map.pop(platform_id, None)
             info = self._inst_map.pop(platform_id)
@@ -267,7 +268,7 @@ class PlatformManager:
                     ),
                 )
             except Exception:
-                logger.warning(f"可能未完全移除 {platform_id} 平台适配器")
+                logger.warning(t('platform-manager-adapter_may_not_be_fully_removed', platform_id=platform_id))
 
             await self._terminate_inst_and_tasks(inst)
 
@@ -314,7 +315,7 @@ class PlatformManager:
                     error_count += 1
             except Exception as e:
                 # 如果获取统计信息失败，记录基本信息
-                logger.warning(f"获取平台统计信息失败: {e}")
+                logger.warning(t('platform-manager-failed_to_get_platform_stats', e=e))
                 stats_list.append(
                     {
                         "id": getattr(inst, "config", {}).get("id", "unknown"),

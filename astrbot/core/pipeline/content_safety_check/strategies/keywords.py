@@ -2,6 +2,7 @@ import re
 
 from . import ContentSafetyStrategy
 
+from astrbot.core import t
 
 class KeywordsStrategy(ContentSafetyStrategy):
     def __init__(self, extra_keywords: list) -> None:
@@ -20,5 +21,5 @@ class KeywordsStrategy(ContentSafetyStrategy):
     def check(self, content: str) -> tuple[bool, str]:
         for keyword in self.keywords:
             if re.search(keyword, content):
-                return False, "内容安全检查不通过，匹配到敏感词。"
+                return False, t('pipeline-content_safety_check-strategies-keywords-keywords_matched_block')
         return True, ""

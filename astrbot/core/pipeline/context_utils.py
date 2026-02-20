@@ -7,6 +7,7 @@ from astrbot.core.message.message_event_result import CommandResult, MessageEven
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 from astrbot.core.star.star import star_map
 from astrbot.core.star.star_handler import EventType, star_handlers_registry
+from astrbot.core import t
 
 
 async def call_handler(
@@ -36,7 +37,7 @@ async def call_handler(
     try:
         ready_to_call = handler(event, *args, **kwargs)
     except TypeError:
-        logger.error("处理函数参数不匹配，请检查 handler 的定义。", exc_info=True)
+        logger.error(t('pipeline-context_utils-handler_params_mismatch'), exc_info=True)
 
     if not ready_to_call:
         return

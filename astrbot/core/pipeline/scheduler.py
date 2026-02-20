@@ -11,6 +11,7 @@ from astrbot.core.utils.active_event_registry import active_event_registry
 from . import STAGES_ORDER
 from .context import PipelineContext
 from .stage import registered_stages
+from astrbot.core import t
 
 
 class PipelineScheduler:
@@ -88,6 +89,6 @@ class PipelineScheduler:
             if isinstance(event, WebChatMessageEvent | WecomAIBotMessageEvent):
                 await event.send(None)
 
-            logger.debug("pipeline 执行完毕。")
+            logger.debug(t('pipeline-scheduler-pipeline_completed'))
         finally:
             active_event_registry.unregister(event)

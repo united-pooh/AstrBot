@@ -23,6 +23,7 @@ from astrbot.core.provider.entities import (
 )
 from astrbot.core.star.star_handler import EventType
 from astrbot.core.utils.metrics import Metric
+from astrbot.core import t
 
 from .....astr_agent_context import AgentContextWrapper, AstrAgentContext
 from .....astr_agent_hooks import MAIN_AGENT_HOOKS
@@ -92,7 +93,7 @@ class ThirdPartyAgentSubStage(Stage):
             {},
         )
         if not self.prov_id:
-            logger.error("没有填写 Agent Runner 提供商 ID，请前往配置页面配置。")
+            logger.error(t('pipeline-process_stage-method-agent_sub_stages-third_party-missing_provider_id'))
             return
         if not self.prov_cfg:
             logger.error(
@@ -185,7 +186,7 @@ class ThirdPartyAgentSubStage(Stage):
             final_resp = runner.get_final_llm_resp()
 
             if not final_resp or not final_resp.result_chain:
-                logger.warning("Agent Runner 未返回最终结果。")
+                logger.warning(t('pipeline-process_stage-method-agent_sub_stages-third_party-no_final_result'))
                 return
 
             event.set_result(

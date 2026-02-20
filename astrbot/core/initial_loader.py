@@ -8,7 +8,7 @@
 import asyncio
 import traceback
 
-from astrbot.core import LogBroker, logger
+from astrbot.core import LogBroker, logger, t
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
 from astrbot.core.db import BaseDatabase
 from astrbot.dashboard.server import AstrBotDashboard
@@ -30,7 +30,7 @@ class InitialLoader:
             await core_lifecycle.initialize()
         except Exception as e:
             logger.critical(traceback.format_exc())
-            logger.critical(f"😭 初始化 AstrBot 失败：{e} !!!")
+            logger.critical(t('initial_loader-critical_init_failed', e=e))
             return
 
         core_task = core_lifecycle.start()
@@ -53,5 +53,5 @@ class InitialLoader:
         try:
             await task  # 整个AstrBot在这里运行
         except asyncio.CancelledError:
-            logger.info("🌈 正在关闭 AstrBot...")
+            logger.info(t('initial_loader-info_shutting_down'))
             await core_lifecycle.stop()

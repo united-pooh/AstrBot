@@ -3,6 +3,7 @@ from astrbot.core.astrbot_config_mgr import AstrBotConfigManager
 from astrbot.core.db import BaseDatabase
 from astrbot.core.db.po import Persona, PersonaFolder, Personality
 from astrbot.core.platform.message_session import MessageSession
+from astrbot.core import t
 
 DEFAULT_PERSONALITY = Personality(
     prompt="You are a helpful and friendly assistant.",
@@ -328,7 +329,7 @@ class PersonaManager:
                     selected_default_persona = persona
                 personas_v3.append(persona)
             except Exception as e:
-                logger.error(f"解析 Persona 配置失败：{e}")
+                logger.error(t('persona_mgr-parse_persona_config_failed', e=e))
 
         if not selected_default_persona and len(personas_v3) > 0:
             # 默认选择第一个

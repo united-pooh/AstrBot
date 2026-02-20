@@ -13,6 +13,7 @@ from astrbot.core.platform.message_type import MessageType
 from astrbot.core.star.session_llm_manager import SessionServiceManager
 from astrbot.core.star.star import star_map
 from astrbot.core.star.star_handler import EventType, star_handlers_registry
+from astrbot.core import t
 
 from ..context import PipelineContext
 from ..stage import Stage, register_stage, registered_stages
@@ -167,7 +168,7 @@ class ResultDecorateStage(Stage):
                 )
                 if is_stream:
                     logger.warning(
-                        "启用流式输出时，依赖发送消息前事件钩子的插件可能无法正常工作",
+                        t('pipeline-result_decorate-stage-streaming_hooks_warning'),
                     )
                 await handler.handler(event)
 
@@ -186,7 +187,7 @@ class ResultDecorateStage(Stage):
 
         # 流式输出不执行下面的逻辑
         if is_stream:
-            logger.info("流式输出已启用，跳过结果装饰阶段")
+            logger.info(t('pipeline-result_decorate-stage-streaming_skip_decoration'))
             return
 
         # 需要再获取一次。插件可能直接对 chain 进行了替换。
@@ -276,7 +277,7 @@ class ResultDecorateStage(Stage):
             ):
                 # inject reasoning content to chain
                 reasoning_content = event.get_extra("_llm_reasoning_content")
-                result.chain.insert(0, Plain(f"🤔 思考: {reasoning_content}\n"))
+                result.chain.insert(0, Plain(t('pipeline-result_decorate-stage-prepend_thinking_content', reasoning_content=reasoning_content)))
 
             if should_tts and tts_provider:
                 new_chain = []
@@ -285,7 +286,7 @@ class ResultDecorateStage(Stage):
                         try:
                             logger.info(f"TTS 请求: {comp.text}")
                             audio_path = await tts_provider.get_audio(comp.text)
-                            logger.info(f"TTS 结果: {audio_path}")
+                            logger.info(t('pipeline-result_decorate-stage-tts_result_logged', audio_path=audio_path))
                             if not audio_path:
                                 logger.error(
                                     f"由于 TTS 音频文件未找到，消息段转语音失败: {comp.text}",
@@ -309,7 +310,7 @@ class ResultDecorateStage(Stage):
                                     audio_path,
                                 )
                                 url = f"{callback_api_base}/api/file/{token}"
-                                logger.debug(f"已注册：{url}")
+                                logger.debug(t('pipeline-result_decorate-stage-url_registered_debug', url=url))
 
                             new_chain.append(
                                 Record(
@@ -322,7 +323,7 @@ class ResultDecorateStage(Stage):
                                 new_chain.append(comp)
                         except Exception:
                             logger.error(traceback.format_exc())
-                            logger.error("TTS 失败，使用文本发送。")
+                            logger.error(t('pipeline-result_decorate-stage-tts_failed_fallback_text'))
                             new_chain.append(comp)
                     else:
                         new_chain.append(comp)
@@ -349,11 +350,11 @@ class ResultDecorateStage(Stage):
                             template_name=self.t2i_active_template,
                         )
                     except BaseException:
-                        logger.error("文本转图片失败，使用文本发送。")
+                        logger.error(t('pipeline-result_decorate-stage-t2i_failed_fallback_text'))
                         return
                     if time.time() - render_start > 3:
                         logger.warning(
-                            "文本转图片耗时超过了 3 秒，如果觉得很慢可以使用 /t2i 关闭文本转图片模式。",
+                            t('pipeline-result_decorate-stage-t2i_too_slow_suggestion'),
                         )
                     if url:
                         if url.startswith("http"):
@@ -364,7 +365,7 @@ class ResultDecorateStage(Stage):
                         ):
                             token = await file_token_service.register_file(url)
                             url = f"{self.ctx.astrbot_config['callback_api_base']}/api/file/{token}"
-                            logger.debug(f"已注册：{url}")
+                            logger.debug(t('pipeline-result_decorate-stage-registered', url=url))
                             result.chain = [Image.fromURL(url)]
                         else:
                             result.chain = [Image.fromFileSystem(url)]

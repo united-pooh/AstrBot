@@ -7,7 +7,7 @@ from pathlib import Path
 
 import aiofiles
 
-from astrbot.core import logger
+from astrbot.core import logger, t
 from astrbot.core.db.vec_db.base import BaseVecDB
 from astrbot.core.db.vec_db.faiss_impl.vec_db import FaissVecDB
 from astrbot.core.provider.manager import ProviderManager
@@ -239,7 +239,7 @@ class KBHelper:
                 # 否则，执行标准的文件解析和分块流程
                 if file_content is None:
                     raise ValueError(
-                        "当未提供 pre_chunked_text 时，file_content 不能为空。"
+                        t('knowledge_base-kb_helper-error_file_content_required')
                     )
 
                 file_size = len(file_content)
@@ -333,7 +333,7 @@ class KBHelper:
             await self.refresh_document(doc_id)
             return doc
         except Exception as e:
-            logger.error(f"上传文档失败: {e}")
+            logger.error(t('knowledge_base-kb_helper-error_upload_document_failed', e=e))
             # if file_path.exists():
             #     file_path.unlink()
 
@@ -342,7 +342,7 @@ class KBHelper:
                     if media_path.exists():
                         media_path.unlink()
                 except Exception as me:
-                    logger.warning(f"清理多媒体文件失败 {media_path}: {me}")
+                    logger.warning(t('knowledge_base-kb_helper-warning_cleanup_media_failed', media_path=media_path, me=me))
 
             raise e
 
@@ -393,7 +393,7 @@ class KBHelper:
         """更新文档的元数据"""
         doc = await self.get_document(doc_id)
         if not doc:
-            raise ValueError(f"无法找到 ID 为 {doc_id} 的文档")
+            raise ValueError(t('knowledge_base-kb_helper-raise_document_not_found', doc_id=doc_id))
         chunk_count = await self.get_chunk_count_by_doc_id(doc_id)
         doc.chunk_count = chunk_count
         async with self.kb_db.get_db() as session:
@@ -536,7 +536,7 @@ class KBHelper:
 
         if enable_cleaning and not final_chunks:
             raise ValueError(
-                "内容清洗后未提取到有效文本。请尝试关闭内容清洗功能，或更换更高性能的LLM模型后重试。"
+                t('knowledge_base-kb_helper-error_no_text_after_cleaning')
             )
 
         # 创建一个虚拟文件名
@@ -575,7 +575,7 @@ class KBHelper:
         if not enable_cleaning:
             # 如果不启用清洗，则使用从前端传递的参数进行分块
             logger.info(
-                f"内容清洗未启用，使用指定参数进行分块: chunk_size={chunk_size}, chunk_overlap={chunk_overlap}"
+                t('knowledge_base-kb_helper-info_cleaning_disabled_using_params', chunk_size=chunk_size, chunk_overlap=chunk_overlap)
             )
             return await self.chunker.chunk(
                 content, chunk_size=chunk_size, chunk_overlap=chunk_overlap
@@ -583,7 +583,7 @@ class KBHelper:
 
         if not cleaning_provider_id:
             logger.warning(
-                "启用了内容清洗，但未提供 cleaning_provider_id，跳过清洗并使用默认分块。"
+                t('knowledge_base-kb_helper-warning_cleaning_skipped_no_provider')
             )
             return await self.chunker.chunk(content)
 
@@ -595,7 +595,7 @@ class KBHelper:
             llm_provider = await self.prov_mgr.get_provider_by_id(cleaning_provider_id)
             if not llm_provider or not isinstance(llm_provider, LLMProvider):
                 raise ValueError(
-                    f"无法找到 ID 为 {cleaning_provider_id} 的 LLM Provider 或类型不正确"
+                    t('knowledge_base-kb_helper-error_cleaning_provider_not_found', cleaning_provider_id=cleaning_provider_id)
                 )
 
             # 初步分块
@@ -637,6 +637,6 @@ class KBHelper:
             return final_chunks
 
         except Exception as e:
-            logger.error(f"使用 Provider '{cleaning_provider_id}' 清洗内容失败: {e}")
+            logger.error(t('knowledge_base-kb_helper-cleaning_provider_failed', cleaning_provider_id=cleaning_provider_id, e=e))
             # 清洗失败，返回默认分块结果，保证流程不中断
             return await self.chunker.chunk(content)

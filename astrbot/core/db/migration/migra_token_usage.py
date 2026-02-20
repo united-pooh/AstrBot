@@ -10,7 +10,7 @@ from sqlalchemy import text
 
 from astrbot.api import logger, sp
 from astrbot.core.db import BaseDatabase
-
+from astrbot.core import t
 
 async def migrate_token_usage(db_helper: BaseDatabase) -> None:
     """Add token_usage column to conversations table.
@@ -24,7 +24,7 @@ async def migrate_token_usage(db_helper: BaseDatabase) -> None:
     if migration_done:
         return
 
-    logger.info("开始执行数据库迁移（添加 conversations.token_usage 列）...")
+    logger.info(t('db-migration-migra_token_usage-start_adding_token_usage'))
 
     # 这里只适配了 SQLite。因为截止至这一版本，AstrBot 仅支持 SQLite。
 
@@ -36,7 +36,7 @@ async def migrate_token_usage(db_helper: BaseDatabase) -> None:
             column_names = [col[1] for col in columns]
 
             if "token_usage" in column_names:
-                logger.info("token_usage 列已存在，跳过迁移")
+                logger.info(t('db-migration-migra_token_usage-column_already_exists'))
                 await sp.put_async(
                     "global", "global", "migration_done_token_usage_1", True
                 )
@@ -50,12 +50,12 @@ async def migrate_token_usage(db_helper: BaseDatabase) -> None:
             )
             await session.commit()
 
-            logger.info("token_usage 列添加成功")
+            logger.info(t('db-migration-migra_token_usage-column_added_success'))
 
         # 标记迁移完成
         await sp.put_async("global", "global", "migration_done_token_usage_1", True)
-        logger.info("token_usage 迁移完成")
+        logger.info(t('db-migration-migra_token_usage-migration_completed'))
 
     except Exception as e:
-        logger.error(f"迁移过程中发生错误: {e}", exc_info=True)
+        logger.error(t('db-migration-migra_token_usage-migration_error', e=e), exc_info=True)
         raise

@@ -110,7 +110,7 @@ class DingtalkPlatformAdapter(Platform):
             staff_id = await self._get_sender_staff_id(session)
             if not staff_id:
                 logger.warning(
-                    "钉钉私聊会话缺少 staff_id 映射，回退使用 session_id 作为 userId 发送",
+                    t('platform-sources-dingtalk-dingtalk_adapter-missing_staff_id_fallback'),
                 )
                 staff_id = session.session_id
             await self.send_message_chain_to_user(
@@ -229,7 +229,7 @@ class DingtalkPlatformAdapter(Platform):
                         sender_staff_id,
                     )
         except Exception as e:
-            logger.warning(f"保存钉钉会话映射失败: {e}")
+            logger.warning(t('platform-sources-dingtalk-dingtalk_adapter-save_session_mapping_failed', e=e))
 
     async def download_ding_file(
         self,
@@ -283,7 +283,7 @@ class DingtalkPlatformAdapter(Platform):
             if access_token:
                 return access_token
         except Exception as e:
-            logger.warning(f"通过 dingtalk_stream 获取 access_token 失败: {e}")
+            logger.warning(t('platform-sources-dingtalk-dingtalk_adapter-get_token_stream_failed', e=e))
 
         payload = {"appKey": self.client_id, "appSecret": self.client_secret}
         async with aiohttp.ClientSession() as session:
@@ -309,7 +309,7 @@ class DingtalkPlatformAdapter(Platform):
             )
             return cast(str, staff_id or "")
         except Exception as e:
-            logger.warning(f"读取钉钉 staff_id 映射失败: {e}")
+            logger.warning(t('platform-sources-dingtalk-dingtalk_adapter-read_staff_id_mapping_failed', e=e))
             return ""
 
     async def _send_group_message(
@@ -321,7 +321,7 @@ class DingtalkPlatformAdapter(Platform):
     ) -> None:
         access_token = await self.get_access_token()
         if not access_token:
-            logger.error("钉钉群消息发送失败: access_token 为空")
+            logger.error(t('platform-sources-dingtalk-dingtalk_adapter-group_send_token_empty'))
             return
 
         payload = {
@@ -354,7 +354,7 @@ class DingtalkPlatformAdapter(Platform):
     ) -> None:
         access_token = await self.get_access_token()
         if not access_token:
-            logger.error("钉钉私聊消息发送失败: access_token 为空")
+            logger.error(t('platform-sources-dingtalk-dingtalk_adapter-private_send_token_empty'))
             return
 
         payload = {
@@ -386,7 +386,7 @@ class DingtalkPlatformAdapter(Platform):
             if p.exists() and p.is_file():
                 p.unlink()
         except Exception as e:
-            logger.warning(f"清理临时文件失败: {file_path}, {e}")
+            logger.warning(t('platform-sources-dingtalk-dingtalk_adapter-cleanup_temp_file_failed', file_path=file_path, e=e))
 
     async def _prepare_voice_for_dingtalk(self, input_path: str) -> tuple[str, bool]:
         """优先转换为 OGG(Opus)，不可用时回退 AMR。"""
@@ -398,7 +398,7 @@ class DingtalkPlatformAdapter(Platform):
             converted = await convert_audio_format(input_path, "ogg")
             return converted, converted != input_path
         except Exception as e:
-            logger.warning(f"钉钉语音转 OGG 失败，回退 AMR: {e}")
+            logger.warning(t('platform-sources-dingtalk-dingtalk_adapter-voice_ogg_conversion_failed', e=e))
             converted = await convert_audio_format(input_path, "amr")
             return converted, converted != input_path
 
@@ -406,7 +406,7 @@ class DingtalkPlatformAdapter(Platform):
         media_file_path = Path(file_path)
         access_token = await self.get_access_token()
         if not access_token:
-            logger.error("钉钉媒体上传失败: access_token 为空")
+            logger.error(t('platform-sources-dingtalk-dingtalk_adapter-media_upload_token_empty'))
             return ""
 
         form = aiohttp.FormData()
@@ -428,7 +428,7 @@ class DingtalkPlatformAdapter(Platform):
                     return ""
                 data = await resp.json()
                 if data.get("errcode") != 0:
-                    logger.error(f"钉钉媒体上传失败: {data}")
+                    logger.error(t('platform-sources-dingtalk-dingtalk_adapter-media_upload_failed_detail', data=data))
                     return ""
                 return cast(str, data.get("media_id", ""))
 
@@ -504,7 +504,7 @@ class DingtalkPlatformAdapter(Platform):
                         },
                     )
                 except Exception as e:
-                    logger.warning(f"钉钉语音发送失败: {e}")
+                    logger.warning(t('platform-sources-dingtalk-dingtalk_adapter-voice_send_failed', e=e))
                     continue
                 finally:
                     if converted_audio:
@@ -535,7 +535,7 @@ class DingtalkPlatformAdapter(Platform):
                         },
                     )
                 except Exception as e:
-                    logger.warning(f"钉钉视频发送失败: {e}")
+                    logger.warning(t('platform-sources-dingtalk-dingtalk_adapter-video_send_failed', e=e))
                     continue
                 finally:
                     self._safe_remove_file(cover_path)
@@ -610,7 +610,7 @@ class DingtalkPlatformAdapter(Platform):
             )
             staff_id = sender_staff_id or await self._get_sender_staff_id(session)
             if not staff_id:
-                logger.error("钉钉私聊回复失败: 缺少 sender_staff_id")
+                logger.error(t('platform-sources-dingtalk-dingtalk_adapter-private_reply_missing_staff_id'))
                 return
             await self.send_message_chain_to_user(
                 staff_id=staff_id,
@@ -643,9 +643,9 @@ class DingtalkPlatformAdapter(Platform):
                     task.result()
             except Exception as e:
                 if "Graceful shutdown" in str(e):
-                    logger.info("钉钉适配器已被关闭")
+                    logger.info(t('platform-sources-dingtalk-dingtalk_adapter-adapter_closed'))
                     return
-                logger.error(f"钉钉机器人启动失败: {e}")
+                logger.error(t('platform-sources-dingtalk-dingtalk_adapter-bot_start_failed', e=e))
 
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, start_client, loop)

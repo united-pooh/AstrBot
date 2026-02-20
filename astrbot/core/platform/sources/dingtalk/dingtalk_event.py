@@ -20,7 +20,7 @@ class DingtalkMessageEvent(AstrMessageEvent):
 
     async def send(self, message: MessageChain) -> None:
         if not self.adapter:
-            logger.error("钉钉消息发送失败: 缺少 adapter")
+            logger.error(t('platform-sources-dingtalk-dingtalk_event-missing_adapter'))
             return
         await self.adapter.send_message_chain_with_incoming(
             incoming_message=self.message_obj.raw_message,

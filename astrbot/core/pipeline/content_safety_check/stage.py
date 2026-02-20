@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator
 from astrbot.core import logger
 from astrbot.core.message.message_event_result import MessageEventResult
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
+from astrbot.core import t
 
 from ..context import PipelineContext
 from ..stage import Stage, register_stage
@@ -32,10 +33,10 @@ class ContentSafetyCheckStage(Stage):
             if event.is_at_or_wake_command:
                 event.set_result(
                     MessageEventResult().message(
-                        "你的消息或者大模型的响应中包含不适当的内容，已被屏蔽。",
+                        t('pipeline-content_safety_check-stage-content_blocked_message'),
                     ),
                 )
                 yield
             event.stop_event()
-            logger.info(f"内容安全检查不通过，原因：{info}")
+            logger.info(t('pipeline-content_safety_check-stage-safety_check_failed_log', info=info))
             return
