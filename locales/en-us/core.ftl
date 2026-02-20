@@ -304,7 +304,6 @@ message-components-use_await_get_file = Please use await get_file() instead of d
 message-components-file_download_failed_log = File download failed: {e}
 message-components-callback_api_not_configured = callback_api_base not configured, file service unavailable
 message-components-registered_file_endpoint_log = Registered: {callback_host}/api/file/{token}
-message-message_event_result-deprecated_use_message = Please use the message method instead.
 persona_mgr-loaded_personas_count = Loaded {len(self.personas)} personas.
 persona_mgr-persona_prompt_format_invalid = {persona_cfg['name']} persona system prompt conversation format incorrect, number of entries should be even.
 persona_mgr-parse_persona_config_failed = Failed to parse Persona config: {e}

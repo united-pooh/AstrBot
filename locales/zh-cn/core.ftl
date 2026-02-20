@@ -304,7 +304,6 @@ message-components-use_await_get_file = 请使用 await get_file() 代替直接�
 message-components-file_download_failed_log = 文件下载失败: {e}
 message-components-callback_api_not_configured = 未配置 callback_api_base，文件服务不可用
 message-components-registered_file_endpoint_log = 已注册：{callback_host}/api/file/{token}
-message-message_event_result-deprecated_use_message = 请使用 message 方法代替。
 persona_mgr-loaded_personas_count = 已加载 {len(self.personas)} 个人格。
 persona_mgr-persona_prompt_format_invalid = {persona_cfg['name']} 人格情景预设对话格式不对，条数应该为偶数。
 persona_mgr-parse_persona_config_failed = 解析 Persona 配置失败：{e}
