@@ -1,17 +1,21 @@
 # lang.py
 from pathlib import Path
+
 from fluent.runtime import FluentLocalization, FluentResourceLoader
+
 from astrbot.core.utils.astrbot_path import get_astrbot_path
 
+
 class Lang:
-    def __init__(self, locale = "zh-cn", files = None):
+    def __init__(self, locale="zh-cn", files=None):
         self.locale = locale
         self.files = files
         self._load_locale(self.locale, self.files)
 
-    def _load_locale(self, locale = "zh-cn", files = None):
+    def _load_locale(self, locale="zh-cn", files=None):
         # 1. 定位 locales 文件夹
-        base_dir = Path(get_astrbot_path()) / "locales"
+        base_dir = Path(get_astrbot_path()) / "astrbot" / "i18n" / "locales"
+
         # 2. 搜索所有可用的语言文件夹 (作为语言包选项)
         self.available_locales = [d.name for d in base_dir.iterdir() if d.is_dir()]
 
@@ -39,7 +43,7 @@ class Lang:
         self._l10n = FluentLocalization(locales_preference, files, loader)
 
     # TODO 删除日志
-    def load_locale(self, locale = "zh-cn", files = None):
+    def load_locale(self, locale="zh-cn", files=None):
         from astrbot import logger
 
         logger.debug(f"[Lang] locale:{locale}, files:{files}")
@@ -87,5 +91,6 @@ class Lang:
         同时利用 **kwargs 简化参数传递
         """
         return self._l10n.format_value(key, kwargs)
+
 
 t = Lang(locale="zh-cn")
