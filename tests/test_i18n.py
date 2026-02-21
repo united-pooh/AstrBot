@@ -52,7 +52,7 @@ def scan_locales(locale_dir):
         return results
 
     for file_path in get_files(locale_dir):
-        # file_path 类似于 .../locales/en-us/main.ftl
+        # file_path 类似于 .../locales/zh-cn/main.ftl
         try:
             rel_path = file_path.relative_to(locale_dir)
         except ValueError:
@@ -131,7 +131,7 @@ def test_i18n_consistency():
     assert data, "未找到语言环境数据"
     
     locales = sorted(data.keys())
-    reference_locale = "en-us" # 使用 en-us 作为基准
+    reference_locale = "zh-cn" # 使用 zh-cn 作为基准
     
     if reference_locale not in locales:
         pytest.fail(f"在 {locales} 中未找到基准语言环境 '{reference_locale}'")
@@ -198,20 +198,20 @@ def test_i18n_consistency():
 def test_code_i18n_usage():
     """
     扫描代码中的 t('id', ...) 调用，确保：
-    1. ID 存在于 locales/en-us 中。
+    1. ID 存在于 locales/zh-cn 中。
     2. 传入的参数与 locales 中定义的一致。
     """
     project_root = Path(__file__).parent.parent
     locale_dir = project_root / "astrbot" / "i18n" / "locales"
     
-    # 1. 加载 en-us 数据作为基准
+    # 1. 加载 zh-cn 数据作为基准
     data = scan_locales(locale_dir)
-    if "en-us" not in data:
-        pytest.fail("未找到 en-us 语言包数据")
+    if "zh-cn" not in data:
+        pytest.fail("未找到 zh-cn 语言包数据")
         
     # 构建 ID -> 参数集合 的映射 (扁平化)
     valid_msgs = {}
-    for filename, msgs in data["en-us"].items():
+    for filename, msgs in data["zh-cn"].items():
         for msg_id, params in msgs.items():
             valid_msgs[msg_id] = set(params)
 
