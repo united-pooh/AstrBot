@@ -1,5 +1,5 @@
 ### astrbot\cli\commands\cmd_conf.py
-invalid-log-level = 日志级别必须是 {valid_levels} 之一"
+invalid-log-level = 日志级别必须是 DEBUG, INFO, WARNING, ERROR, CRITICAL 之一"
 invalid-dashboard-port = 端口必须在 {min}-{max} 范围内
 invalid-dashboard-port-value = 端口必须是数字
 invalid-dashboard-username = 用户名不能为空

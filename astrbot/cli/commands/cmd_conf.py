@@ -16,10 +16,7 @@ def _validate_log_level(value: str) -> str:
     value = value.upper()
     if value not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
         raise click.ClickException(
-            t(
-                "invalid-log-level",
-                valid_levels="DEBUG, INFO, WARNING, ERROR, CRITICAL",
-            ),
+            t("invalid-log-level"),
         )
     return value
 
