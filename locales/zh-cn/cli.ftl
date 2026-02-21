@@ -21,4 +21,5 @@ invalid-config-value = 不支持的配置值: {k}
 get-config-value = {key}: {value}
 unknown-config-key = 未知的配置项: {k}
 get-config-failed = 获取配置失败: {error}
+current-config = 当前配置:
 get-config-value = {k}: {value}

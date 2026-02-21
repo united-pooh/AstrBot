@@ -96,7 +96,7 @@ def _load_config() -> dict[str, Any]:
     try:
         return json.loads(config_path.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as e:
-        raise click.ClickException(t("config-parse-failed", error=e))
+        raise click.ClickException(t("config-parse-failed", error=str(e)))
 
 
 def _save_config(config: dict[str, Any]) -> None:
@@ -201,7 +201,7 @@ def get_config(key: str | None = None) -> None:
         except Exception as e:
             raise click.UsageError(t("get-config-failed", error=str(e)))
     else:
-        click.echo("当前配置:")
+        click.echo(t("current-config"))
         for key in CONFIG_VALIDATORS:
             try:
                 value = (
