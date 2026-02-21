@@ -1,9 +1,10 @@
-import os
 import ast
+import os
 from pathlib import Path
 
 import pytest
-from fluent.syntax import FluentParser, ast as fluent_ast
+from fluent.syntax import FluentParser
+from fluent.syntax import ast as fluent_ast
 
 
 def get_files(path):
@@ -124,7 +125,7 @@ def test_i18n_consistency():
     2. 所有文件应具有相同的消息 ID 集合。
     3. 所有消息应具有相同的参数。
     """
-    base_dir = Path(__file__).parent.parent / "locales"
+    base_dir = Path(__file__).parent.parent / "astrbot" / "i18n" / "locales"
     data = scan_locales(base_dir)
     
     assert data, "未找到语言环境数据"
@@ -201,7 +202,7 @@ def test_code_i18n_usage():
     2. 传入的参数与 locales 中定义的一致。
     """
     project_root = Path(__file__).parent.parent
-    locale_dir = project_root / "locales"
+    locale_dir = project_root / "astrbot" / "i18n" / "locales"
     
     # 1. 加载 en-us 数据作为基准
     data = scan_locales(locale_dir)
