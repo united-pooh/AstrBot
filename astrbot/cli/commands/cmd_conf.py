@@ -170,7 +170,9 @@ def set_config(key: str, value: str) -> None:
             click.echo(t("config-restart-reminder"))
         else:
             click.echo(t("value-remains-intact", old_value=old_value))
-            click.echo(t("config-restart-reminder", validated_value=validated_value))
+            click.echo(
+                t("config-restart-reminder-observable", validated_value=validated_value)
+            )
 
     except KeyError:
         raise click.ClickException(t("unknown-config-key", k=key))
