@@ -16,7 +16,7 @@ live-agent-feeder-sentence = [Live Agent Feeder] 分句: {$sentence}
 
 ### astr_agent_tool_exec.py
 background-task-failed = 后台任务 {$task_id} 失败: {$error}
-background-task-build-failed = 为后台任务构建主代理失败。
+background-task-build-failed = 为后台任务{$tool_name}构建主代理失败。
 background-task-no-response = 后台任务代理未返回响应
 tool-send-message-failed = 工具直接发送消息失败: {$error}，追踪信息: {$traceback}
 tool-execution-timeout = 工具 {$tool_name} 执行超时，已超过 {$timeout} 秒。

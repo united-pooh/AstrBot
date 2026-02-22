@@ -16,7 +16,7 @@ live-agent-feeder-sentence = [Live Agent Feeder] Sentence: {$sentence}
 
 ### astr_agent_tool_exec.py
 background-task-failed = Background task {$task_id} failed: {$error}
-background-task-build-failed = Failed to build main agent for background task job.
+background-task-build-failed = Failed to build main agent for background task {$tool_name}.
 background-task-no-response = background task agent got no response
 tool-send-message-failed = Tool failed to send message directly: {$error}, traceback: {$traceback}
 tool-execution-timeout = tool {$tool_name} execution timeout after {$timeout} seconds.
