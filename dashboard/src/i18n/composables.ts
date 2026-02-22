@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { translations as staticTranslations } from './translations';
+import { localeList, translations as staticTranslations } from './translations';
 import type { Locale } from './types';
 import axios from 'axios';
 
@@ -118,7 +118,7 @@ export function useI18n() {
   const locale = computed(() => currentLocale.value);
   
   // 获取可用语言列表
-  const availableLocales: Locale[] = ['zh-CN', 'en-US'];
+  const availableLocales: Locale[] = localeList as Locale[];
   
   // 检查是否已加载
   const isLoaded = computed(() => Object.keys(translations.value).length > 0);
@@ -235,7 +235,7 @@ function deepMerge(target: Record<string, any>, source: Record<string, any>) {
 export async function setupI18n() {
   // 从localStorage获取保存的语言设置
   const savedLocale = localStorage.getItem('astrbot-locale') as Locale;
-  const initialLocale = savedLocale && ['zh-CN', 'en-US'].includes(savedLocale) 
+  const initialLocale = savedLocale && localeList.includes(savedLocale)
     ? savedLocale 
     : 'zh-CN';
   

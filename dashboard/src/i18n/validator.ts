@@ -5,10 +5,11 @@
 
 import type { ValidationResult, ValidationError, UsageReport, TranslationStats } from './types';
 import { t } from '@/i18n/composables';
+import { localeList } from './translations';
 
 export class I18nValidator {
   private baseLocale: string = 'zh-CN';
-  private supportedLocales: string[] = ['zh-CN', 'en-US'];
+  private supportedLocales: string[] = [...localeList];
 
   /**
    * 验证翻译完整性

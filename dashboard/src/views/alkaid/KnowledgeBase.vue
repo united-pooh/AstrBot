@@ -164,10 +164,14 @@
                     <v-chip v-if="currentKB.rerank_provider_id" color="tertiary" variant="tonal" size="small"
                         rounded="sm">
                         <v-icon start size="small">mdi-sort-variant</v-icon>
-                        {{ t('src.views.alkaid.knowledgebase.rerank_model_label') }}
-                            find(provider => provider.id === currentKB.rerank_provider_id)?.rerank_model || t('src.views.alkaid.knowledgebase.rerank_model_value')}}
+                        {{ t('src.views.alkaid.knowledgebase.rerank_model_label', {
+                            rerank_model: rerankProviderConfigs.find(provider => provider.id === currentKB.rerank_provider_id)?.rerank_model ||
+                                t('src.views.alkaid.knowledgebase.rerank_model_value')
+                        }) }}
                     </v-chip>
-                    <small style="margin-left: 8px;t('src.views.alkaid.knowledgebase.usage_tip')/kb use {{ currentKB.collection_name }}"</small>
+                    <small style="margin-left: 8px;">
+                        {{ t('src.views.alkaid.knowledgebase.usage_tip', { collection_name: currentKB.collection_name }) }}
+                    </small>
                 </div>
 
                 <v-card-text>
