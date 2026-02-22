@@ -4,6 +4,8 @@ from pathlib import Path
 import click
 from filelock import FileLock, Timeout
 
+from astrbot.core.lang import t
+
 from ..utils import check_dashboard, get_astrbot_root
 
 
@@ -14,10 +16,10 @@ async def initialize_astrbot(astrbot_root: Path) -> None:
     if not dot_astrbot.exists():
         click.echo(f"Current Directory: {astrbot_root}")
         click.echo(
-            "如果你确认这是 Astrbot root directory, 你需要在当前目录下创建一个 .astrbot 文件标记该目录为 AstrBot 的数据目录。",
+            t("cli-commands-cmd_init-create_marker_file"),
         )
         if click.confirm(
-            f"请检查当前目录是否正确，确认正确请回车: {astrbot_root}",
+            t("cli-commands-cmd_init-confirm_directory", astrbot_root=astrbot_root),
             default=True,
             abort=True,
         ):
@@ -50,7 +52,7 @@ def init() -> None:
         with lock.acquire():
             asyncio.run(initialize_astrbot(astrbot_root))
     except Timeout:
-        raise click.ClickException("无法获取锁文件，请检查是否有其他实例正在运行")
+        raise click.ClickException(t("cli-commands-cmd_init-lock_acquisition_failed"))
 
     except Exception as e:
-        raise click.ClickException(f"初始化失败: {e!s}")
+        raise click.ClickException(t("cli-commands-cmd_init-init_failed", e=e))

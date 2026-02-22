@@ -145,7 +145,7 @@
                                         <strong>{{ t('features.settings.backup.import.version.backupVersion') }}:</strong> {{ checkResult?.backup_version }}<br>
                                         <strong>{{ t('features.settings.backup.import.version.currentVersion') }}:</strong> {{ checkResult?.current_version }}
                                     </div>
-                                    <div v-if="checkResult?.backup_time && checkResult?.backup_time !== '未知'" class="mb-2">
+                                    <div v-if="checkResult?.backup_time && checkResult?.backup_time !== t('src.components.shared.backupdialog.backup_time_display_condition')" class="mb-2">
                                         <strong>{{ t('features.settings.backup.import.version.backupTime') }}:</strong> {{ formatISODate(checkResult?.backup_time) }}
                                     </div>
                                     <div class="mt-3" style="white-space: pre-line;">{{ versionAlertMessage }}</div>

@@ -70,7 +70,8 @@
   "modes": {
     "darkMode": "Switch to Dark Mode",
     "lightMode": "Switch to Light Mode"
-  },  "shortcuts": {
+  },
+  "shortcuts": {
     "help": "Get Help",
     "voiceRecord": "Record Voice",
     "pasteImage": "Paste Image"
@@ -80,9 +81,11 @@
     "disabled": "Streaming disabled",
     "on": "Stream",
     "off": "Normal"
-  },  "config": {
+  },
+  "config": {
     "title": "Config"
-  },  "reasoning": {
+  },
+  "reasoning": {
     "thinking": "Thinking Process"
   },
   "reply": {
@@ -133,5 +136,98 @@
   "errors": {
     "sendMessageFailed": "Failed to send message, please try again",
     "createSessionFailed": "Failed to create session, please refresh the page"
+  },
+  "src": {
+    "components": {
+      "chat": {
+        "chat": {
+          "selected_text_fallback": "[Media Content]"
+        },
+        "configselector": {
+          "label_select_config": "Select Configuration",
+          "no_configs_available": "No configurations available. Please create one in the configuration page first.",
+          "btn_cancel": "Cancel",
+          "btn_apply": "Apply",
+          "error_load_config_list": "Failed to load configuration list",
+          "error_get_config_route": "Failed to get config route",
+          "error_get_config_details": "Failed to get configuration details",
+          "error_update_config": "Failed to update configuration",
+          "error_apply_config_toast": "Failed to apply configuration",
+          "label_select_profile": "Select Profile",
+          "no_profiles_message": "No profiles available. Please create one on the configuration page first.",
+          "error_load_profile_list": "Failed to load profile list",
+          "error_get_profile_details": "Failed to get profile details",
+          "error_update_profile": "Failed to update profile",
+          "error_apply_profile_toast": "Failed to apply profile"
+        },
+        "livemode": {
+          "status_processing": "Processing...",
+          "status_speaking": "Speaking...",
+          "status_listening": "Listening...",
+          "status_ready": "Ready",
+          "log_vad_speech_start": "[Live Mode] VAD detected speech start",
+          "log_vad_speech_end": "[Live Mode] VAD detected speech end, audio length:",
+          "error_start_live_mode": "Failed to start Live Mode:",
+          "alert_start_failed": "Failed to start. Please check microphone permissions or network connection",
+          "reject_not_logged_in": "Not logged in, please log in first",
+          "log_websocket_connected": "[Live Mode] WebSocket connected successfully",
+          "error_websocket_error": "[Live Mode] WebSocket error:",
+          "log_websocket_closed": "[Live Mode] WebSocket connection closed",
+          "reject_websocket_timeout": "WebSocket connection timed out",
+          "error_live_mode": "[Live Mode] Error:",
+          "alert_processing_error": "Processing error:",
+          "failed_process_message": "[Live Mode] Failed to process message:",
+          "failed_receive_audio": "[Live Mode] Failed to receive audio data:",
+          "failed_decode_audio": "[Live Mode] Failed to decode audio:",
+          "error_play_audio_failed": "[Live Mode] Failed to play audio:",
+          "websocket_connected_success": "[Live Mode] WebSocket connected successfully",
+          "websocket_error": "[Live Mode] WebSocket error:",
+          "websocket_connection_closed": "[Live Mode] WebSocket connection closed",
+          "websocket_connection_timeout": "WebSocket connection timeout",
+          "play_audio_failed": "[Live Mode] Failed to play audio:"
+        },
+        "messagelist": {
+          "label_quote": "Quote",
+          "fallback_media_content": "[Media Content]",
+          "success_code_copied": "Code copied to clipboard",
+          "error_copy_failed": "Copy failed:",
+          "success_code_copied_fallback": "Code copied to clipboard (fallback)",
+          "error_copy_failed_fallback": "Copy failed (fallback):",
+          "append_images_count": "[Includes {imageCount} images]",
+          "append_audio_content": "[Includes audio content]",
+          "fallback_media_only": "[Media Content]",
+          "copy_success_log": "Message copied to clipboard",
+          "copy_error_log": "Copy failed:",
+          "copy_success_fallback_log": "Message copied to clipboard (fallback)",
+          "copy_error_fallback_log": "Copy failed (fallback):",
+          "copy_code_button_title": "Copy code",
+          "quote": "Quote",
+          "media_content_fallback": "[Media Content]",
+          "code_copied": "Code copied to clipboard",
+          "copy_failed": "Copy failed:",
+          "code_copied_fallback": "Code copied to clipboard (fallback)",
+          "copy_failed_fallback": "Copy failed (fallback):",
+          "append_image_count": "[Includes {imageCount} images]",
+          "media_content_only": "[Media Content]"
+        },
+        "providerconfigdialog": {
+          "cancel_button": "Cancel",
+          "add_button": "Add",
+          "id_modification_warning": "It is not recommended to modify the ID, as it may cause related configurations pointing to this model (such as default model, plugin-related configurations, etc.) to become invalid.",
+          "id_modify_warning": "It is not recommended to modify the ID, as it may cause related configurations pointing to this model (such as default model, plugin-related configurations, etc.) to become invalid."
+        },
+        "providermodelmenu": {
+          "supports_image_input_tooltip": "Supports image input",
+          "supports_tool_call_tooltip": "Supports tool calling",
+          "supports_reasoning_tooltip": "Supports reasoning",
+          "fetch_providers_error_log": "Failed to fetch provider list:",
+          "supports_image_tooltip": "Supports image input"
+        },
+        "standalonechat": {
+          "test_config_title": "Test Configuration: {configId}",
+          "test_config_label": "Test config: {configId}"
+        }
+      }
+    }
   }
-} 
+}

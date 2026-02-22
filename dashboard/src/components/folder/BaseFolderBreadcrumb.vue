@@ -19,6 +19,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import type { BreadcrumbItem, FolderTreeNode } from './types';
+import { t } from '@/i18n/composables';
 
 export default defineComponent({
     name: 'BaseFolderBreadcrumb',
@@ -33,7 +34,7 @@ export default defineComponent({
         },
         rootFolderName: {
             type: String,
-            default: '根目录'
+            default: t('src.components.folder.basefolderbreadcrumb.label_root')
         }
     },
     emits: ['navigate'],
@@ -41,7 +42,7 @@ export default defineComponent({
         computedItems(): BreadcrumbItem[] {
             const items: BreadcrumbItem[] = [
                 {
-                    title: this.rootFolderName,
+                    title: this.rootFolderName ?? t('src.components.folder.basefolderbreadcrumb.label_root'),
                     folderId: null,
                     disabled: this.currentFolderId === null,
                     isRoot: true
@@ -82,3 +83,4 @@ export default defineComponent({
     color: rgb(var(--v-theme-primary));
 }
 </style>
+

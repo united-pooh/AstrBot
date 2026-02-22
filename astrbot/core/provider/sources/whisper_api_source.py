@@ -4,6 +4,7 @@ import uuid
 from openai import NOT_GIVEN, AsyncOpenAI
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.io import download_file
 from astrbot.core.utils.tencent_record_helper import (
@@ -74,7 +75,12 @@ class ProviderOpenAIWhisperAPI(STTProvider):
             audio_url = path
 
         if not os.path.exists(audio_url):
-            raise FileNotFoundError(f"文件不存在: {audio_url}")
+            raise FileNotFoundError(
+                t(
+                    "core-provider-sources-whisper_api_source-file_not_found",
+                    audio_url=audio_url,
+                )
+            )
 
         if audio_url.endswith(".amr") or audio_url.endswith(".silk") or is_tencent:
             file_format = await self._get_audio_format(audio_url)

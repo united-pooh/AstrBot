@@ -2,6 +2,7 @@
 import { useCommonStore } from '@/stores/common';
 import axios from 'axios';
 import { EventSourcePolyfill } from 'event-source-polyfill';
+import { t } from '@/i18n/composables';
 </script>
 
 <template>
@@ -21,8 +22,14 @@ import { EventSourcePolyfill } from 'event-source-polyfill';
 </template>
 
 <script>
+import { useI18n } from '@/i18n/composables';
+
 export default {
   name: 'ConsoleDisplayer',
+  setup() {
+    const { t } = useI18n();
+    return { t };
+  },
   data() {
     return {
       autoScroll: true,
@@ -99,7 +106,7 @@ export default {
         this.eventSource = null;
       }
 
-      console.log(`正在连接日志流... (尝试次数: ${this.retryAttempts})`);
+      console.log(this.t('src.components.shared.consoledisplayer.connecting_to_log_stream', { retryAttempts: this.retryAttempts + 1 }));
       
       const token = localStorage.getItem('token');
 
@@ -112,7 +119,7 @@ export default {
       });
 
       this.eventSource.onopen = () => {
-        console.log('日志流连接成功！');
+        console.log(this.t('src.components.shared.consoledisplayer.log_stream_connected_success'));
         this.retryAttempts = 0;
 
         if (!this.lastEventId) {
@@ -129,17 +136,17 @@ export default {
           const payload = JSON.parse(event.data);
           this.processNewLogs([payload]);
         } catch (e) {
-          console.error('解析日志失败:', e);
+          console.error(this.t('src.components.shared.consoledisplayer.failed_to_parse_log'), e);
         }
       };
 
       this.eventSource.onerror = (err) => {
 
         if (err.status === 401) {
-            console.error('鉴权失败 (401)，可能是 Token 过期了。');
+            console.error(this.t('src.components.shared.consoledisplayer.auth_failed_token_expired'));
 
         } else {
-            console.warn('日志流连接错误:', err);
+            console.warn(this.t('src.components.shared.consoledisplayer.log_stream_connection_error'), err);
         }
         
         if (this.eventSource) {
@@ -148,7 +155,7 @@ export default {
         }
 
         if (this.retryAttempts >= this.maxRetryAttempts) {
-            console.error('❌ 已达到最大重试次数，停止重连。请刷新页面重试。');
+            console.error(this.t('src.components.shared.consoledisplayer.max_retries_reached_stop'));
             return; 
         }
 
@@ -157,7 +164,7 @@ export default {
             30000
         );
         
-        console.log(`⏳ ${delay}ms 后尝试第 ${this.retryAttempts + 1} 次重连...`);
+        console.log(this.t('src.components.shared.consoledisplayer.retry_after_delay', { delay, retryAttempts: this.retryAttempts + 1 }));
 
         if (this.retryTimer) {
           clearTimeout(this.retryTimer);

@@ -4,6 +4,7 @@
  * 提供文件夹管理的核心逻辑，可以被不同的业务模块复用
  */
 import { ref, computed, reactive, type Ref, type ComputedRef } from 'vue';
+import { t } from '@/i18n/composables';
 import type {
   Folder,
   FolderTreeNode,
@@ -61,7 +62,7 @@ export interface UseFolderManagerReturn {
  * 创建文件夹管理 composable
  */
 export function useFolderManager(options: UseFolderManagerOptions): UseFolderManagerReturn {
-  const { operations, rootFolderName = '根目录', autoLoad = false } = options;
+  const { operations, rootFolderName = t('src.components.folder.usefoldermanager.root_folder_default'), autoLoad = false } = options;
   
   // 状态
   const folderTree = ref<FolderTreeNode[]>([]);

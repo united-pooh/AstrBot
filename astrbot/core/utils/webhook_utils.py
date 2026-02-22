@@ -3,13 +3,14 @@ import uuid
 
 from astrbot.core import astrbot_config, logger
 from astrbot.core.config.default import WEBHOOK_SUPPORTED_PLATFORMS
+from astrbot.core.lang import t
 
 
 def _get_callback_api_base() -> str:
     try:
         return astrbot_config.get("callback_api_base", "").rstrip("/")
     except Exception as e:
-        logger.error(f"获取 callback_api_base 失败: {e!s}")
+        logger.error(t("core-utils-webhook_utils-error_callback_api_base_failed", e=e))
         return ""
 
 
@@ -17,7 +18,7 @@ def _get_dashboard_port() -> int:
     try:
         return astrbot_config.get("dashboard", {}).get("port", 6185)
     except Exception as e:
-        logger.error(f"获取 dashboard 端口失败: {e!s}")
+        logger.error(t("core-utils-webhook_utils-error_dashboard_port_failed", e=e))
         return 6185
 
 
@@ -31,7 +32,9 @@ def _is_dashboard_ssl_enabled() -> bool:
     try:
         return bool(astrbot_config.get("dashboard", {}).get("ssl", {}).get("enable"))
     except Exception as e:
-        logger.error(f"获取 dashboard SSL 配置失败: {e!s}")
+        logger.error(
+            t("core-utils-webhook_utils-error_dashboard_ssl_config_failed", e=e)
+        )
         return False
 
 
@@ -57,9 +60,12 @@ def log_webhook_info(platform_name: str, webhook_uuid: str) -> None:
 
     display_log = (
         "\n====================\n"
-        f"🔗 机器人平台 {platform_name} 已启用统一 Webhook 模式\n"
-        f"📍 Webhook 回调地址: \n"
-        f"   ➜  {scheme}://<your-ip>:{_get_dashboard_port()}/api/platform/webhook/{webhook_uuid}\n"
+        + t(
+            "core-utils-webhook_utils-unified_webhook_mode_enabled",
+            platform_name=platform_name,
+        )
+        + t("core-utils-webhook_utils-webhook_callback_address")
+        + f"   ➜  {scheme}://<your-ip>:{_get_dashboard_port()}/api/platform/webhook/{webhook_uuid}\n"
         f"   ➜  {webhook_url}\n"
         "====================\n"
     )

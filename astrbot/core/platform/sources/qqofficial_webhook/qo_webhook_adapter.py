@@ -11,6 +11,7 @@ from botpy import Client
 from astrbot import logger
 from astrbot.api.event import MessageChain
 from astrbot.api.platform import AstrBotMessage, MessageType, Platform, PlatformMetadata
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import MessageSesion
 from astrbot.core.utils.webhook_utils import log_webhook_info
 
@@ -89,7 +90,12 @@ class botClient(Client):
         )
 
 
-@register_platform_adapter("qq_official_webhook", "QQ 机器人官方 API 适配器(Webhook)")
+@register_platform_adapter(
+    "qq_official_webhook",
+    t(
+        "core-platform-sources-qqofficial_webhook-qo_webhook_adapter-register_webhook_adapter"
+    ),
+)
 class QQOfficialWebhookPlatformAdapter(Platform):
     def __init__(
         self,
@@ -235,7 +241,9 @@ class QQOfficialWebhookPlatformAdapter(Platform):
     def meta(self) -> PlatformMetadata:
         return PlatformMetadata(
             name="qq_official_webhook",
-            description="QQ 机器人官方 API 适配器",
+            description=t(
+                "core-platform-sources-qqofficial_webhook-qo_webhook_adapter-adapter_description"
+            ),
             id=cast(str, self.config.get("id")),
             support_proactive_message=True,
         )
@@ -251,7 +259,13 @@ class QQOfficialWebhookPlatformAdapter(Platform):
         # 如果启用统一 webhook 模式，则不启动独立服务器
         webhook_uuid = self.config.get("webhook_uuid")
         if self.unified_webhook_mode and webhook_uuid:
-            log_webhook_info(f"{self.meta().id}(QQ 官方机器人 Webhook)", webhook_uuid)
+            log_webhook_info(
+                t(
+                    "core-platform-sources-qqofficial_webhook-qo_webhook_adapter-log_webhook_info",
+                    id=self.meta().id,
+                ),
+                webhook_uuid,
+            )
             # 保持运行状态，等待 shutdown
             await self.webhook_helper.shutdown_event.wait()
         else:
@@ -280,4 +294,8 @@ class QQOfficialWebhookPlatformAdapter(Platform):
                     f"Exception occurred during QQOfficialWebhook server shutdown: {exc}",
                     exc_info=True,
                 )
-        logger.info("QQ 机器人官方 API 适配器已经被优雅地关闭")
+        logger.info(
+            t(
+                "core-platform-sources-qqofficial_webhook-qo_webhook_adapter-graceful_shutdown"
+            )
+        )

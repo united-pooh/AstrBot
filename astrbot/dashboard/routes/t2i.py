@@ -6,6 +6,7 @@ from quart import jsonify, request
 
 from astrbot.core import logger
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
+from astrbot.core.lang import t
 from astrbot.core.utils.t2i.template_manager import TemplateManager
 
 from .route import Response, Route, RouteContext
@@ -134,9 +135,9 @@ class T2iRoute(Route):
             active_template = self.config.get("t2i_active_template", "base")
             if name == active_template:
                 await self.core_lifecycle.reload_pipeline_scheduler("default")
-                message = f"模板 '{name}' 已更新并重新加载。"
+                message = t("dashboard-routes-t2i-template_updated_reloaded", name=name)
             else:
-                message = f"模板 '{name}' 已更新。"
+                message = t("dashboard-routes-t2i-template_updated", name=name)
 
             return jsonify(asdict(Response().ok(data={"name": name}, message=message)))
         except ValueError as e:
@@ -175,7 +176,13 @@ class T2iRoute(Route):
             data = await request.json
             name = data.get("name")
             if not name:
-                response = jsonify(asdict(Response().error("模板名称(name)不能为空。")))
+                response = jsonify(
+                    asdict(
+                        Response().error(
+                            t("dashboard-routes-t2i-template_name_required")
+                        )
+                    )
+                )
                 response.status_code = 400
                 return response
 
@@ -190,11 +197,26 @@ class T2iRoute(Route):
             # 热重载以应用更改
             await self.core_lifecycle.reload_pipeline_scheduler("default")
 
-            return jsonify(asdict(Response().ok(message=f"模板 '{name}' 已成功应用。")))
+            return jsonify(
+                asdict(
+                    Response().ok(
+                        message=t(
+                            "dashboard-routes-t2i-template_applied_success", name=name
+                        )
+                    )
+                )
+            )
 
         except FileNotFoundError:
             response = jsonify(
-                asdict(Response().error(f"模板 '{name}' 不存在，无法应用。")),
+                asdict(
+                    Response().error(
+                        t(
+                            "dashboard-routes-t2i-template_not_found_cannot_apply",
+                            name=name,
+                        )
+                    )
+                ),
             )
             response.status_code = 404
             return response

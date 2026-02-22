@@ -4,6 +4,7 @@
  */
 
 import type { ValidationResult, ValidationError, UsageReport, TranslationStats } from './types';
+import { t } from '@/i18n/composables';
 
 export class I18nValidator {
   private baseLocale: string = 'zh-CN';
@@ -23,7 +24,7 @@ export class I18nValidator {
       errors.push({
         type: 'missing',
         key: this.baseLocale,
-        message: `基准语言 ${this.baseLocale} 数据缺失`,
+        message: t('src.i18n.validator.missing_base_language_data', { baseLocale: this.baseLocale }),
         severity: 'error'
       });
       return { isValid: false, missingKeys, extraKeys, errors };
@@ -41,7 +42,7 @@ export class I18nValidator {
         errors.push({
           type: 'missing',
           key: locale,
-          message: `语言 ${locale} 数据缺失`,
+          message: t('src.i18n.validator.missing_language_data', { locale: locale }),
           severity: 'error'
         });
         continue;
@@ -62,7 +63,7 @@ export class I18nValidator {
         errors.push({
           type: 'missing',
           key: `${locale}.${key}`,
-          message: `${locale} 中缺失键: ${key}`,
+          message: t('src.i18n.validator.missing_key_in_locale', { locale: locale, key: key }),
           severity: 'error'
         });
       });
@@ -71,7 +72,7 @@ export class I18nValidator {
         errors.push({
           type: 'extra',
           key: `${locale}.${key}`,
-          message: `${locale} 中存在多余键: ${key}`,
+          message: t('src.i18n.validator.extra_key_in_locale', { locale: locale, key: key }),
           severity: 'warning'
         });
       });
@@ -118,7 +119,7 @@ export class I18nValidator {
           errors.push({
             type: 'empty_value',
             key: `${locale}.${fullKey}`,
-            message: `空翻译值: ${locale}.${fullKey}`,
+            message: t('src.i18n.validator.empty_translation_value', { locale: locale, fullKey: fullKey }),
             severity: 'warning'
           });
         }
@@ -130,7 +131,7 @@ export class I18nValidator {
             errors.push({
               type: 'type_mismatch',
               key: `${locale}.${fullKey}`,
-              message: `无效的插值占位符: ${placeholder} in ${locale}.${fullKey}`,
+              message: t('src.i18n.validator.invalid_interpolation_placeholder', { placeholder: placeholder, locale: locale, fullKey: fullKey }),
               severity: 'warning'
             });
           }
@@ -139,7 +140,7 @@ export class I18nValidator {
         errors.push({
           type: 'type_mismatch',
           key: `${locale}.${fullKey}`,
-          message: `翻译值应为字符串，实际为: ${typeof value}`,
+          message: t('src.i18n.validator.translation_value_not_string', { value: typeof value }),
           severity: 'error'
         });
       }
@@ -289,7 +290,7 @@ export class I18nValidator {
           errors.push({
             type: 'type_mismatch',
             key: `${locale}.${key}`,
-            message: `插值占位符不匹配: ${locale}.${key}，期望 ${basePlaceholders.join(', ')}，实际 ${targetPlaceholders.join(', ')}`,
+            message: t('src.i18n.validator.interpolation_placeholders_mismatch', { locale: locale, key: key, join: basePlaceholders.join(', ') }),
             severity: 'error'
           });
         }
@@ -330,7 +331,7 @@ export class I18nValidator {
         errors.push({
           type: 'type_mismatch',
           key: `${locale}.${fullKey}`,
-          message: `键名不符合命名规范: ${key}，应使用小驼峰命名`,
+          message: t('src.i18n.validator.invalid_key_naming_convention', { key: key }),
           severity: 'warning'
         });
       }
@@ -365,7 +366,7 @@ export class I18nValidator {
         const result = this.validateCompleteness(localeData);
         results.push(result);
              } catch (error) {
-         console.error(`验证语言包 ${locale} 时出错:`, error);
+         console.error(t('src.i18n.validator.error_validating_language_package', { locale: locale }), error);
          // 创建错误结果
          const errorResult: ValidationResult = {
            isValid: false,
@@ -375,7 +376,7 @@ export class I18nValidator {
              {
                type: 'missing',
                key: locale,
-               message: error instanceof Error ? error.message : '未知错误',
+               message: error instanceof Error ? error.message : t('src.i18n.validator.unknown_error_fallback'),
                severity: 'error'
              }
            ]
@@ -399,9 +400,9 @@ export class I18nValidator {
       },
       details: results,
       recommendations: [
-        '建议优先翻译核心模块的缺失键',
-        '检查所有空值并提供适当的翻译',
-        '确保插值占位符在所有语言中保持一致'
+        t('src.i18n.validator.suggest_core_missing_keys'),
+        t('src.i18n.validator.check_empty_values'),
+        t('src.i18n.validator.ensure_placeholder_consistency')
       ]
     };
   }

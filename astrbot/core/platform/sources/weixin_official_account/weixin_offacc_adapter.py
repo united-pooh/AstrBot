@@ -25,6 +25,7 @@ from astrbot.api.platform import (
     register_platform_adapter,
 )
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import MessageSesion
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.media_utils import convert_audio_to_wav
@@ -85,11 +86,20 @@ class WeixinOfficialAccountServer:
         Returns:
             验证响应
         """
-        logger.info(f"验证请求有效性: {request.args}")
+        logger.info(
+            t(
+                "core-platform-sources-weixin_official_account-weixin_offacc_adapter-validate_request",
+                request=request,
+            )
+        )
 
         args = request.args
         if not args.get("signature", None):
-            logger.error("未知的响应，请检查回调地址是否填写正确。")
+            logger.error(
+                t(
+                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-unknown_response"
+                )
+            )
             return "err"
         try:
             check_signature(
@@ -98,10 +108,18 @@ class WeixinOfficialAccountServer:
                 args.get("timestamp"),
                 args.get("nonce"),
             )
-            logger.info("验证请求有效性成功。")
+            logger.info(
+                t(
+                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-validate_request_success"
+                )
+            )
             return args.get("echostr", "empty")
         except InvalidSignatureException:
-            logger.error("验证请求有效性失败，签名异常，请检查配置。")
+            logger.error(
+                t(
+                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-validate_request_signature_failed"
+                )
+            )
             return "err"
 
     async def callback_command(self):
@@ -117,12 +135,31 @@ class WeixinOfficialAccountServer:
         """生成消息预览文本，供占位符使用"""
         if isinstance(msg, TextMessage):
             t = cast(str, msg.content).strip()
-            return (t[:limit] + "...") if len(t) > limit else (t or "空消息")
+            return (
+                (t[:limit] + "...")
+                if len(t) > limit
+                else (
+                    t
+                    or t(
+                        "core-platform-sources-weixin_official_account-weixin_offacc_adapter-truncate_or_empty_message"
+                    )
+                )
+            )
         if isinstance(msg, ImageMessage):
-            return "图片"
+            return t(
+                "core-platform-sources-weixin_official_account-weixin_offacc_adapter-message_type_image"
+            )
         if isinstance(msg, VoiceMessage):
-            return "语音"
-        return getattr(msg, "type", "未知消息")
+            return t(
+                "core-platform-sources-weixin_official_account-weixin_offacc_adapter-message_type_voice"
+            )
+        return getattr(
+            msg,
+            "type",
+            t(
+                "core-platform-sources-weixin_official_account-weixin_offacc_adapter-message_type_fallback_unknown"
+            ),
+        )
 
     async def handle_callback(self, request) -> str:
         """处理回调请求，可被统一 webhook 入口复用
@@ -140,14 +177,27 @@ class WeixinOfficialAccountServer:
         try:
             xml = self.crypto.decrypt_message(data, msg_signature, timestamp, nonce)
         except InvalidSignatureException:
-            logger.error("解密失败，签名异常，请检查配置。")
+            logger.error(
+                t(
+                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-decrypt_signature_failed"
+                )
+            )
             raise
         else:
             msg = parse_message(xml)
             if not msg:
-                logger.error("解析失败。msg为None。")
+                logger.error(
+                    t(
+                        "core-platform-sources-weixin_official_account-weixin_offacc_adapter-parse_msg_none"
+                    )
+                )
                 raise
-            logger.info(f"解析成功: {msg}")
+            logger.info(
+                t(
+                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-parse_success",
+                    msg=msg,
+                )
+            )
 
             if not self.callback:
                 return "success"
@@ -172,7 +222,13 @@ class WeixinOfficialAccountServer:
 
             # if in cached state, return cached result or placeholder
             if state:
-                logger.debug(f"用户消息缓冲状态: user={from_user} state={state}")
+                logger.debug(
+                    t(
+                        "core-platform-sources-weixin_official_account-weixin_offacc_adapter-user_buffer_debug",
+                        from_user=from_user,
+                        state=state,
+                    )
+                )
                 cached = state.get("cached_xml")
                 # send one cached each time, if cached is empty after pop, remove the buffer
                 if cached and len(cached) > 0:
@@ -184,13 +240,20 @@ class WeixinOfficialAccountServer:
                     else:
                         return _reply_text(
                             cached_xml
-                            + "\n【后续消息还在缓冲中，回复任意文字继续获取】"
+                            + t(
+                                "core-platform-sources-weixin_official_account-weixin_offacc_adapter-buffered_more_hint"
+                            )
                         )
 
                 task: asyncio.Task | None = cast(asyncio.Task | None, state.get("task"))
-                placeholder = (
-                    f"【正在思考'{state.get('preview', '...')}'中，已思考"
-                    f"{int(time.monotonic() - state.get('started_at', time.monotonic()))}s，回复任意文字尝试获取回复】"
+                placeholder = t(
+                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-thinking_in_progress",
+                    preview=state.get("preview", "..."),
+                ) + t(
+                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-thinking_time_elapsed",
+                    monotonic=int(
+                        time.monotonic() - state.get("started_at", time.monotonic())
+                    ),
                 )
 
                 # same msgid => WeChat retry: wait a little; new msgid => user trigger: just placeholder
@@ -221,7 +284,9 @@ class WeixinOfficialAccountServer:
                                     )
                                     return _reply_text(
                                         cached_xml
-                                        + "\n【后续消息还在缓冲中，回复任意文字继续获取】"
+                                        + t(
+                                            "core-platform-sources-weixin_official_account-weixin_offacc_adapter-buffered_more_hint_2"
+                                        )
                                     )
                             logger.info(
                                 f"wx finished in window but not final; return placeholder: user={from_user} msg_id={msg_id} "
@@ -232,7 +297,11 @@ class WeixinOfficialAccountServer:
                                 "wx task failed in passive window", exc_info=True
                             )
                             self.user_buffer.pop(from_user, None)
-                            return _reply_text("处理消息失败，请稍后再试。")
+                            return _reply_text(
+                                t(
+                                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-process_message_failed"
+                                )
+                            )
 
                     logger.info(
                         f"wx passive window timeout: user={from_user} msg_id={msg_id}"
@@ -245,8 +314,9 @@ class WeixinOfficialAccountServer:
             # create new trigger when state is empty, and store state in buffer
             logger.debug(f"wx new trigger: user={from_user} msg_id={msg_id}")
             preview = self._preview(msg)
-            placeholder = (
-                f"【正在思考'{preview}'中，已思考0s，回复任意文字尝试获取回复】"
+            placeholder = t(
+                "core-platform-sources-weixin_official_account-weixin_offacc_adapter-thinking_started",
+                preview=preview,
             )
             logger.info(
                 f"wx start task: user={from_user} msg_id={msg_id} preview={preview}"
@@ -282,7 +352,9 @@ class WeixinOfficialAccountServer:
                         else:
                             return _reply_text(
                                 cached_xml
-                                + "\n【后续消息还在缓冲中，回复任意文字继续获取】"
+                                + t(
+                                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-buffered_more_hint_3"
+                                )
                             )
                     logger.info(
                         f"wx not finished in first window; return placeholder: user={from_user} msg_id={msg_id} "
@@ -291,14 +363,21 @@ class WeixinOfficialAccountServer:
                 except Exception:
                     logger.critical("wx task failed in first window", exc_info=True)
                     self.user_buffer.pop(from_user, None)
-                    return _reply_text("处理消息失败，请稍后再试。")
+                    return _reply_text(
+                        t(
+                            "core-platform-sources-weixin_official_account-weixin_offacc_adapter-process_message_failed_2"
+                        )
+                    )
 
             logger.info(f"wx first window timeout: user={from_user} msg_id={msg_id}")
             return _reply_text(placeholder)
 
     async def start_polling(self) -> None:
         logger.info(
-            f"将在 {self.callback_server_host}:{self.port} 端口启动 微信公众平台 适配器。",
+            t(
+                "core-platform-sources-weixin_official_account-weixin_offacc_adapter-starting_server",
+                self=self,
+            ),
         )
         await self.server.run_task(
             host=self.callback_server_host,
@@ -311,7 +390,11 @@ class WeixinOfficialAccountServer:
 
 
 @register_platform_adapter(
-    "weixin_official_account", "微信公众平台 适配器", support_streaming_message=False
+    "weixin_official_account",
+    t(
+        "core-platform-sources-weixin_official_account-weixin_offacc_adapter-adapter_registration"
+    ),
+    support_streaming_message=False,
 )
 class WeixinOfficialAccountPlatformAdapter(Platform):
     def __init__(
@@ -378,10 +461,25 @@ class WeixinOfficialAccountPlatformAdapter(Platform):
                 logger.debug(f"Got future result: {result}")
                 return result
             except asyncio.TimeoutError:
-                logger.info(f"callback 处理消息超时: message_id={msg.id}")
-                return create_reply("处理消息超时，请稍后再试。", msg)
+                logger.info(
+                    t(
+                        "core-platform-sources-weixin_official_account-weixin_offacc_adapter-callback_timeout",
+                        msg=msg,
+                    )
+                )
+                return create_reply(
+                    t(
+                        "core-platform-sources-weixin_official_account-weixin_offacc_adapter-reply_message_timeout"
+                    ),
+                    msg,
+                )
             except Exception as e:
-                logger.error(f"转换消息时出现异常: {e}")
+                logger.error(
+                    t(
+                        "core-platform-sources-weixin_official_account-weixin_offacc_adapter-message_conversion_exception",
+                        e=e,
+                    )
+                )
             finally:
                 self.wexin_event_workers.pop(str(cast(str | int, msg.id)), None)
 
@@ -400,7 +498,9 @@ class WeixinOfficialAccountPlatformAdapter(Platform):
     def meta(self) -> PlatformMetadata:
         return PlatformMetadata(
             "weixin_official_account",
-            "微信公众平台 适配器",
+            t(
+                "core-platform-sources-weixin_official_account-weixin_offacc_adapter-adapter_name"
+            ),
             id=self.config.get("id", "weixin_official_account"),
             support_streaming_message=False,
             support_proactive_message=False,
@@ -411,7 +511,13 @@ class WeixinOfficialAccountPlatformAdapter(Platform):
         # 如果启用统一 webhook 模式，则不启动独立服务器
         webhook_uuid = self.config.get("webhook_uuid")
         if self.unified_webhook_mode and webhook_uuid:
-            log_webhook_info(f"{self.meta().id}(微信公众平台)", webhook_uuid)
+            log_webhook_info(
+                t(
+                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-official_account_webhook_info",
+                    id=self.meta().id,
+                ),
+                webhook_uuid,
+            )
             # 保持运行状态，等待 shutdown
             await self.server.shutdown_event.wait()
         else:
@@ -445,7 +551,9 @@ class WeixinOfficialAccountPlatformAdapter(Platform):
             abm.session_id = abm.sender.user_id
         elif msg.type == "image":
             assert isinstance(msg, ImageMessage)
-            abm.message_str = "[图片]"
+            abm.message_str = t(
+                "core-platform-sources-weixin_official_account-weixin_offacc_adapter-image_placeholder"
+            )
             abm.self_id = str(msg.target)
             abm.message = [Image(file=cast(str, msg.image), url=cast(str, msg.image))]
             abm.type = MessageType.FRIEND_MESSAGE
@@ -477,7 +585,10 @@ class WeixinOfficialAccountPlatformAdapter(Platform):
                 path_wav = await convert_audio_to_wav(path, path_wav)
             except Exception as e:
                 logger.error(
-                    f"转换音频失败: {e}。如果没有安装 ffmpeg 请先安装。",
+                    t(
+                        "core-platform-sources-weixin_official_account-weixin_offacc_adapter-audio_conversion_failure",
+                        e=e,
+                    ),
                 )
                 path_wav = path
                 return
@@ -494,7 +605,12 @@ class WeixinOfficialAccountPlatformAdapter(Platform):
             abm.timestamp = cast(int, msg.time)
             abm.session_id = abm.sender.user_id
         else:
-            logger.warning(f"暂未实现的事件: {msg.type}")
+            logger.warning(
+                t(
+                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-unimplemented_event",
+                    msg=msg,
+                )
+            )
             if future:
                 future.set_result(None)
             return
@@ -511,7 +627,10 @@ class WeixinOfficialAccountPlatformAdapter(Platform):
         buffer = self.user_buffer.get(message.sender.user_id, None)
         if buffer is None:
             logger.critical(
-                f"用户消息未找到缓冲状态，无法处理消息: user={message.sender.user_id} message_id={message.message_id}"
+                t(
+                    "core-platform-sources-weixin_official_account-weixin_offacc_adapter-missing_buffer_state",
+                    message=message,
+                )
             )
             return
         message_event = WeixinOfficialAccountPlatformEvent(
@@ -533,4 +652,8 @@ class WeixinOfficialAccountPlatformAdapter(Platform):
             await self.server.server.shutdown()
         except Exception as _:
             pass
-        logger.info("微信公众平台 适配器已被关闭")
+        logger.info(
+            t(
+                "core-platform-sources-weixin_official_account-weixin_offacc_adapter-adapter_shutdown"
+            )
+        )

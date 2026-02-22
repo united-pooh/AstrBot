@@ -13,6 +13,7 @@ from astrbot import logger
 from astrbot.core import sp
 from astrbot.core.agent.mcp_client import MCPClient, MCPTool
 from astrbot.core.agent.tool import FunctionTool, ToolSet
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
 DEFAULT_MCP_CONFIG = {"mcpServers": {}}
@@ -98,7 +99,9 @@ async def _quick_test_mcp_connection(config: dict) -> tuple[bool, str]:
                     return False, f"HTTP {response.status}: {response.reason}"
 
     except asyncio.TimeoutError:
-        return False, f"连接超时: {timeout}秒"
+        return False, t(
+            "core-provider-func_tool_manager-connection_timeout", timeout=timeout
+        )
     except Exception as e:
         return False, f"{e!s}"
 
@@ -160,7 +163,7 @@ class FunctionToolManager:
                 handler=handler,
             ),
         )
-        logger.info(f"添加函数调用工具: {name}")
+        logger.info(t("core-provider-func_tool_manager-adding_func_tool", name=name))
 
     def remove_func(self, name: str) -> None:
         """删除一个函数调用工具。"""
@@ -205,7 +208,12 @@ class FunctionToolManager:
             # 配置文件不存在错误处理
             with open(mcp_json_file, "w", encoding="utf-8") as f:
                 json.dump(DEFAULT_MCP_CONFIG, f, ensure_ascii=False, indent=4)
-            logger.info(f"未找到 MCP 服务配置文件，已创建默认配置文件 {mcp_json_file}")
+            logger.info(
+                t(
+                    "core-provider-func_tool_manager-created_default_mcp_config",
+                    mcp_json_file=mcp_json_file,
+                )
+            )
             return
 
         mcp_server_json_obj: dict[str, dict] = json.load(
@@ -236,9 +244,17 @@ class FunctionToolManager:
                 # tell the caller we are ready
                 ready_future.set_result(tools)
             await event.wait()
-            logger.info(f"收到 MCP 客户端 {name} 终止信号")
+            logger.info(
+                t(
+                    "core-provider-func_tool_manager-received_termination_signal",
+                    name=name,
+                )
+            )
         except Exception as e:
-            logger.error(f"初始化 MCP 客户端 {name} 失败", exc_info=True)
+            logger.error(
+                t("core-provider-func_tool_manager-init_mcp_client_failed", name=name),
+                exc_info=True,
+            )
             if ready_future and not ready_future.done():
                 ready_future.set_exception(e)
         finally:
@@ -275,7 +291,13 @@ class FunctionToolManager:
             )
             self.func_list.append(func_tool)
 
-        logger.info(f"已连接 MCP 服务 {name}, Tools: {tool_names}")
+        logger.info(
+            t(
+                "core-provider-func_tool_manager-connected_to_mcp_service",
+                name=name,
+                tool_names=tool_names,
+            )
+        )
 
     async def _terminate_mcp_client(self, name: str) -> None:
         """关闭并清理MCP客户端"""
@@ -285,7 +307,13 @@ class FunctionToolManager:
                 # 关闭MCP连接
                 await client.cleanup()
             except Exception as e:
-                logger.error(f"清空 MCP 客户端资源 {name}: {e}。")
+                logger.error(
+                    t(
+                        "core-provider-func_tool_manager-clear_mcp_resources_failed",
+                        name=name,
+                        e=e,
+                    )
+                )
             finally:
                 # Remove client from dict after cleanup attempt (successful or not)
                 self.mcp_client_dict.pop(name, None)
@@ -295,7 +323,9 @@ class FunctionToolManager:
                     for f in self.func_list
                     if not (isinstance(f, MCPTool) and f.mcp_server_name == name)
                 ]
-                logger.info(f"已关闭 MCP 服务 {name}")
+                logger.info(
+                    t("core-provider-func_tool_manager-closed_mcp_service", name=name)
+                )
 
     @staticmethod
     async def test_mcp_server_connection(config: dict) -> list[str]:
@@ -457,7 +487,10 @@ class FunctionToolManager:
             if func_tool.handler_module_path in star_map:
                 if not star_map[func_tool.handler_module_path].activated:
                     raise ValueError(
-                        f"此函数调用工具所属的插件 {star_map[func_tool.handler_module_path].name} 已被禁用，请先在管理面板启用再激活此工具。",
+                        t(
+                            "core-provider-func_tool_manager-func_tool_plugin_disabled",
+                            name=star_map[func_tool.handler_module_path].name,
+                        ),
                     )
 
             func_tool.active = True
@@ -497,7 +530,9 @@ class FunctionToolManager:
             with open(self.mcp_config_path, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            logger.error(f"加载 MCP 配置失败: {e}")
+            logger.error(
+                t("core-provider-func_tool_manager-load_mcp_config_failed", e=e)
+            )
             return DEFAULT_MCP_CONFIG
 
     def save_mcp_config(self, config: dict) -> bool:
@@ -506,7 +541,9 @@ class FunctionToolManager:
                 json.dump(config, f, ensure_ascii=False, indent=4)
             return True
         except Exception as e:
-            logger.error(f"保存 MCP 配置失败: {e}")
+            logger.error(
+                t("core-provider-func_tool_manager-save_mcp_config_failed", e=e)
+            )
             return False
 
     async def sync_modelscope_mcp_servers(self, access_token: str) -> None:
@@ -561,19 +598,33 @@ class FunctionToolManager:
                                 )
                             await asyncio.gather(*tasks)
                             logger.info(
-                                f"从 ModelScope 同步了 {synced_count} 个 MCP 服务器",
+                                t(
+                                    "core-provider-func_tool_manager-synced_modelscope_mcp_servers",
+                                    synced_count=synced_count,
+                                ),
                             )
                         else:
-                            logger.warning("没有找到可用的 ModelScope MCP 服务器")
+                            logger.warning(
+                                t(
+                                    "core-provider-func_tool_manager-no_modelscope_mcp_servers_found"
+                                )
+                            )
                     else:
                         raise Exception(
-                            f"ModelScope API 请求失败: HTTP {response.status}",
+                            t(
+                                "core-provider-func_tool_manager-modelscope_http_error",
+                                response=response,
+                            ),
                         )
 
         except aiohttp.ClientError as e:
-            raise Exception(f"网络连接错误: {e!s}")
+            raise Exception(
+                t("core-provider-func_tool_manager-network_connection_error", e=e)
+            )
         except Exception as e:
-            raise Exception(f"同步 ModelScope MCP 服务器时发生错误: {e!s}")
+            raise Exception(
+                t("core-provider-func_tool_manager-modelscope_sync_error", e=e)
+            )
 
     def __str__(self) -> str:
         return str(self.func_list)

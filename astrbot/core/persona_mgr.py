@@ -2,6 +2,7 @@ from astrbot import logger
 from astrbot.core.astrbot_config_mgr import AstrBotConfigManager
 from astrbot.core.db import BaseDatabase
 from astrbot.core.db.po import Persona, PersonaFolder, Personality
+from astrbot.core.lang import t
 from astrbot.core.platform.message_session import MessageSession
 
 DEFAULT_PERSONALITY = Personality(
@@ -32,7 +33,7 @@ class PersonaManager:
     async def initialize(self) -> None:
         self.personas = await self.get_all_personas()
         self.get_v3_persona_data()
-        logger.info(f"已加载 {len(self.personas)} 个人格。")
+        logger.info(t("core-persona_mgr-loaded_personas", personas=len(self.personas)))
 
     async def get_persona(self, persona_id: str):
         """获取指定 persona 的信息"""
@@ -304,7 +305,10 @@ class PersonaManager:
             if begin_dialogs:
                 if len(begin_dialogs) % 2 != 0:
                     logger.error(
-                        f"{persona_cfg['name']} 人格情景预设对话格式不对，条数应该为偶数。",
+                        t(
+                            "core-persona_mgr-persona_scenario_preset_invalid_pair_count",
+                            name=persona_cfg["name"],
+                        ),
                     )
                     begin_dialogs = []
                 user_turn = True
@@ -328,7 +332,7 @@ class PersonaManager:
                     selected_default_persona = persona
                 personas_v3.append(persona)
             except Exception as e:
-                logger.error(f"解析 Persona 配置失败：{e}")
+                logger.error(t("core-persona_mgr-parse_persona_config_failed", e=e))
 
         if not selected_default_persona and len(personas_v3) > 0:
             # 默认选择第一个

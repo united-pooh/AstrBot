@@ -1,6 +1,6 @@
 from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.core import t
+from astrbot.core.lang import t
 
 
 class LLMCommands:

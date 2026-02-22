@@ -4,6 +4,8 @@ from pathlib import Path
 
 import click
 
+from astrbot.core.lang import t
+
 from ..utils import (
     PluginStatus,
     build_plug_list,
@@ -23,7 +25,7 @@ def _get_data_path() -> Path:
     base = get_astrbot_root()
     if not check_astrbot_root(base):
         raise click.ClickException(
-            f"{base}不是有效的 AstrBot 根目录，如需初始化请使用 astrbot init",
+            t("cli-commands-cmd_plug-invalid_root_dir", base=base),
         )
     return (base / "data").resolve()
 
@@ -32,7 +34,7 @@ def display_plugins(plugins, title=None, color=None) -> None:
     if title:
         click.echo(click.style(title, fg=color, bold=True))
 
-    click.echo(f"{'名称':<20} {'版本':<10} {'状态':<10} {'作者':<15} {'描述':<30}")
+    click.echo(t("cli-commands-cmd_plug-list_header"))
     click.echo("-" * 85)
 
     for p in plugins:
@@ -51,24 +53,26 @@ def new(name: str) -> None:
     plug_path = base_path / "plugins" / name
 
     if plug_path.exists():
-        raise click.ClickException(f"插件 {name} 已存在")
+        raise click.ClickException(
+            t("cli-commands-cmd_plug-plugin_already_exists", name=name)
+        )
 
-    author = click.prompt("请输入插件作者", type=str)
-    desc = click.prompt("请输入插件描述", type=str)
-    version = click.prompt("请输入插件版本", type=str)
+    author = click.prompt(t("cli-commands-cmd_plug-prompt_author"), type=str)
+    desc = click.prompt(t("cli-commands-cmd_plug-prompt_description"), type=str)
+    version = click.prompt(t("cli-commands-cmd_plug-prompt_version"), type=str)
     if not re.match(r"^\d+\.\d+(\.\d+)?$", version.lower().lstrip("v")):
-        raise click.ClickException("版本号必须为 x.y 或 x.y.z 格式")
-    repo = click.prompt("请输入插件仓库：", type=str)
+        raise click.ClickException(t("cli-commands-cmd_plug-invalid_version_format"))
+    repo = click.prompt(t("cli-commands-cmd_plug-prompt_repository"), type=str)
     if not repo.startswith("http"):
-        raise click.ClickException("仓库地址必须以 http 开头")
+        raise click.ClickException(t("cli-commands-cmd_plug-invalid_repo_url"))
 
-    click.echo("下载插件模板...")
+    click.echo(t("cli-commands-cmd_plug-downloading_template"))
     get_git_repo(
         "https://github.com/Soulter/helloworld",
         plug_path,
     )
 
-    click.echo("重写插件信息...")
+    click.echo(t("cli-commands-cmd_plug-rewriting_info"))
     # 重写 metadata.yaml
     with open(plug_path / "metadata.yaml", "w", encoding="utf-8") as f:
         f.write(
@@ -81,25 +85,27 @@ def new(name: str) -> None:
 
     # 重写 README.md
     with open(plug_path / "README.md", "w", encoding="utf-8") as f:
-        f.write(f"# {name}\n\n{desc}\n\n# 支持\n\n[帮助文档](https://astrbot.app)\n")
+        f.write(t("cli-commands-cmd_plug-write_readme_content", name=name, desc=desc))
 
     # 重写 main.py
     with open(plug_path / "main.py", encoding="utf-8") as f:
         content = f.read()
 
     new_content = content.replace(
-        '@register("helloworld", "YourName", "一个简单的 Hello World 插件", "1.0.0")',
+        t("cli-commands-cmd_plug-example_register_decorator"),
         f'@register("{name}", "{author}", "{desc}", "{version}")',
     )
 
     with open(plug_path / "main.py", "w", encoding="utf-8") as f:
         f.write(new_content)
 
-    click.echo(f"插件 {name} 创建成功")
+    click.echo(t("cli-commands-cmd_plug-plugin_created_success", name=name))
 
 
 @plug.command()
-@click.option("--all", "-a", is_flag=True, help="列出未安装的插件")
+@click.option(
+    "--all", "-a", is_flag=True, help=t("cli-commands-cmd_plug-option_list_all")
+)
 def list(all: bool) -> None:
     """列出插件"""
     base_path = _get_data_path()
@@ -110,37 +116,49 @@ def list(all: bool) -> None:
         p for p in plugins if p["status"] == PluginStatus.NOT_PUBLISHED
     ]
     if not_published_plugins:
-        display_plugins(not_published_plugins, "未发布的插件", "red")
+        display_plugins(
+            not_published_plugins, t("cli-commands-cmd_plug-display_unpublished"), "red"
+        )
 
     # 需要更新的插件
     need_update_plugins = [
         p for p in plugins if p["status"] == PluginStatus.NEED_UPDATE
     ]
     if need_update_plugins:
-        display_plugins(need_update_plugins, "需要更新的插件", "yellow")
+        display_plugins(
+            need_update_plugins,
+            t("cli-commands-cmd_plug-display_needs_update"),
+            "yellow",
+        )
 
     # 已安装的插件
     installed_plugins = [p for p in plugins if p["status"] == PluginStatus.INSTALLED]
     if installed_plugins:
-        display_plugins(installed_plugins, "已安装的插件", "green")
+        display_plugins(
+            installed_plugins, t("cli-commands-cmd_plug-display_installed"), "green"
+        )
 
     # 未安装的插件
     not_installed_plugins = [
         p for p in plugins if p["status"] == PluginStatus.NOT_INSTALLED
     ]
     if not_installed_plugins and all:
-        display_plugins(not_installed_plugins, "未安装的插件", "blue")
+        display_plugins(
+            not_installed_plugins,
+            t("cli-commands-cmd_plug-display_not_installed"),
+            "blue",
+        )
 
     if (
         not any([not_published_plugins, need_update_plugins, installed_plugins])
         and not all
     ):
-        click.echo("未安装任何插件")
+        click.echo(t("cli-commands-cmd_plug-no_plugins_installed"))
 
 
 @plug.command()
 @click.argument("name")
-@click.option("--proxy", help="代理服务器地址")
+@click.option("--proxy", help=t("cli-commands-cmd_plug-option_proxy"))
 def install(name: str, proxy: str | None) -> None:
     """安装插件"""
     base_path = _get_data_path()
@@ -157,7 +175,9 @@ def install(name: str, proxy: str | None) -> None:
     )
 
     if not plugin:
-        raise click.ClickException(f"未找到可安装的插件 {name}，可能是不存在或已安装")
+        raise click.ClickException(
+            t("cli-commands-cmd_plug-plugin_not_found_or_installed", name=name)
+        )
 
     manage_plugin(plugin, plug_path, is_update=False, proxy=proxy)
 
@@ -171,22 +191,30 @@ def remove(name: str) -> None:
     plugin = next((p for p in plugins if p["name"] == name), None)
 
     if not plugin or not plugin.get("local_path"):
-        raise click.ClickException(f"插件 {name} 不存在或未安装")
+        raise click.ClickException(
+            t("cli-commands-cmd_plug-plugin_not_exist_or_not_installed", name=name)
+        )
 
     plugin_path = plugin["local_path"]
 
-    click.confirm(f"确定要卸载插件 {name} 吗?", default=False, abort=True)
+    click.confirm(
+        t("cli-commands-cmd_plug-confirm_uninstall_plugin", name=name),
+        default=False,
+        abort=True,
+    )
 
     try:
         shutil.rmtree(plugin_path)
-        click.echo(f"插件 {name} 已卸载")
+        click.echo(t("cli-commands-cmd_plug-plugin_uninstalled_success", name=name))
     except Exception as e:
-        raise click.ClickException(f"卸载插件 {name} 失败: {e}")
+        raise click.ClickException(
+            t("cli-commands-cmd_plug-uninstall_plugin_failed", name=name, e=e)
+        )
 
 
 @plug.command()
 @click.argument("name", required=False)
-@click.option("--proxy", help="Github代理地址")
+@click.option("--proxy", help=t("cli-commands-cmd_plug-option_github_proxy"))
 def update(name: str, proxy: str | None) -> None:
     """更新插件"""
     base_path = _get_data_path()
@@ -204,7 +232,12 @@ def update(name: str, proxy: str | None) -> None:
         )
 
         if not plugin:
-            raise click.ClickException(f"插件 {name} 不需要更新或无法更新")
+            raise click.ClickException(
+                t(
+                    "cli-commands-cmd_plug-plugin_no_update_needed_or_impossible",
+                    name=name,
+                )
+            )
 
         manage_plugin(plugin, plug_path, is_update=True, proxy=proxy)
     else:
@@ -213,13 +246,20 @@ def update(name: str, proxy: str | None) -> None:
         ]
 
         if not need_update_plugins:
-            click.echo("没有需要更新的插件")
+            click.echo(t("cli-commands-cmd_plug-no_plugins_to_update"))
             return
 
-        click.echo(f"发现 {len(need_update_plugins)} 个插件需要更新")
+        click.echo(
+            t(
+                "cli-commands-cmd_plug-plugins_need_update",
+                need_update_plugins=need_update_plugins,
+            )
+        )
         for plugin in need_update_plugins:
             plugin_name = plugin["name"]
-            click.echo(f"正在更新插件 {plugin_name}...")
+            click.echo(
+                t("cli-commands-cmd_plug-updating_plugin", plugin_name=plugin_name)
+            )
             manage_plugin(plugin, plug_path, is_update=True, proxy=proxy)
 
 
@@ -239,7 +279,11 @@ def search(query: str) -> None:
     ]
 
     if not matched_plugins:
-        click.echo(f"未找到匹配 '{query}' 的插件")
+        click.echo(t("cli-commands-cmd_plug-no_matching_plugins", query=query))
         return
 
-    display_plugins(matched_plugins, f"搜索结果: '{query}'", "cyan")
+    display_plugins(
+        matched_plugins,
+        t("cli-commands-cmd_plug-display_search_results", query=query),
+        "cyan",
+    )

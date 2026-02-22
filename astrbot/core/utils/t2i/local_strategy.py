@@ -1,17 +1,19 @@
-import re
 import os
-import aiohttp
+import re
 import ssl
-import certifi
-from io import BytesIO
-from typing import List, Tuple
 from abc import ABC, abstractmethod
+from io import BytesIO
+
+import aiohttp
+import certifi
+from PIL import Image, ImageDraw, ImageFont
+
 from astrbot.core.config import VERSION
+from astrbot.core.lang import t
+from astrbot.core.utils.astrbot_path import get_astrbot_data_path
+from astrbot.core.utils.io import save_temp_img
 
 from . import RenderStrategy
-from PIL import ImageFont, Image, ImageDraw
-from astrbot.core.utils.io import save_temp_img
-from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
 
 class FontManager:
@@ -59,7 +61,7 @@ class FontManager:
             # PIL默认字体大小固定，这里不缓存
             return default_font
         except Exception:
-            raise RuntimeError("无法加载任何字体")
+            raise RuntimeError(t("core-utils-t2i-local_strategy-no_fonts_available"))
 
 
 class TextMeasurer:
@@ -675,7 +677,7 @@ class ImageElement(MarkdownElement):
         if self.image is None:
             # 图片加载失败
             font = FontManager.get_font(font_size)
-            draw.text((x, y + 10), "[图片加载失败]", font=font, fill=(255, 0, 0))
+            draw.text((x, y + 10), t("core-utils-t2i-local_strategy-image_load_failed_text"), font=font, fill=(255, 0, 0))
             return y + font_size + 20
 
         # 调整图片大小

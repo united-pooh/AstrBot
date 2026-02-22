@@ -54,6 +54,7 @@ import { defineComponent, type PropType } from 'vue';
 import type { FolderTreeNode } from './types';
 import BaseMoveTargetNode from './BaseMoveTargetNode.vue';
 import { collectFolderAndChildrenIds } from './useFolderManager';
+import { t } from '@/i18n/composables';
 
 interface DefaultLabels {
     title: string;
@@ -64,11 +65,11 @@ interface DefaultLabels {
 }
 
 const defaultLabels: DefaultLabels = {
-    title: '移动到文件夹',
-    description: '选择目标文件夹',
-    rootFolder: '根目录',
-    cancelButton: '取消',
-    moveButton: '移动'
+    title: t('src.components.folder.basemovetofolderdialog.dialog_title'),
+    description: t('src.components.folder.basemovetofolderdialog.dialog_description'),
+    rootFolder: t('src.components.folder.basemovetofolderdialog.root_folder'),
+    cancelButton: t('src.components.folder.basemovetofolderdialog.cancel_button'),
+    moveButton: t('src.components.folder.basemovetofolderdialog.move_button')
 };
 
 export default defineComponent({
@@ -176,3 +177,4 @@ export default defineComponent({
     padding: 8px;
 }
 </style>
+

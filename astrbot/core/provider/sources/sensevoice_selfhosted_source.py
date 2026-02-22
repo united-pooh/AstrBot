@@ -14,6 +14,7 @@ from funasr_onnx import SenseVoiceSmall
 from funasr_onnx.utils.postprocess_utils import rich_transcription_postprocess
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.io import download_file
 from astrbot.core.utils.tencent_record_helper import tencent_silk_to_wav
@@ -25,7 +26,7 @@ from ..register import register_provider_adapter
 
 @register_provider_adapter(
     "sensevoice_stt_selfhost",
-    "SenseVoice 自托管语音识别 模型部署",
+    t("core-provider-sources-sensevoice_selfhosted_source-model_deployment_title"),
     provider_type=ProviderType.SPEECH_TO_TEXT,
 )
 class ProviderSenseVoiceSTTSelfHost(STTProvider):
@@ -40,7 +41,9 @@ class ProviderSenseVoiceSTTSelfHost(STTProvider):
         self.is_emotion = provider_config.get("is_emotion", False)
 
     async def initialize(self) -> None:
-        logger.info("下载或者加载 SenseVoice 模型中，这可能需要一些时间 ...")
+        logger.info(
+            t("core-provider-sources-sensevoice_selfhosted_source-loading_model")
+        )
 
         # 将模型加载放到线程池中执行
         self.model = await asyncio.get_event_loop().run_in_executor(
@@ -48,7 +51,9 @@ class ProviderSenseVoiceSTTSelfHost(STTProvider):
             lambda: SenseVoiceSmall(self.model_name, quantize=True, batch_size=16),
         )
 
-        logger.info("SenseVoice 模型加载完成。")
+        logger.info(
+            t("core-provider-sources-sensevoice_selfhosted_source-model_load_complete")
+        )
 
     async def get_timestamped_path(self) -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -77,7 +82,12 @@ class ProviderSenseVoiceSTTSelfHost(STTProvider):
                 audio_url = path
 
             if not os.path.isfile(audio_url):
-                raise FileNotFoundError(f"文件不存在: {audio_url}")
+                raise FileNotFoundError(
+                    t(
+                        "core-provider-sources-sensevoice_selfhosted_source-audio_file_not_found",
+                        audio_url=audio_url,
+                    )
+                )
 
             if audio_url.endswith((".amr", ".silk")) or is_tencent:
                 is_silk = await self._is_silk_file(audio_url)
@@ -97,17 +107,35 @@ class ProviderSenseVoiceSTTSelfHost(STTProvider):
             )
 
             # res = self.model(audio_url, language="auto", use_itn=True)
-            logger.debug(f"SenseVoice识别到的文案：{res}")
+            logger.debug(
+                t(
+                    "core-provider-sources-sensevoice_selfhosted_source-recognized_text_debug",
+                    res=res,
+                )
+            )
             text = rich_transcription_postprocess(res[0])
             if self.is_emotion:
                 # 提取第二个匹配的值
                 matches = re.findall(r"<\|([^|]+)\|>", res[0])
                 if len(matches) >= 2:
                     emotion = matches[1]
-                    text = f"(当前的情绪：{emotion}) {text}"
+                    text = t(
+                        "core-provider-sources-sensevoice_selfhosted_source-prepend_emotion",
+                        emotion=emotion,
+                        text=text,
+                    )
                 else:
-                    logger.warning("未能提取到情绪信息")
+                    logger.warning(
+                        t(
+                            "core-provider-sources-sensevoice_selfhosted_source-emotion_extraction_failed"
+                        )
+                    )
             return text
         except Exception as e:
-            logger.error(f"处理音频文件时出错: {e}")
+            logger.error(
+                t(
+                    "core-provider-sources-sensevoice_selfhosted_source-audio_processing_error",
+                    e=e,
+                )
+            )
             raise

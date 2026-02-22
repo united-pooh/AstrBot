@@ -8,7 +8,7 @@
     :location="toastStore.current.location" close-on-back>
     {{ toastStore.current.message }}
     <template #actions v-if="toastStore.current.closable">
-      <v-btn variant="text" @click="snackbarShow = false">关闭</v-btn>
+      <v-btn variant="text" @click="snackbarShow = false">{{ t('src.app.btn_close') }}</v-btn>
     </template>
   </v-snackbar>
 </template>
@@ -18,6 +18,7 @@ import { RouterView } from 'vue-router';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useToastStore } from '@/stores/toast'
 import WaitingForRestart from '@/components/shared/WaitingForRestart.vue'
+import { t } from '@/i18n/composables';
 
 const toastStore = useToastStore()
 const globalWaitingRef = ref(null)

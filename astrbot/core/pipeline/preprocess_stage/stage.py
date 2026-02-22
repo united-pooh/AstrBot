@@ -4,6 +4,7 @@ import traceback
 from collections.abc import AsyncGenerator
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.message.components import Image, Plain, Record
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 
@@ -44,7 +45,13 @@ class PreProcessStage(Stage):
             try:
                 await event.react(random.choice(emojis))
             except Exception as e:
-                logger.warning(f"{platform} 预回应表情发送失败: {e}")
+                logger.warning(
+                    t(
+                        "core-pipeline-preprocess_stage-stage-pre_emoji_send_failed",
+                        platform=platform,
+                        e=e,
+                    )
+                )
 
         # 路径映射
         if mappings := self.platform_settings.get("path_mapping", []):
@@ -61,7 +68,13 @@ class PreProcessStage(Stage):
                         url = component.url.removeprefix("file://")
                         if url.startswith(from_):
                             component.url = url.replace(from_, to_, 1)
-                            logger.debug(f"路径映射: {url} -> {component.url}")
+                            logger.debug(
+                                t(
+                                    "core-pipeline-preprocess_stage-stage-path_mapping",
+                                    url=url,
+                                    component=component,
+                                )
+                            )
                     message_chain[idx] = component
 
         # STT
@@ -71,7 +84,10 @@ class PreProcessStage(Stage):
             stt_provider = ctx.get_using_stt_provider(event.unified_msg_origin)
             if not stt_provider:
                 logger.warning(
-                    f"会话 {event.unified_msg_origin} 未配置语音转文本模型。",
+                    t(
+                        "core-pipeline-preprocess_stage-stage-no_speech_to_text_model",
+                        event=event,
+                    ),
                 )
                 return
             message_chain = event.get_messages()
@@ -83,7 +99,12 @@ class PreProcessStage(Stage):
                         try:
                             result = await stt_provider.get_text(audio_url=path)
                             if result:
-                                logger.info("语音转文本结果: " + result)
+                                logger.info(
+                                    t(
+                                        "core-pipeline-preprocess_stage-stage-stt_result_logged"
+                                    )
+                                    + result
+                                )
                                 message_chain[idx] = Plain(result)
                                 event.message_str += result
                                 event.message_obj.message_str += result
@@ -91,10 +112,21 @@ class PreProcessStage(Stage):
                         except FileNotFoundError as e:
                             # napcat workaround
                             logger.warning(e)
-                            logger.warning(f"重试中: {i + 1}/{retry}")
+                            logger.warning(
+                                t(
+                                    "core-pipeline-preprocess_stage-stage-retry_attempt",
+                                    i=i + 1,
+                                    retry=retry,
+                                )
+                            )
                             await asyncio.sleep(0.5)
                             continue
                         except BaseException as e:
                             logger.error(traceback.format_exc())
-                            logger.error(f"语音转文本失败: {e}")
+                            logger.error(
+                                t(
+                                    "core-pipeline-preprocess_stage-stage-speech_to_text_failed",
+                                    e=e,
+                                )
+                            )
                             break

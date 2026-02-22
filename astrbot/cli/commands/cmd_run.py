@@ -7,6 +7,8 @@ from pathlib import Path
 import click
 from filelock import FileLock, Timeout
 
+from astrbot.core.lang import t
+
 from ..utils import check_astrbot_root, check_dashboard, get_astrbot_root
 
 
@@ -26,8 +28,19 @@ async def run_astrbot(astrbot_root: Path) -> None:
     await core_lifecycle.start()
 
 
-@click.option("--reload", "-r", is_flag=True, help="插件自动重载")
-@click.option("--port", "-p", help="Astrbot Dashboard端口", required=False, type=str)
+@click.option(
+    "--reload",
+    "-r",
+    is_flag=True,
+    help=t("cli-commands-cmd_run-option_plugin_auto_reload"),
+)
+@click.option(
+    "--port",
+    "-p",
+    help=t("cli-commands-cmd_run-option_dashboard_port"),
+    required=False,
+    type=str,
+)
 @click.command()
 def run(reload: bool, port: str) -> None:
     """运行 AstrBot"""
@@ -37,7 +50,10 @@ def run(reload: bool, port: str) -> None:
 
         if not check_astrbot_root(astrbot_root):
             raise click.ClickException(
-                f"{astrbot_root}不是有效的 AstrBot 根目录，如需初始化请使用 astrbot init",
+                t(
+                    "cli-commands-cmd_run-invalid_astrbot_root_dir",
+                    astrbot_root=astrbot_root,
+                ),
             )
 
         os.environ["ASTRBOT_ROOT"] = str(astrbot_root)
@@ -47,7 +63,7 @@ def run(reload: bool, port: str) -> None:
             os.environ["DASHBOARD_PORT"] = port
 
         if reload:
-            click.echo("启用插件自动重载")
+            click.echo(t("cli-commands-cmd_run-enabled_plugin_auto_reload"))
             os.environ["ASTRBOT_RELOAD"] = "1"
 
         lock_file = astrbot_root / "astrbot.lock"
@@ -55,8 +71,14 @@ def run(reload: bool, port: str) -> None:
         with lock.acquire():
             asyncio.run(run_astrbot(astrbot_root))
     except KeyboardInterrupt:
-        click.echo("AstrBot 已关闭...")
+        click.echo(t("cli-commands-cmd_run-astrbot_shut_down"))
     except Timeout:
-        raise click.ClickException("无法获取锁文件，请检查是否有其他实例正在运行")
+        raise click.ClickException(t("cli-commands-cmd_run-cannot_acquire_lock_file"))
     except Exception as e:
-        raise click.ClickException(f"运行时出现错误: {e}\n{traceback.format_exc()}")
+        raise click.ClickException(
+            t(
+                "cli-commands-cmd_run-runtime_error",
+                e=e,
+                format_exc=traceback.format_exc(),
+            )
+        )

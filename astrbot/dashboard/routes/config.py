@@ -19,6 +19,7 @@ from astrbot.core.config.default import (
 )
 from astrbot.core.config.i18n_utils import ConfigMetadataI18n
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
+from astrbot.core.lang import t
 from astrbot.core.platform.register import platform_cls_map, platform_registry
 from astrbot.core.provider import Provider
 from astrbot.core.provider.register import provider_registry
@@ -62,8 +63,12 @@ def try_cast(value: Any, type_: str):
 def _expect_type(value, expected_type, path_key, errors, expected_name=None) -> bool:
     if not isinstance(value, expected_type):
         errors.append(
-            f"错误的类型 {path_key}: 期望是 {expected_name or expected_type.__name__}, "
-            f"得到了 {type(value).__name__}"
+            t(
+                "dashboard-routes-config-invalid_type_at_path_key",
+                path_key=path_key,
+                name=expected_name or expected_type.__name__,
+            )
+            + t("dashboard-routes-config-got_actual_type", name=type(value).__name__)
         )
         return False
     return True
@@ -84,12 +89,20 @@ def _validate_template_list(value, meta, path_key, errors, validate_fn) -> None:
 
         template_key = item.get("__template_key") or item.get("template")
         if not template_key:
-            errors.append(f"缺少模板选择 {item_path}: 需要 __template_key")
+            errors.append(
+                t("dashboard-routes-config-missing_template_key", item_path=item_path)
+            )
             continue
 
         template_meta = templates.get(template_key)
         if not template_meta:
-            errors.append(f"未知模板 {item_path}: {template_key}")
+            errors.append(
+                t(
+                    "dashboard-routes-config-unknown_template",
+                    item_path=item_path,
+                    template_key=template_key,
+                )
+            )
             continue
 
         validate_fn(
@@ -108,7 +121,13 @@ def validate_config(data, schema: dict, is_core: bool) -> tuple[list[str], dict]
                 continue
             meta = metadata[key]
             if "type" not in meta:
-                logger.debug(f"配置项 {path}{key} 没有类型定义, 跳过校验")
+                logger.debug(
+                    t(
+                        "dashboard-routes-config-missing_type_skip_validation",
+                        path=path,
+                        key=key,
+                    )
+                )
                 continue
             # null 转换
             if value is None:
@@ -147,7 +166,12 @@ def validate_config(data, schema: dict, is_core: bool) -> tuple[list[str], dict]
 
             if meta["type"] == "list" and not isinstance(value, list):
                 errors.append(
-                    f"错误的类型 {path}{key}: 期望是 list, 得到了 {type(value).__name__}",
+                    t(
+                        "dashboard-routes-config-invalid_type_expected_list",
+                        path=path,
+                        key=key,
+                        name=type(value).__name__,
+                    ),
                 )
             elif (
                 meta["type"] == "list"
@@ -166,31 +190,61 @@ def validate_config(data, schema: dict, is_core: bool) -> tuple[list[str], dict]
                 casted = try_cast(value, "int")
                 if casted is None:
                     errors.append(
-                        f"错误的类型 {path}{key}: 期望是 int, 得到了 {type(value).__name__}",
+                        t(
+                            "dashboard-routes-config-invalid_type_expected_int",
+                            path=path,
+                            key=key,
+                            name=type(value).__name__,
+                        ),
                     )
                 data[key] = casted
             elif meta["type"] == "float" and not isinstance(value, float):
                 casted = try_cast(value, "float")
                 if casted is None:
                     errors.append(
-                        f"错误的类型 {path}{key}: 期望是 float, 得到了 {type(value).__name__}",
+                        t(
+                            "dashboard-routes-config-invalid_type_expected_float",
+                            path=path,
+                            key=key,
+                            name=type(value).__name__,
+                        ),
                     )
                 data[key] = casted
             elif meta["type"] == "bool" and not isinstance(value, bool):
                 errors.append(
-                    f"错误的类型 {path}{key}: 期望是 bool, 得到了 {type(value).__name__}",
+                    t(
+                        "dashboard-routes-config-invalid_type_expected_bool",
+                        path=path,
+                        key=key,
+                        name=type(value).__name__,
+                    ),
                 )
             elif meta["type"] in ["string", "text"] and not isinstance(value, str):
                 errors.append(
-                    f"错误的类型 {path}{key}: 期望是 string, 得到了 {type(value).__name__}",
+                    t(
+                        "dashboard-routes-config-invalid_type_expected_string",
+                        path=path,
+                        key=key,
+                        name=type(value).__name__,
+                    ),
                 )
             elif meta["type"] == "list" and not isinstance(value, list):
                 errors.append(
-                    f"错误的类型 {path}{key}: 期望是 list, 得到了 {type(value).__name__}",
+                    t(
+                        "dashboard-routes-config-invalid_type_expected_list_repeated",
+                        path=path,
+                        key=key,
+                        name=type(value).__name__,
+                    ),
                 )
             elif meta["type"] == "object" and not isinstance(value, dict):
                 errors.append(
-                    f"错误的类型 {path}{key}: 期望是 dict, 得到了 {type(value).__name__}",
+                    t(
+                        "dashboard-routes-config-invalid_type_expected_dict",
+                        path=path,
+                        key=key,
+                        name=type(value).__name__,
+                    ),
                 )
 
     if is_core:
@@ -225,10 +279,12 @@ def save_config(
             )
     except BaseException as e:
         logger.error(traceback.format_exc())
-        logger.warning(f"验证配置时出现异常: {e}")
-        raise ValueError(f"验证配置时出现异常: {e}")
+        logger.warning(t("dashboard-routes-config-validation_exception_warning", e=e))
+        raise ValueError(t("dashboard-routes-config-validation_exception_raise", e=e))
     if errors:
-        raise ValueError(f"格式校验未通过: {errors}")
+        raise ValueError(
+            t("dashboard-routes-config-format_validation_failed", errors=errors)
+        )
 
     config.save_config(post_config)
 
@@ -293,11 +349,19 @@ class ConfigRoute(Route):
         """删除 provider_source，并更新关联的 providers"""
         post_data = await request.json
         if not post_data:
-            return Response().error("缺少配置数据").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_missing_config_data"))
+                .__dict__
+            )
 
         provider_source_id = post_data.get("id")
         if not provider_source_id:
-            return Response().error("缺少 provider_source_id").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_missing_provider_source_id"))
+                .__dict__
+            )
 
         provider_sources = self.config.get("provider_sources", [])
         target_idx = next(
@@ -310,7 +374,11 @@ class ConfigRoute(Route):
         )
 
         if target_idx == -1:
-            return Response().error("未找到对应的 provider source").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_provider_source_not_found"))
+                .__dict__
+            )
 
         # 删除 provider_source
         del provider_sources[target_idx]
@@ -329,21 +397,37 @@ class ConfigRoute(Route):
             logger.error(traceback.format_exc())
             return Response().error(str(e)).__dict__
 
-        return Response().ok(message="删除 provider source 成功").__dict__
+        return (
+            Response()
+            .ok(message=t("dashboard-routes-config-success_provider_source_deleted"))
+            .__dict__
+        )
 
     async def update_provider_source(self):
         """更新或新增 provider_source，并重载关联的 providers"""
         post_data = await request.json
         if not post_data:
-            return Response().error("缺少配置数据").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_missing_config_data"))
+                .__dict__
+            )
 
         new_source_config = post_data.get("config") or post_data
         original_id = post_data.get("original_id")
         if not original_id:
-            return Response().error("缺少 original_id").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_missing_original_id"))
+                .__dict__
+            )
 
         if not isinstance(new_source_config, dict):
-            return Response().error("缺少或错误的配置数据").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_invalid_config_data"))
+                .__dict__
+            )
 
         # 确保配置中有 id 字段
         if not new_source_config.get("id"):
@@ -403,11 +487,18 @@ class ConfigRoute(Route):
         if reload_errors:
             return (
                 Response()
-                .error("更新成功，但部分提供商重载失败: " + ", ".join(reload_errors))
+                .error(
+                    t("dashboard-routes-config-partial_reload_failure")
+                    + ", ".join(reload_errors)
+                )
                 .__dict__
             )
 
-        return Response().ok(message="更新 provider source 成功").__dict__
+        return (
+            Response()
+            .ok(message=t("dashboard-routes-config-success_provider_source_updated"))
+            .__dict__
+        )
 
     async def get_provider_template(self):
         provider_metadata = ConfigMetadataI18n.convert_to_i18n_keys(
@@ -439,58 +530,102 @@ class ConfigRoute(Route):
         """更新 UMOP 配置路由表的全部内容"""
         post_data = await request.json
         if not post_data:
-            return Response().error("缺少配置数据").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_config_data"))
+                .__dict__
+            )
 
         new_routing = post_data.get("routing", None)
 
         if not new_routing or not isinstance(new_routing, dict):
-            return Response().error("缺少或错误的路由表数据").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_or_invalid_route_table_data"))
+                .__dict__
+            )
 
         try:
             await self.ucr.update_routing_data(new_routing)
-            return Response().ok(message="更新成功").__dict__
+            return (
+                Response()
+                .ok(message=t("dashboard-routes-config-update_success"))
+                .__dict__
+            )
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response().error(f"更新路由表失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-update_route_table_failed", e=e))
+                .__dict__
+            )
 
     async def update_ucr(self):
         """更新 UMOP 配置路由表"""
         post_data = await request.json
         if not post_data:
-            return Response().error("缺少配置数据").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_config_data"))
+                .__dict__
+            )
 
         umo = post_data.get("umo", None)
         conf_id = post_data.get("conf_id", None)
 
         if not umo or not conf_id:
-            return Response().error("缺少 UMO 或配置文件 ID").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_umo_or_config_id"))
+                .__dict__
+            )
 
         try:
             await self.ucr.update_route(umo, conf_id)
-            return Response().ok(message="更新成功").__dict__
+            return (
+                Response()
+                .ok(message=t("dashboard-routes-config-update_success"))
+                .__dict__
+            )
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response().error(f"更新路由表失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-update_route_table_failed", e=e))
+                .__dict__
+            )
 
     async def delete_ucr(self):
         """删除 UMOP 配置路由表中的一项"""
         post_data = await request.json
         if not post_data:
-            return Response().error("缺少配置数据").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_config_data"))
+                .__dict__
+            )
 
         umo = post_data.get("umo", None)
 
         if not umo:
-            return Response().error("缺少 UMO").__dict__
+            return Response().error(t("dashboard-routes-config-missing_umo")).__dict__
 
         try:
             if umo in self.ucr.umop_to_conf_id:
                 del self.ucr.umop_to_conf_id[umo]
                 await self.ucr.update_routing_data(self.ucr.umop_to_conf_id)
-            return Response().ok(message="删除成功").__dict__
+            return (
+                Response()
+                .ok(message=t("dashboard-routes-config-delete_success"))
+                .__dict__
+            )
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response().error(f"删除路由表项失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-delete_route_entry_failed", e=e))
+                .__dict__
+            )
 
     async def get_default_config(self):
         """获取默认配置文件"""
@@ -506,13 +641,24 @@ class ConfigRoute(Route):
         """创建新的 AstrBot 配置文件"""
         post_data = await request.json
         if not post_data:
-            return Response().error("缺少配置数据").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_config_data"))
+                .__dict__
+            )
         name = post_data.get("name", None)
         config = post_data.get("config", DEFAULT_CONFIG)
 
         try:
             conf_id = self.acm.create_conf(name=name, config=config)
-            return Response().ok(message="创建成功", data={"conf_id": conf_id}).__dict__
+            return (
+                Response()
+                .ok(
+                    message=t("dashboard-routes-config-create_success_with_conf_id"),
+                    data={"conf_id": conf_id},
+                )
+                .__dict__
+            )
         except ValueError as e:
             return Response().error(str(e)).__dict__
 
@@ -521,7 +667,11 @@ class ConfigRoute(Route):
         abconf_id = request.args.get("id")
         system_config = request.args.get("system_config", "0").lower() == "1"
         if not abconf_id and not system_config:
-            return Response().error("缺少配置文件 ID").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_config_file_id"))
+                .__dict__
+            )
 
         try:
             if system_config:
@@ -542,45 +692,77 @@ class ConfigRoute(Route):
         """删除指定 AstrBot 配置文件"""
         post_data = await request.json
         if not post_data:
-            return Response().error("缺少配置数据").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_config_data"))
+                .__dict__
+            )
 
         conf_id = post_data.get("id")
         if not conf_id:
-            return Response().error("缺少配置文件 ID").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_config_file_id"))
+                .__dict__
+            )
 
         try:
             success = self.acm.delete_conf(conf_id)
             if success:
-                return Response().ok(message="删除成功").__dict__
-            return Response().error("删除失败").__dict__
+                return (
+                    Response()
+                    .ok(message=t("dashboard-routes-config-delete_success"))
+                    .__dict__
+                )
+            return Response().error(t("dashboard-routes-config-delete_failed")).__dict__
         except ValueError as e:
             return Response().error(str(e)).__dict__
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response().error(f"删除配置文件失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-delete_config_file_failed", e=e))
+                .__dict__
+            )
 
     async def update_abconf(self):
         """更新指定 AstrBot 配置文件信息"""
         post_data = await request.json
         if not post_data:
-            return Response().error("缺少配置数据").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_config_data"))
+                .__dict__
+            )
 
         conf_id = post_data.get("id")
         if not conf_id:
-            return Response().error("缺少配置文件 ID").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_config_file_id"))
+                .__dict__
+            )
 
         name = post_data.get("name")
 
         try:
             success = self.acm.update_conf_info(conf_id, name=name)
             if success:
-                return Response().ok(message="更新成功").__dict__
-            return Response().error("更新失败").__dict__
+                return (
+                    Response()
+                    .ok(message=t("dashboard-routes-config-update_success"))
+                    .__dict__
+                )
+            return Response().error(t("dashboard-routes-config-update_failed")).__dict__
         except ValueError as e:
             return Response().error(str(e)).__dict__
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response().error(f"更新配置文件失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-update_config_file_failed", e=e))
+                .__dict__
+            )
 
     async def _test_single_provider(self, provider):
         """辅助函数：测试单个 provider 的可用性"""
@@ -675,7 +857,11 @@ class ConfigRoute(Route):
     async def get_provider_config_list(self):
         provider_type = request.args.get("provider_type", None)
         if not provider_type:
-            return Response().error("缺少参数 provider_type").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_provider_type"))
+                .__dict__
+            )
         provider_type_ls = provider_type.split(",")
         provider_list = []
         ps = self.core_lifecycle.provider_manager.providers_config
@@ -704,16 +890,34 @@ class ConfigRoute(Route):
         """获取指定提供商的模型列表"""
         provider_id = request.args.get("provider_id", None)
         if not provider_id:
-            return Response().error("缺少参数 provider_id").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_provider_id"))
+                .__dict__
+            )
 
         prov_mgr = self.core_lifecycle.provider_manager
         provider = prov_mgr.inst_map.get(provider_id, None)
         if not provider:
-            return Response().error(f"未找到 ID 为 {provider_id} 的提供商").__dict__
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-config-provider_id_not_found",
+                        provider_id=provider_id,
+                    )
+                )
+                .__dict__
+            )
         if not isinstance(provider, Provider):
             return (
                 Response()
-                .error(f"提供商 {provider_id} 类型不支持获取模型列表")
+                .error(
+                    t(
+                        "dashboard-routes-config-provider_type_unsupported_model_list",
+                        provider_id=provider_id,
+                    )
+                )
                 .__dict__
             )
 
@@ -742,7 +946,11 @@ class ConfigRoute(Route):
         post_data = await request.json
         provider_config = post_data.get("provider_config", None)
         if not provider_config:
-            return Response().error("缺少参数 provider_config").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_provider_config"))
+                .__dict__
+            )
 
         try:
             # 动态导入 EmbeddingProvider
@@ -752,13 +960,22 @@ class ConfigRoute(Route):
             # 获取 provider 类型
             provider_type = provider_config.get("type", None)
             if not provider_type:
-                return Response().error("provider_config 缺少 type 字段").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-config-provider_config_missing_type"))
+                    .__dict__
+                )
 
             # 获取对应的 provider 类
             if provider_type not in provider_cls_map:
                 return (
                     Response()
-                    .error(f"未找到适用于 {provider_type} 的提供商适配器")
+                    .error(
+                        t(
+                            "dashboard-routes-config-provider_adapter_not_found",
+                            provider_type=provider_type,
+                        )
+                    )
                     .__dict__
                 )
 
@@ -766,14 +983,27 @@ class ConfigRoute(Route):
             cls_type = provider_metadata.cls_type
 
             if not cls_type:
-                return Response().error(f"无法找到 {provider_type} 的类").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-config-provider_class_not_found",
+                            provider_type=provider_type,
+                        )
+                    )
+                    .__dict__
+                )
 
             # 实例化 provider
             inst = cls_type(provider_config, {})
 
             # 检查是否是 EmbeddingProvider
             if not isinstance(inst, EmbeddingProvider):
-                return Response().error("提供商不是 EmbeddingProvider 类型").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-config-not_embedding_provider_type"))
+                    .__dict__
+                )
 
             init_fn = getattr(inst, "initialize", None)
             if inspect.iscoroutinefunction(init_fn):
@@ -784,13 +1014,21 @@ class ConfigRoute(Route):
             dim = len(vec)
 
             logger.info(
-                f"检测到 {provider_config.get('id', 'unknown')} 的嵌入向量维度为 {dim}",
+                t(
+                    "dashboard-routes-config-embedding_dimension_detected",
+                    unknown=provider_config.get("id", "unknown"),
+                    dim=dim,
+                ),
             )
 
             return Response().ok({"embedding_dimensions": dim}).__dict__
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response().error(f"获取嵌入维度失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-get_embedding_dim_failed", e=e))
+                .__dict__
+            )
 
     async def get_provider_source_models(self):
         """获取指定 provider_source 支持的模型列表
@@ -799,7 +1037,11 @@ class ConfigRoute(Route):
         """
         provider_source_id = request.args.get("source_id")
         if not provider_source_id:
-            return Response().error("缺少参数 source_id").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-missing_source_id"))
+                .__dict__
+            )
 
         try:
             from astrbot.core.provider.register import provider_cls_map
@@ -815,14 +1057,23 @@ class ConfigRoute(Route):
             if not provider_source:
                 return (
                     Response()
-                    .error(f"未找到 ID 为 {provider_source_id} 的 provider_source")
+                    .error(
+                        t(
+                            "dashboard-routes-config-provider_source_id_not_found",
+                            provider_source_id=provider_source_id,
+                        )
+                    )
                     .__dict__
                 )
 
             # 获取 provider 类型
             provider_type = provider_source.get("type", None)
             if not provider_type:
-                return Response().error("provider_source 缺少 type 字段").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-config-provider_source_missing_type"))
+                    .__dict__
+                )
 
             try:
                 self.core_lifecycle.provider_manager.dynamic_import_provider(
@@ -830,13 +1081,24 @@ class ConfigRoute(Route):
                 )
             except ImportError as e:
                 logger.error(traceback.format_exc())
-                return Response().error(f"动态导入提供商适配器失败: {e!s}").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-config-import_provider_adapter_failed", e=e)
+                    )
+                    .__dict__
+                )
 
             # 获取对应的 provider 类
             if provider_type not in provider_cls_map:
                 return (
                     Response()
-                    .error(f"未找到适用于 {provider_type} 的提供商适配器")
+                    .error(
+                        t(
+                            "dashboard-routes-config-error_no_adapter_for_provider",
+                            provider_type=provider_type,
+                        )
+                    )
                     .__dict__
                 )
 
@@ -844,13 +1106,27 @@ class ConfigRoute(Route):
             cls_type = provider_metadata.cls_type
 
             if not cls_type:
-                return Response().error(f"无法找到 {provider_type} 的类").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-config-error_class_not_found_for_provider",
+                            provider_type=provider_type,
+                        )
+                    )
+                    .__dict__
+                )
 
             # 检查是否是 Provider 类型
             if not issubclass(cls_type, Provider):
                 return (
                     Response()
-                    .error(f"提供商 {provider_type} 不支持获取模型列表")
+                    .error(
+                        t(
+                            "dashboard-routes-config-error_provider_no_model_list_support",
+                            provider_type=provider_type,
+                        )
+                    )
                     .__dict__
                 )
 
@@ -878,7 +1154,11 @@ class ConfigRoute(Route):
                 await terminate_fn()
 
             logger.info(
-                f"获取到 provider_source {provider_source_id} 的模型列表: {models}",
+                t(
+                    "dashboard-routes-config-log_fetched_model_list",
+                    provider_source_id=provider_source_id,
+                    models=models,
+                ),
             )
 
             return (
@@ -888,7 +1168,11 @@ class ConfigRoute(Route):
             )
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response().error(f"获取模型列表失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-get_model_list_failed", e=e))
+                .__dict__
+            )
 
     async def get_platform_list(self):
         """获取所有平台的列表"""
@@ -912,7 +1196,9 @@ class ConfigRoute(Route):
 
             await self._save_astrbot_configs(config, conf_id)
             await self.core_lifecycle.reload_pipeline_scheduler(conf_id)
-            return Response().ok(None, "保存成功~").__dict__
+            return (
+                Response().ok(None, t("dashboard-routes-config-success_save")).__dict__
+            )
         except Exception as e:
             logger.error(traceback.format_exc())
             return Response().error(str(e)).__dict__
@@ -925,7 +1211,13 @@ class ConfigRoute(Route):
             await self.core_lifecycle.plugin_manager.reload(plugin_name)
             return (
                 Response()
-                .ok(None, f"保存插件 {plugin_name} 成功~ 机器人正在热重载插件。")
+                .ok(
+                    None,
+                    t(
+                        "dashboard-routes-config-success_save_plugin_hot_reload",
+                        plugin_name=plugin_name,
+                    ),
+                )
                 .__dict__
             )
         except Exception as e:
@@ -1132,7 +1424,11 @@ class ConfigRoute(Route):
             )
         except Exception as e:
             return Response().error(str(e)).__dict__
-        return Response().ok(None, "新增平台配置成功~").__dict__
+        return (
+            Response()
+            .ok(None, t("dashboard-routes-config-success_add_platform_config"))
+            .__dict__
+        )
 
     async def post_new_provider(self):
         new_provider_config = await request.json
@@ -1143,17 +1439,29 @@ class ConfigRoute(Route):
             )
         except Exception as e:
             return Response().error(str(e)).__dict__
-        return Response().ok(None, "新增服务提供商配置成功").__dict__
+        return (
+            Response()
+            .ok(None, t("dashboard-routes-config-success_add_provider_config"))
+            .__dict__
+        )
 
     async def post_update_platform(self):
         update_platform_config = await request.json
         origin_platform_id = update_platform_config.get("id", None)
         new_config = update_platform_config.get("config", None)
         if not origin_platform_id or not new_config:
-            return Response().error("参数错误").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_invalid_parameters"))
+                .__dict__
+            )
 
         if origin_platform_id != new_config.get("id", None):
-            return Response().error("机器人名称不允许修改").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_bot_name_not_modifiable"))
+                .__dict__
+            )
 
         # 如果是支持统一 webhook 模式的平台，且启用了统一 webhook 模式，确保有 webhook_uuid
         ensure_platform_webhook_config(new_config)
@@ -1163,21 +1471,33 @@ class ConfigRoute(Route):
                 self.config["platform"][i] = new_config
                 break
         else:
-            return Response().error("未找到对应平台").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_platform_not_found"))
+                .__dict__
+            )
 
         try:
             save_config(self.config, self.config, is_core=True)
             await self.core_lifecycle.platform_manager.reload(new_config)
         except Exception as e:
             return Response().error(str(e)).__dict__
-        return Response().ok(None, "更新平台配置成功~").__dict__
+        return (
+            Response()
+            .ok(None, t("dashboard-routes-config-success_update_platform_config"))
+            .__dict__
+        )
 
     async def post_update_provider(self):
         update_provider_config = await request.json
         origin_provider_id = update_provider_config.get("id", None)
         new_config = update_provider_config.get("config", None)
         if not origin_provider_id or not new_config:
-            return Response().error("参数错误").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_invalid_parameters_update"))
+                .__dict__
+            )
 
         try:
             await self.core_lifecycle.provider_manager.update_provider(
@@ -1185,7 +1505,11 @@ class ConfigRoute(Route):
             )
         except Exception as e:
             return Response().error(str(e)).__dict__
-        return Response().ok(None, "更新成功，已经实时生效~").__dict__
+        return (
+            Response()
+            .ok(None, t("dashboard-routes-config-success_update_realtime"))
+            .__dict__
+        )
 
     async def post_delete_platform(self):
         platform_id = await request.json
@@ -1195,19 +1519,29 @@ class ConfigRoute(Route):
                 del self.config["platform"][i]
                 break
         else:
-            return Response().error("未找到对应平台").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-config-error_platform_not_found_update"))
+                .__dict__
+            )
         try:
             save_config(self.config, self.config, is_core=True)
             await self.core_lifecycle.platform_manager.terminate_platform(platform_id)
         except Exception as e:
             return Response().error(str(e)).__dict__
-        return Response().ok(None, "删除平台配置成功~").__dict__
+        return (
+            Response()
+            .ok(None, t("dashboard-routes-config-success_delete_platform_config"))
+            .__dict__
+        )
 
     async def post_delete_provider(self):
         provider_id = await request.json
         provider_id = provider_id.get("id", "")
         if not provider_id:
-            return Response().error("缺少参数 id").__dict__
+            return (
+                Response().error(t("dashboard-routes-config-error_missing_id")).__dict__
+            )
 
         try:
             await self.core_lifecycle.provider_manager.delete_provider(
@@ -1215,7 +1549,11 @@ class ConfigRoute(Route):
             )
         except Exception as e:
             return Response().error(str(e)).__dict__
-        return Response().ok(None, "删除成功，已经实时生效。").__dict__
+        return (
+            Response()
+            .ok(None, t("dashboard-routes-config-success_delete_realtime"))
+            .__dict__
+        )
 
     async def get_llm_tools(self):
         """获取函数调用工具。包含了本地加载的以及 MCP 服务的工具"""
@@ -1388,7 +1726,10 @@ class ConfigRoute(Route):
                 )  # 这是自定义的 Dict 类（AstrBotConfig）
                 ret["metadata"] = {
                     plugin_name: {
-                        "description": f"{plugin_name} 配置",
+                        "description": t(
+                            "dashboard-routes-config-plugin_config_description",
+                            plugin_name=plugin_name,
+                        ),
                         "type": "object",
                         "items": plugin_md.config.schema,  # 初始化时通过 __setattr__ 存入了 schema
                     },
@@ -1402,7 +1743,9 @@ class ConfigRoute(Route):
     ) -> None:
         try:
             if conf_id not in self.acm.confs:
-                raise ValueError(f"配置文件 {conf_id} 不存在")
+                raise ValueError(
+                    t("dashboard-routes-config-raise_config_not_found", conf_id=conf_id)
+                )
             astrbot_config = self.acm.confs[conf_id]
 
             # 保留服务端的 t2i_active_template 值
@@ -1422,9 +1765,19 @@ class ConfigRoute(Route):
                 md = plugin_md
 
         if not md:
-            raise ValueError(f"插件 {plugin_name} 不存在")
+            raise ValueError(
+                t(
+                    "dashboard-routes-config-raise_plugin_not_found",
+                    plugin_name=plugin_name,
+                )
+            )
         if not md.config:
-            raise ValueError(f"插件 {plugin_name} 没有注册配置")
+            raise ValueError(
+                t(
+                    "dashboard-routes-config-raise_plugin_no_config_registered",
+                    plugin_name=plugin_name,
+                )
+            )
         assert md.config is not None
 
         try:
@@ -1432,7 +1785,12 @@ class ConfigRoute(Route):
                 post_configs, getattr(md.config, "schema", {}), is_core=False
             )
             if errors:
-                raise ValueError(f"格式校验未通过: {errors}")
+                raise ValueError(
+                    t(
+                        "dashboard-routes-config-raise_format_validation_failed",
+                        errors=errors,
+                    )
+                )
             md.config.save_config(post_configs)
         except Exception as e:
             raise e

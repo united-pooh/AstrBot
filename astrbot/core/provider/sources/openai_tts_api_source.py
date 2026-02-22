@@ -5,6 +5,7 @@ import httpx
 from openai import NOT_GIVEN, AsyncOpenAI
 
 from astrbot import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 from ..entities import ProviderType
@@ -34,7 +35,12 @@ class ProviderOpenAITTSAPI(TTSProvider):
         proxy = provider_config.get("proxy", "")
         http_client = None
         if proxy:
-            logger.info(f"[OpenAI TTS] 使用代理: {proxy}")
+            logger.info(
+                t(
+                    "core-provider-sources-openai_tts_api_source-using_proxy",
+                    proxy=proxy,
+                )
+            )
             http_client = httpx.AsyncClient(proxy=proxy)
         self.client = AsyncOpenAI(
             api_key=self.chosen_api_key,

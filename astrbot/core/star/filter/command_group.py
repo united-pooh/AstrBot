@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from astrbot.core.config import AstrBotConfig
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 
 from . import HandlerFilter
@@ -79,7 +80,7 @@ class CommandGroupFilter(HandlerFilter):
                     if cmd_th:
                         line += f" ({cmd_th})"
                     else:
-                        line += " (无参数指令)"
+                        line += t("core-star-filter-command_group-no_params_command")
 
                     if sub_filter.handler_md and sub_filter.handler_md.desc:
                         line += f": {sub_filter.handler_md.desc}"
@@ -129,7 +130,8 @@ class CommandGroupFilter(HandlerFilter):
                 + self.print_cmd_tree(self.sub_command_filters, event=event, cfg=cfg)
             )
             raise ValueError(
-                f"参数不足。{self.group_name} 指令组下有如下指令，请参考：\n" + tree,
+                t("core-star-filter-command_group-insufficient_params", self=self)
+                + tree,
             )
 
         return self.startswith(event.message_str)

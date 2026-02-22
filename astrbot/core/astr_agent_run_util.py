@@ -8,6 +8,7 @@ from astrbot.core import logger
 from astrbot.core.agent.message import Message
 from astrbot.core.agent.runners.tool_loop_agent_runner import ToolLoopAgentRunner
 from astrbot.core.astr_agent_context import AstrAgentContext
+from astrbot.core.lang import t
 from astrbot.core.message.components import BaseMessageComponent, Json, Plain
 from astrbot.core.message.message_event_result import (
     MessageChain,
@@ -16,7 +17,6 @@ from astrbot.core.message.message_event_result import (
 )
 from astrbot.core.provider.entities import LLMResponse
 from astrbot.core.provider.provider import TTSProvider
-from astrbot.core import t
 
 AgentRunner = ToolLoopAgentRunner[AstrAgentContext]
 
@@ -43,7 +43,7 @@ async def run_agent(
                 agent_runner.run_context.messages.append(
                     Message(
                         role="user",
-                        content="工具调用次数已达到上限，请停止使用工具，并根据已经收集到的信息，对你的任务和发现进行总结，然后直接回复用户。",
+                        content=t("core-astr_agent_run_util-tool_call_limit_reached"),
                     )
                 )
 
@@ -89,7 +89,10 @@ async def run_agent(
                         await astr_event.send(resp.data["chain"])
                     elif show_tool_use:
                         if tool_info:
-                            m = t("agent-tool-call",tool_name = tool_info.get('name', 'unknown'))
+                            m = t(
+                                "agent-tool-call",
+                                tool_name=tool_info.get("name", "unknown"),
+                            )
                         else:
                             m = t("agent-tool-call-unknown")
                         chain = MessageChain(type="tool_call").message(m)
@@ -134,9 +137,11 @@ async def run_agent(
         except Exception as e:
             logger.error(traceback.format_exc())
 
-            err_msg = t("agent-request-failed",
-                        error_type=type(e).__name__,
-                        error_message=str(e))
+            err_msg = t(
+                "agent-request-failed",
+                error_type=type(e).__name__,
+                error_message=str(e),
+            )
 
             error_llm_response = LLMResponse(
                 role="err",
@@ -328,7 +333,12 @@ async def _run_agent_feeder(
 
                         if len(temp_buffer) >= 10:
                             if temp_buffer.strip():
-                                logger.info(t("live-agent-feeder-sentence", sentence=temp_buffer))
+                                logger.info(
+                                    t(
+                                        "live-agent-feeder-sentence",
+                                        sentence=temp_buffer,
+                                    )
+                                )
                                 await text_queue.put(temp_buffer)
                             temp_buffer = ""
 
@@ -380,9 +390,9 @@ async def _simulated_stream_tts(
                         audio_data = f.read()
                     await audio_queue.put((text, audio_data))
             except Exception as e:
-                logger.error(t("live-tts-simulated-error",
-                               text_preview=text[:20],
-                               error=str(e)))
+                logger.error(
+                    t("live-tts-simulated-error", text_preview=text[:20], error=str(e))
+                )
                 # 继续处理下一句
 
     except Exception as e:

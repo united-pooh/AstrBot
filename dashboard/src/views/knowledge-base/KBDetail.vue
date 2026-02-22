@@ -180,7 +180,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
-import { useModuleI18n } from '@/i18n/composables'
+import { useModuleI18n } from '@/i18n/composables';
 import DocumentsTab from './components/DocumentsTab.vue'
 import RetrievalTab from './components/RetrievalTab.vue'
 import SettingsTab from './components/SettingsTab.vue'
@@ -215,11 +215,11 @@ const loadKB = async () => {
     if (response.data.status === 'ok') {
       kb.value = response.data.data
     } else {
-      showSnackbar(response.data.message || '加载失败', 'error')
+      showSnackbar(response.data.message || t('src.views.knowledge_base.kbdetail.load_failed_snackbar'), 'error')
     }
   } catch (error) {
     console.error('Failed to load knowledge base:', error)
-    showSnackbar('加载知识库详情失败', 'error')
+    showSnackbar(t('src.views.knowledge_base.kbdetail.load_kb_details_failed'), 'error')
   } finally {
     loading.value = false
   }

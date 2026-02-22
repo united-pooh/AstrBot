@@ -21,6 +21,7 @@ from astrbot.api.platform import (
     Platform,
     PlatformMetadata,
 )
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import MessageSesion
 from astrbot.core.utils.webhook_utils import log_webhook_info
 
@@ -63,7 +64,7 @@ class WecomAIQueueListener:
 
 @register_platform_adapter(
     "wecom_ai_bot",
-    "企业微信智能机器人适配器，支持 HTTP 回调接收消息",
+    t("core-platform-sources-wecom_ai_bot-wecomai_adapter-adapter_description_short"),
 )
 class WecomAIBotAdapter(Platform):
     """企业微信智能机器人适配器"""
@@ -100,7 +101,9 @@ class WecomAIBotAdapter(Platform):
         # 平台元数据
         self.metadata = PlatformMetadata(
             name="wecom_ai_bot",
-            description="企业微信智能机器人适配器，支持 HTTP 回调接收消息",
+            description=t(
+                "core-platform-sources-wecom_ai_bot-wecomai_adapter-adapter_description"
+            ),
             id=self.config.get("id", "wecom_ai_bot"),
             support_proactive_message=bool(self.msg_push_webhook_url),
         )
@@ -136,7 +139,12 @@ class WecomAIBotAdapter(Platform):
                     self.msg_push_webhook_url,
                 )
             except WecomAIBotWebhookError as e:
-                logger.error("企业微信消息推送 webhook 配置无效: %s", e)
+                logger.error(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_adapter-webhook_config_invalid"
+                    ),
+                    e,
+                )
 
     async def _handle_queued_message(self, data: dict) -> None:
         """处理队列中的消息，类似webchat的callback"""
@@ -144,7 +152,12 @@ class WecomAIBotAdapter(Platform):
             abm = await self.convert_message(data)
             await self.handle_msg(abm)
         except Exception as e:
-            logger.error(f"处理队列消息时发生异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_adapter-queue_message_processing_error",
+                    e=e,
+                )
+            )
 
     async def _process_message(
         self,
@@ -163,7 +176,12 @@ class WecomAIBotAdapter(Platform):
         """
         msgtype = message_data.get("msgtype")
         if not msgtype:
-            logger.warning(f"消息类型未知，忽略: {message_data}")
+            logger.warning(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_adapter-unknown_message_type_ignored",
+                    message_data=message_data,
+                )
+            )
             return None
         session_id = self._extract_session_id(message_data)
         if msgtype in ("text", "image", "mixed"):
@@ -193,7 +211,12 @@ class WecomAIBotAdapter(Platform):
                         callback_params["timestamp"],
                     )
             except Exception as e:
-                logger.error("处理消息时发生异常: %s", e)
+                logger.error(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_adapter-message_processing_error"
+                    ),
+                    e,
+                )
                 return None
         elif msgtype == "stream":
             # wechat server is requesting for updates of a stream
@@ -300,7 +323,11 @@ class WecomAIBotAdapter(Platform):
                         f"Stream message sent successfully, stream_id: {stream_id}",
                     )
                 else:
-                    logger.error("消息加密失败")
+                    logger.error(
+                        t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_adapter-message_encryption_failed"
+                        )
+                    )
                 return encrypted_message
             return None
         elif msgtype == "event":
@@ -317,7 +344,12 @@ class WecomAIBotAdapter(Platform):
                         callback_params["timestamp"],
                     )
                 except Exception as e:
-                    logger.error("处理欢迎消息时发生异常: %s", e)
+                    logger.error(
+                        t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_adapter-welcome_message_processing_error"
+                        ),
+                        e,
+                    )
                     return None
 
     def _extract_session_id(self, message_data: dict[str, Any]) -> str:
@@ -342,7 +374,12 @@ class WecomAIBotAdapter(Platform):
             "stream_id": stream_id,
         }
         await input_queue.put(message_payload)
-        logger.debug(f"[WecomAI] 消息已入队: {stream_id}")
+        logger.debug(
+            t(
+                "core-platform-sources-wecom_ai_bot-wecomai_adapter-message_enqueued",
+                stream_id=stream_id,
+            )
+        )
 
     async def convert_message(self, payload: dict) -> AstrBotMessage:
         """转换队列中的消息数据为AstrBotMessage，类似webchat的convert_message"""
@@ -379,7 +416,10 @@ class WecomAIBotAdapter(Platform):
                         _img_url_to_process.append(image_url)
             content = " ".join(text_parts) if text_parts else ""
         else:
-            content = f"[{msgtype}消息]"
+            content = t(
+                "core-platform-sources-wecom_ai_bot-wecomai_adapter-generic_message_type_fallback",
+                msgtype=msgtype,
+            )
 
         # 并行处理图片下载和解密
         if _img_url_to_process:
@@ -392,12 +432,19 @@ class WecomAIBotAdapter(Platform):
                 if success:
                     image_base64.append(result)
                 else:
-                    logger.error(f"处理加密图片失败: {result}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_adapter-encrypted_image_processing_failed",
+                            result=result,
+                        )
+                    )
 
         # 构建 AstrBotMessage
         abm = AstrBotMessage()
         abm.self_id = self.bot_name
-        abm.message_str = content or "[未知消息]"
+        abm.message_str = content or t(
+            "core-platform-sources-wecom_ai_bot-wecomai_adapter-unknown_message_fallback"
+        )
         abm.message_id = str(uuid.uuid4())
         abm.timestamp = int(time.time())
         abm.raw_message = payload
@@ -439,7 +486,9 @@ class WecomAIBotAdapter(Platform):
         """通过消息推送 webhook 发送消息。"""
         if not self.webhook_client:
             logger.warning(
-                "主动消息发送失败: 未配置企业微信消息推送 Webhook URL，请前往配置添加。session_id=%s",
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_adapter-active_send_webhook_not_configured"
+                ),
                 session.session_id,
             )
             await super().send_by_session(session, message_chain)
@@ -449,7 +498,9 @@ class WecomAIBotAdapter(Platform):
             await self.webhook_client.send_message_chain(message_chain)
         except Exception as e:
             logger.error(
-                "企业微信消息推送失败(session=%s): %s",
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_adapter-message_push_failed"
+                ),
                 session.session_id,
                 e,
             )
@@ -462,12 +513,22 @@ class WecomAIBotAdapter(Platform):
             # 如果启用统一 webhook 模式，则不启动独立服务器
             webhook_uuid = self.config.get("webhook_uuid")
             if self.unified_webhook_mode and webhook_uuid:
-                log_webhook_info(f"{self.meta().id}(企业微信智能机器人)", webhook_uuid)
+                log_webhook_info(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_adapter-wecom_ai_bot_webhook_info",
+                        id=self.meta().id,
+                    ),
+                    webhook_uuid,
+                )
                 # 只运行队列监听器
                 await self.queue_listener.run()
             else:
                 logger.info(
-                    "启动企业微信智能机器人适配器，监听 %s:%d", self.host, self.port
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_adapter-starting_adapter_listening"
+                    ),
+                    self.host,
+                    self.port,
                 )
                 # 同时运行HTTP服务器和队列监听器
                 await asyncio.gather(
@@ -487,7 +548,11 @@ class WecomAIBotAdapter(Platform):
 
     async def terminate(self) -> None:
         """终止适配器"""
-        logger.info("企业微信智能机器人适配器正在关闭...")
+        logger.info(
+            t(
+                "core-platform-sources-wecom_ai_bot-wecomai_adapter-adapter_shutting_down"
+            )
+        )
         self.shutdown_event.set()
         await self.server.shutdown()
 
@@ -512,7 +577,12 @@ class WecomAIBotAdapter(Platform):
             self.commit_event(message_event)
 
         except Exception as e:
-            logger.error("处理消息时发生异常: %s", e)
+            logger.error(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_adapter-message_processing_exception"
+                ),
+                e,
+            )
 
     def get_client(self) -> WecomAIBotAPIClient:
         """获取 API 客户端"""

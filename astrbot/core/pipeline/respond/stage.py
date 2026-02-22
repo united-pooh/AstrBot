@@ -5,6 +5,7 @@ from collections.abc import AsyncGenerator
 
 import astrbot.core.message.components as Comp
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.message.components import BaseMessageComponent, ComponentType
 from astrbot.core.message.message_event_result import MessageChain, ResultContentType
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
@@ -85,8 +86,12 @@ class RespondStage(Stage):
             try:
                 self.interval = [float(t) for t in interval_str_ls]
             except BaseException as e:
-                logger.error(f"解析分段回复的间隔时间失败。{e}")
-            logger.info(f"分段回复间隔时间：{self.interval}")
+                logger.error(
+                    t("core-pipeline-respond-stage-parse_segment_interval_failed", e=e)
+                )
+            logger.info(
+                t("core-pipeline-respond-stage-segmented_reply_interval", self=self)
+            )
 
     async def _word_cnt(self, text: str) -> int:
         """分段回复 统计字数"""
@@ -187,7 +192,9 @@ class RespondStage(Stage):
 
         if result.result_content_type == ResultContentType.STREAMING_RESULT:
             if result.async_stream is None:
-                logger.warning("async_stream 为空，跳过发送。")
+                logger.warning(
+                    t("core-pipeline-respond-stage-empty_async_stream_skip_send")
+                )
                 return
             # 流式结果直接交付平台适配器处理
             realtime_segmenting = (
@@ -197,7 +204,12 @@ class RespondStage(Stage):
                 )
                 == "realtime_segmenting"
             )
-            logger.info(f"应用流式输出({event.get_platform_id()})")
+            logger.info(
+                t(
+                    "core-pipeline-respond-stage-applying_streaming_output",
+                    get_platform_id=event.get_platform_id(),
+                )
+            )
             await event.send_streaming(result.async_stream, realtime_segmenting)
             return
         if len(result.chain) > 0:
@@ -212,10 +224,14 @@ class RespondStage(Stage):
             # 检查消息链是否为空
             try:
                 if await self._is_empty_message_chain(result.chain):
-                    logger.info("消息为空，跳过发送阶段")
+                    logger.info(
+                        t("core-pipeline-respond-stage-empty_message_skip_send")
+                    )
                     return
             except Exception as e:
-                logger.warning(f"空内容检查异常: {e}")
+                logger.warning(
+                    t("core-pipeline-respond-stage-empty_content_check_exception", e=e)
+                )
 
             # 将 Plain 为空的消息段移除
             result.chain = [
@@ -239,7 +255,11 @@ class RespondStage(Stage):
                 if not result.chain or len(result.chain) == 0:
                     # may fix #2670
                     logger.warning(
-                        f"实际消息链为空, 跳过发送阶段。header_chain: {header_comps}, actual_chain: {result.chain}",
+                        t(
+                            "core-pipeline-respond-stage-empty_message_chain_skip",
+                            header_comps=header_comps,
+                            result=result,
+                        ),
                     )
                     return
                 for comp in result.chain:
@@ -253,7 +273,11 @@ class RespondStage(Stage):
                             header_comps.clear()
                     except Exception as e:
                         logger.error(
-                            f"发送消息链失败: chain = {MessageChain([comp])}, error = {e}",
+                            t(
+                                "core-pipeline-respond-stage-send_message_chain_failed",
+                                comp=MessageChain([comp]),
+                                e=e,
+                            ),
                             exc_info=True,
                         )
             else:
@@ -263,7 +287,10 @@ class RespondStage(Stage):
                 ):
                     # may fix #2670
                     logger.warning(
-                        f"消息链全为 Reply 和 At 消息段, 跳过发送阶段。chain: {result.chain}",
+                        t(
+                            "core-pipeline-respond-stage-only_reply_at_skip_send",
+                            result=result,
+                        ),
                     )
                     return
                 sep_comps = self._extract_comp(
@@ -277,7 +304,11 @@ class RespondStage(Stage):
                         await event.send(chain)
                     except Exception as e:
                         logger.error(
-                            f"发送消息链失败: chain = {chain}, error = {e}",
+                            t(
+                                "core-pipeline-respond-stage-send_chain_failed_2",
+                                chain=chain,
+                                e=e,
+                            ),
                             exc_info=True,
                         )
                 chain = MessageChain(result.chain)
@@ -286,7 +317,11 @@ class RespondStage(Stage):
                         await event.send(chain)
                     except Exception as e:
                         logger.error(
-                            f"发送消息链失败: chain = {chain}, error = {e}",
+                            t(
+                                "core-pipeline-respond-stage-send_chain_failed_3",
+                                chain=chain,
+                                e=e,
+                            ),
                             exc_info=True,
                         )
 

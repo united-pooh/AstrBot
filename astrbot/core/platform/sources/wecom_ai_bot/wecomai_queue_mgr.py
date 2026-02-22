@@ -8,6 +8,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from astrbot.api import logger
+from astrbot.core.lang import t
 
 
 class WecomAIQueueMgr:
@@ -44,7 +45,12 @@ class WecomAIQueueMgr:
             self.queues[session_id] = asyncio.Queue(maxsize=self.queue_maxsize)
             self._queue_close_events[session_id] = asyncio.Event()
             self._start_listener_if_needed(session_id)
-            logger.debug(f"[WecomAI] 创建输入队列: {session_id}")
+            logger.debug(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_queue_mgr-create_input_queue",
+                    session_id=session_id,
+                )
+            )
         return self.queues[session_id]
 
     def get_or_create_back_queue(self, session_id: str) -> asyncio.Queue:
@@ -61,7 +67,12 @@ class WecomAIQueueMgr:
             self.back_queues[session_id] = asyncio.Queue(
                 maxsize=self.back_queue_maxsize
             )
-            logger.debug(f"[WecomAI] 创建输出队列: {session_id}")
+            logger.debug(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_queue_mgr-create_output_queue",
+                    session_id=session_id,
+                )
+            )
         return self.back_queues[session_id]
 
     def remove_queues(self, session_id: str, mark_finished: bool = False) -> None:
@@ -76,20 +87,40 @@ class WecomAIQueueMgr:
 
         if session_id in self.back_queues:
             del self.back_queues[session_id]
-            logger.debug(f"[WecomAI] 移除输出队列: {session_id}")
+            logger.debug(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_queue_mgr-remove_output_queue",
+                    session_id=session_id,
+                )
+            )
 
         if session_id in self.pending_responses:
             del self.pending_responses[session_id]
-            logger.debug(f"[WecomAI] 移除待处理响应: {session_id}")
+            logger.debug(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_queue_mgr-remove_pending_response",
+                    session_id=session_id,
+                )
+            )
         if mark_finished:
             self.completed_streams[session_id] = asyncio.get_event_loop().time()
-            logger.debug(f"[WecomAI] 标记流已结束: {session_id}")
+            logger.debug(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_queue_mgr-mark_stream_ended",
+                    session_id=session_id,
+                )
+            )
 
     def remove_queue(self, session_id: str):
         """仅移除输入队列和对应监听任务"""
         if session_id in self.queues:
             del self.queues[session_id]
-            logger.debug(f"[WecomAI] 移除输入队列: {session_id}")
+            logger.debug(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_queue_mgr-remove_input_queue",
+                    session_id=session_id,
+                )
+            )
 
         close_event = self._queue_close_events.pop(session_id, None)
         if close_event is not None:
@@ -137,7 +168,12 @@ class WecomAIQueueMgr:
             "callback_params": callback_params,
             "timestamp": asyncio.get_event_loop().time(),
         }
-        logger.debug(f"[WecomAI] 设置待处理响应: {session_id}")
+        logger.debug(
+            t(
+                "core-platform-sources-wecom_ai_bot-wecomai_queue_mgr-set_pending_response",
+                session_id=session_id,
+            )
+        )
 
     def get_pending_response(self, session_id: str) -> dict[str, Any] | None:
         """获取待处理的响应参数
@@ -181,7 +217,12 @@ class WecomAIQueueMgr:
 
         for session_id in expired_sessions:
             self.remove_queues(session_id)
-            logger.debug(f"[WecomAI] 清理过期响应及队列: {session_id}")
+            logger.debug(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_queue_mgr-clean_expired_responses_and_queues",
+                    session_id=session_id,
+                )
+            )
         expired_finished = [
             session_id
             for session_id, finished_at in self.completed_streams.items()
@@ -215,7 +256,12 @@ class WecomAIQueueMgr:
         )
         self._listener_tasks[session_id] = task
         task.add_done_callback(lambda _: self._listener_tasks.pop(session_id, None))
-        logger.debug(f"[WecomAI] 为会话启动监听器: {session_id}")
+        logger.debug(
+            t(
+                "core-platform-sources-wecom_ai_bot-wecomai_queue_mgr-start_listener_for_session",
+                session_id=session_id,
+            )
+        )
 
     async def _listen_to_queue(
         self,
@@ -241,7 +287,13 @@ class WecomAIQueueMgr:
                 try:
                     await self._listener_callback(data)
                 except Exception as e:
-                    logger.error(f"处理会话 {session_id} 消息时发生错误: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_queue_mgr-error_processing_session_message",
+                            session_id=session_id,
+                            e=e,
+                        )
+                    )
             except asyncio.CancelledError:
                 break
             finally:

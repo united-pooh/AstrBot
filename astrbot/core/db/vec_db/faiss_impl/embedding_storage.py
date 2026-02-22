@@ -1,8 +1,10 @@
+from astrbot.core.lang import t
+
 try:
     import faiss
 except ModuleNotFoundError:
     raise ImportError(
-        "faiss 未安装。请使用 'pip install faiss-cpu' 或 'pip install faiss-gpu' 安装。",
+        t("core-db-vec_db-faiss_impl-embedding_storage-faiss_not_installed"),
     )
 import os
 
@@ -33,7 +35,11 @@ class EmbeddingStorage:
         assert self.index is not None, "FAISS index is not initialized."
         if vector.shape[0] != self.dimension:
             raise ValueError(
-                f"向量维度不匹配, 期望: {self.dimension}, 实际: {vector.shape[0]}",
+                t(
+                    "core-db-vec_db-faiss_impl-embedding_storage-error_dimension_mismatch_single",
+                    dimension=self.dimension,
+                    shape=vector.shape[0],
+                ),
             )
         self.index.add_with_ids(vector.reshape(1, -1), np.array([id]))
         await self.save_index()
@@ -51,7 +57,11 @@ class EmbeddingStorage:
         assert self.index is not None, "FAISS index is not initialized."
         if vectors.shape[1] != self.dimension:
             raise ValueError(
-                f"向量维度不匹配, 期望: {self.dimension}, 实际: {vectors.shape[1]}",
+                t(
+                    "core-db-vec_db-faiss_impl-embedding_storage-error_dimension_mismatch_batch",
+                    dimension=self.dimension,
+                    shape=vectors.shape[1],
+                ),
             )
         self.index.add_with_ids(vectors, np.array(ids))
         await self.save_index()

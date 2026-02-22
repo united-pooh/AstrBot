@@ -77,9 +77,9 @@
   },
   "templateList": {
     "addEntry": "Add Entry",
-    "empty": "No entries yet, pick a template to add",
-    "missingTemplate": "Template not found, please remove and add again.",
-    "unknownTemplate": "Template not specified"
+    "empty": "No entries yet. Please select a template and add one first.",
+    "missingTemplate": "The corresponding template could not be found. Please delete and re-add it.",
+    "unknownTemplate": "No template specified"
   },
   "list": {
     "addItemPlaceholder": "Add new item, press Enter to confirm",
@@ -128,5 +128,498 @@
       "title": "No first notice content available",
       "subtitle": "FIRST_NOTICE.md was not found or is empty."
     }
-  }
+  },
+  "index": {
+    "title_dashboard": "AstrBot - Dashboard"
+  },
+  "src": {
+    "components": {
+      "extension": {
+        "mcpserverssection": {
+          "sync_mcp_servers": "Sync external platform MCP servers",
+          "select_platform_label": "Select platform",
+          "discover_mcp_servers_heading": "Discover MCP Servers",
+          "browse_modelscope_mcp": "ModelScope platform",
+          "obtain_access_token_heading": "Obtain Access Token",
+          "get_token_from_account_settings": "Account Settings",
+          "enter_access_token_heading": "Enter Your Access Token",
+          "enter_access_token_sync_mcp_server": "Enter your access token to sync the MCP server.",
+          "label_access_token": "Access Token",
+          "error_network_or_token": "Network connection or access token issue",
+          "discover_mcp_title": "Discover MCP servers",
+          "obtain_token_title": "Obtain access token",
+          "get_token_from_settings": "account settings",
+          "enter_token_title": "Enter your access token",
+          "enter_access_token_to_sync": "Enter your access token to sync the MCP server.",
+          "network_or_token_error": "Network connection or access token issue"
+        }
+      },
+      "folder": {
+        "basecreatefolderdialog": {
+          "title_create_folder": "Create Folder",
+          "label_name": "Name",
+          "label_description": "Description",
+          "error_name_required": "Please enter a folder name",
+          "button_cancel": "Cancel",
+          "button_create": "Create"
+        },
+        "basefolderbreadcrumb": {
+          "default_root_directory": "Root Directory",
+          "label_root": "Root"
+        },
+        "basefoldercard": {
+          "action_open": "Open",
+          "action_rename": "Rename",
+          "action_move_to": "Move to...",
+          "action_delete": "Delete"
+        },
+        "basefolderitemselector": {
+          "text_not_selected": "Not selected",
+          "button_select": "Select...",
+          "dialog_title_select_item": "Select Item",
+          "label_folder": "Folder",
+          "root_folder_title": "Root Folder",
+          "section_subfolders": "Subfolders",
+          "optional_items": "Optional Items",
+          "empty_folder_message": "This folder is empty",
+          "create_button": "Create New",
+          "cancel_button": "Cancel",
+          "confirm_button": "Confirm",
+          "root_folder_title_dup2": "Root Folder",
+          "text_none_selected": "None selected",
+          "root_folder_label": "Root"
+        },
+        "basefoldertree": {
+          "search_placeholder": "Search folders...",
+          "root_folder": "Root Folder",
+          "no_folders": "No folders yet",
+          "open": "Open",
+          "rename": "Rename",
+          "move_to": "Move to...",
+          "delete": "Delete"
+        },
+        "basemovetofolderdialog": {
+          "dialog_title": "Move to Folder",
+          "dialog_description": "Select target folder",
+          "root_folder": "Root Folder",
+          "cancel_button": "Cancel",
+          "move_button": "Move"
+        },
+        "usefoldermanager": {
+          "root_folder_default": "Root Folder"
+        }
+      },
+      "platform": {
+        "addnewplatform": {
+          "config_preview_title": "Configuration File Preview",
+          "unable_to_load_config_preview": "Unable to load configuration file preview",
+          "failed_to_fetch_config_preview": "Failed to fetch configuration file preview data:",
+          "failed_to_fetch_default_template": "Failed to fetch default configuration template:",
+          "successfully_updated_routing_table": "Successfully updated routing table: {umop} -> {configId}",
+          "failed_to_update_routing_table": "Failed to update routing table:",
+          "successfully_created_new_config": "Successfully created new configuration file {configName}, ID: {newConfigId}",
+          "failed_to_create_new_config": "Failed to create new configuration file:",
+          "failed_to_fetch_platform_routing": "Failed to fetch platform routing configuration:",
+          "failed_to_save_routing_table": "Failed to save routing table:"
+        }
+      },
+      "shared": {
+        "astrbotconfig": {
+          "fetch_success_embedding_dimensions": "Fetched successfully:",
+          "fetch_embedding_dimensions_success": "Fetch successful:"
+        },
+        "backupdialog": {
+          "backup_time_display_condition": "checkResult?.backup_time && checkResult?.backup_time !== '未知'"
+        },
+        "consoledisplayer": {
+          "connecting_to_log_stream": "Connecting to log stream... (attempt: {retryAttempts})",
+          "log_stream_connected_success": "Log stream connected successfully!",
+          "failed_to_parse_log": "Failed to parse log:",
+          "auth_failed_token_expired": "Authentication failed (401), token may have expired.",
+          "log_stream_connection_error": "Log stream connection error:",
+          "max_retries_reached_stop": "❌ Maximum retry attempts reached, stopping reconnection. Please refresh the page to try again.",
+          "retry_after_delay": "⏳ Retrying in {delay}ms (attempt {retryAttempts})..."
+        },
+        "knowledgebaseselector": {
+          "failed_to_load_kb_list_response": "Failed to load knowledge base list:",
+          "failed_to_load_kb_list_error": "Failed to load knowledge base list:"
+        },
+        "migrationdialog": {
+          "select_platform_adapter_hint": "Please select the platform adapter you mainly use under this platform type."
+        },
+        "personaform": {
+          "radio_use_all_tools": "Use all function tools by default",
+          "radio_select_specific_tools": "Select specific function tools"
+        },
+        "personaselector": {
+          "root_folder_fallback": "All Personas",
+          "empty_folder_fallback": "This folder is empty",
+          "error_load_folder_tree": "Failed to load folder tree:",
+          "error_load_persona_list": "Failed to load persona list:",
+          "log_persona_save_success": "Persona saved successfully:",
+          "error_create_persona": "Failed to create persona:"
+        },
+        "pluginsetselector": {
+          "error_load_plugin_list": "Failed to load plugin list:"
+        },
+        "providerselector": {
+          "error_load_provider_list": "Failed to load provider list:"
+        },
+        "t2itemplateeditor": {
+          "preview_text_fallback": "This is sample text used to preview the template effect.\\n\\nMultiple lines of text are supported here, with line breaks and various formatting.",
+          "template_render_error_html": "<div style=\"color: red; padding: 20px;\">Template rendering error: {message}</div>",
+          "error_load_template_list": "Failed to load template list:",
+          "error_load_active_template": "Failed to load active template:",
+          "error_load_initial_data": "Failed to load initial data:",
+          "error_load_template_response": "Failed to load template '{name}':",
+          "error_load_template_exception": "Failed to load template '{name}':",
+          "error_save_template": "Failed to save template:",
+          "error_apply_template": "Failed to apply template '{name}':",
+          "delete_template_failed": "Failed to delete template '{value}':",
+          "reset_template_failed": "Failed to reset template:",
+          "template_rendering_error": "<div style=\"color: red; padding: 20px;\">Template rendering error: {message}</div>",
+          "failed_to_load_template": "Failed to load template '{name}':",
+          "load_template_failed_error": "Failed to load template '{name}':",
+          "failed_to_apply_template": "Failed to apply template '{name}':",
+          "failed_to_delete_template": "Failed to delete template '{value}':"
+        }
+      }
+    },
+    "composables": {
+      "useconversations": {
+        "rename_conversation_failed": "Failed to rename conversation:"
+      },
+      "usemessages": {
+        "session_running": "This session is currently running.",
+        "json_parse_failed": "JSON parsing failed:",
+        "invalid_data_object": "Invalid data object:",
+        "sse_read_error": "SSE read error:",
+        "send_message_failed": "Failed to send message:"
+      },
+      "useprovidersources": {
+        "template_config_not_found": "Corresponding template configuration not found"
+      },
+      "userecording": {
+        "recording_in_progress": "Recording...",
+        "stop_chat_input": "Chat input"
+      },
+      "usesessions": {
+        "rename_session_failed": "Failed to rename session:"
+      }
+    },
+    "i18n": {
+      "composables": {
+        "simplified_chinese": "Simplified Chinese"
+      },
+      "loader": {
+        "module_not_registered": "Module {moduleName} not registered",
+        "load_module_failed": "Failed to load module {moduleName}:",
+        "fallback_fetch_failed": "Fallback fetch loading also failed:",
+        "module_path_conflict": "⚠️ I18n module path conflict: \"{fullPath}\" is already occupied by module \"{existingModule}\", module \"{moduleName}\" may override some keys",
+        "failed_to_load_module": "Failed to load module {moduleName}:",
+        "i18n_module_path_conflict": "⚠️ I18n module path conflict: \"{fullPath}\" is already occupied by module \"{existingModule}\", module \"{moduleName}\" may override some keys"
+      },
+      "validator": {
+        "base_locale_data_missing": "Base language {baseLocale} data is missing",
+        "locale_data_missing": "Language {locale} data is missing",
+        "missing_key_in_locale": "Missing key in {locale}: {key}",
+        "extraneous_key_in_locale": "Extraneous key in {locale}: {key}",
+        "empty_translation_value": "Empty translation value: {locale}.{fullKey}",
+        "invalid_interpolation_placeholder": "Invalid interpolation placeholder: {placeholder} in {locale}.{fullKey}",
+        "translation_not_string": "Translation value should be a string, got: {value_type}",
+        "placeholder_mismatch": "Interpolation placeholders mismatch: {locale}.{key}, expected {join}, got {join}",
+        "invalid_key_naming_convention": "Key name does not follow naming convention: {key}, should use camelCase",
+        "validation_error": "Error validating language pack {locale}:",
+        "unknown_error_fallback": "Unknown error",
+        "suggest_prioritize_core_keys": "It is recommended to prioritize translating missing keys in core modules",
+        "check_empty_values": "Check all empty values and provide proper translations",
+        "ensure_placeholder_consistency": "Ensure interpolation placeholders remain consistent across all languages",
+        "invalid_placeholder": "Invalid interpolation placeholder: {placeholder} in {locale}.{fullKey}",
+        "value_not_string": "Translation value should be a string, got: {value}",
+        "invalid_key_naming": "Key name does not follow naming convention: {key}, should use camelCase",
+        "suggest_core_missing_keys": "It is recommended to prioritize translating missing keys in core modules",
+        "missing_base_language_data": "Missing data for base language {baseLocale}",
+        "missing_language_data": "Missing data for language {locale}",
+        "extra_key_in_locale": "Extra key present in {locale}: {key}",
+        "translation_value_not_string": "Translation value should be a string, got: {value}",
+        "interpolation_placeholders_mismatch": "Interpolation placeholders mismatch: {locale}.{key}, expected {join}, got {join}",
+        "error_validating_language_package": "Error validating language package {locale}:"
+      }
+    },
+    "main": {
+      "i18n_system_initialized": "🌍 New i18n system initialization completed",
+      "i18n_system_init_failed": "❌ New i18n system initialization failed:",
+      "new_i18n_init_success": "🌍 New i18n system initialization completed",
+      "new_i18n_init_failed": "❌ New i18n system initialization failed:"
+    },
+    "stores": {
+      "common": {
+        "plugin_version_unknown": "Unknown"
+      },
+      "personastore": {
+        "root_directory": "Root directory",
+        "get_root_name_fallback": "Root",
+        "fetch_folder_tree_error": "Failed to fetch folder tree",
+        "move_persona_error": "Failed to move persona",
+        "move_folder_error": "Failed to move folder",
+        "create_folder_error": "Failed to create folder",
+        "update_folder_error": "Failed to update folder",
+        "delete_folder_error": "Failed to delete folder",
+        "delete_persona_error": "Failed to delete persona",
+        "update_sort_order_error": "Failed to update sort order",
+        "breadcrumb_root_fallback": "Root",
+        "update_sorting_error": "Failed to update sorting"
+      }
+    },
+    "utils": {
+      "platformutils": {
+        "credit_hikarifroya": "Provided by @HikariFroya.",
+        "credit_wuyan1003": "Provided by @wuyan1003.",
+        "platform_qq_official_label": "qq_official (QQ Official Bot Platform)",
+        "platform_weixin_official_account_label": "weixin_official_account (WeChat Official Account)",
+        "platform_wecom_label": "wecom (WeCom)",
+        "platform_wecom_ai_bot_label": "wecom_ai_bot (WeCom AI Bot)",
+        "platform_lark_label": "lark (Feishu)",
+        "platform_dingtalk_label": "dingtalk (DingTalk)",
+        "provided_by_hikarifroya": "Provided by @HikariFroya.",
+        "provided_by_wuyan1003": "Provided by @wuyan1003."
+      }
+    },
+    "views": {
+      "configpage": {
+        "test_config_tooltip": "Test current configuration",
+        "test_config_title": "Test Configuration",
+        "save_no_file_selected_message": "Please select a configuration file first",
+        "tooltip_test_config": "Test current configuration",
+        "heading_test_config": "Test Configuration",
+        "message_select_config_first": "Please select a configuration file first"
+      },
+      "conversationpage": {
+        "log_processing_message": "Processing message:",
+        "error_invalid_api_data_format": "API returned data format does not match expected:",
+        "warn_no_pagination_info": "No pagination information in API response",
+        "error_fetch_conversation_list": "Failed to fetch conversation list:",
+        "error_response_data": "Error response data:",
+        "error_status_code": "Error status code:",
+        "log_requesting_conversation_details": "Requesting conversation details, user_id={user_id}, cid={cid}",
+        "error_parse_conversation_history": "Failed to parse conversation history:",
+        "error_fetch_conversation_details": "Failed to fetch conversation details:",
+        "error_update_conversation_history": "Failed to update conversation history:",
+        "bulk_delete_conversation_error": "Bulk delete conversation failed:",
+        "bulk_delete_conversations_error": "Error deleting conversations in batch:"
+      },
+      "extensionpage": {
+        "no_failed_plugins_to_reload": "No failed plugins need reloading",
+        "reloaded_all_failed_plugins": "Attempted to reload all failed plugins",
+        "reload_failed": "Reload failed:",
+        "batch_reload_error": "An error occurred during batch reloading",
+        "one_click_reload_fix": "Try One-Click Reload Fix",
+        "my_plugin_source_placeholder": "My Plugin Source"
+      },
+      "platformpage": {
+        "fetch_platform_stats_failed": "Failed to fetch platform statistics:"
+      },
+      "providerpage": {
+        "cancel_button": "Cancel",
+        "add_button": "Add",
+        "warning_do_not_modify_id": "It is not recommended to modify the ID, as it may cause configurations pointing to this model (such as default model, plugin-related configurations, etc.) to become invalid. In older versions of AstrBot, the “Provider ID” refers to the “ID” field below.",
+        "prompt_go_to_config_test_agent": "Please go to the \"Configuration File\" page to test the Agent executor",
+        "note_test_agent_in_config": "Testing of the Agent executor should be performed on the \"Configuration File\" page.",
+        "step_find_and_open_config": "Locate and open the corresponding configuration file.",
+        "step_modify_executor_save": "Find the Agent execution method section, modify the executor, then click Save.",
+        "step_click_chat_to_test": "Click the 💬 chat button in the bottom right corner to test.",
+        "note_update_agent_executor_for_bot": "To make the bot use this Agent executor, you also need to go and modify the Agent executor settings.",
+        "btn_ok_close_dialog": "OK",
+        "btn_go_to_config": "Go Now",
+        "code_show_update_failed": "Update failed!",
+        "code_show_update_success": "Update successful!",
+        "code_show_add_failed": "Add failed!",
+        "code_show_add_success": "Add successful!",
+        "code_show_copy_create_success": "Successfully copied and created {id}",
+        "code_error_provider_not_enabled": "This provider has not been enabled by the user",
+        "prompt_test_agent_executor_on_config_page": "Please go to the \"Configuration File\" page to test the Agent executor",
+        "note_test_agent_executor_on_config_page": "Testing of the Agent executor should be performed on the \"Configuration File\" page.",
+        "step_open_config_file": "Locate and open the corresponding configuration file.",
+        "step_modify_and_save_executor": "Find the Agent execution method section, modify the executor, then click Save.",
+        "note_modify_agent_executor_for_bot": "To make the bot use this Agent executor, you also need to go and modify the Agent executor settings.",
+        "btn_go_to_config_page": "Go Now"
+      },
+      "sessionmanagementpage": {
+        "display_platform": "Platform: {platform}",
+        "display_message_type": "Message Type: {message_type}",
+        "display_session_id": "Session ID: {session_id}",
+        "title_group_management": "Group Management",
+        "label_group_count": "{groups} groups",
+        "add_to_group": "Add to Group",
+        "create_new_group": "New Group",
+        "group_session_count": "{{ group.umo_count }} sessions",
+        "no_groups_prompt": "No groups yet, click \"New Group\" to create",
+        "group_dialog_title": "Create Group Edit Group",
+        "group_name_field": "Group Name",
+        "available_sessions_title": "Available sessions ({{ unselectedUmos.length }})",
+        "available_search_field": "Search...",
+        "no_matches_found": "No matches",
+        "selected_sessions_title": "Selected sessions ({{ editingGroup.umos.length }})",
+        "selected_search_field": "Search...",
+        "no_members_yet": "No members yet",
+        "cancel_button": "Cancel",
+        "save_button": "Save",
+        "custom_groups_divider": "── Custom Groups ──",
+        "group_option_label": "{name} ({umo_count} sessions)",
+        "error_no_session_selected": "Please select at least one session to operate on",
+        "error_no_config_selected": "Please select at least one configuration to modify",
+        "success_batch_update": "Batch update successful",
+        "error_partial_update_failed": "Partial update failed",
+        "show_error_batch_update_failed": "Batch update failed",
+        "console_error_load_groups_failed": "Failed to load groups:",
+        "console_error_load_sessions_failed": "Failed to load session list:",
+        "show_error_group_name_required": "Group name cannot be empty",
+        "show_error_save_group_failed": "Failed to save group",
+        "confirm_delete_group_message": "Are you sure you want to delete group \"{name}\"?",
+        "show_error_delete_group_failed": "Failed to delete group",
+        "show_error_no_sessions_selected": "Please select sessions to add first",
+        "show_success_sessions_added": "Added {length} session(s) to group",
+        "show_error_add_failed": "Add failed",
+        "new_group": "New Group",
+        "no_matches_available": "No matches",
+        "no_members_selected": "No members yet",
+        "batch_update_failed": "Batch update failed",
+        "load_groups_failed": "Failed to load groups:",
+        "load_sessions_failed": "Failed to load session list:",
+        "group_name_required": "Group name cannot be empty",
+        "save_group_failed": "Failed to save group",
+        "confirm_delete_group": "Are you sure you want to delete group \"{name}\"?",
+        "delete_group_failed": "Failed to delete group",
+        "select_sessions_required": "Please select sessions to add first",
+        "sessions_added_success": "Added {length} session(s) to group",
+        "add_failed": "Add failed",
+        "session_count": "{{ group.umo_count }} sessions",
+        "create_or_edit_group": {
+          "true": "Create Group",
+          "false": "Edit Group"
+        }
+      },
+      "alkaid": {
+        "knowledgebase": {
+          "recommend_new_knowledge_base": "It is recommended that you switch to the new knowledge base feature.",
+          "rerank_model_label_prefix": "Rerank model: {rerank_model}",
+          "rerank_model_not_set": "Not set",
+          "usage_tip_kb_use": "💡 Usage: In the chat page, type \"/kb use {collection_name}\"",
+          "tab_import_data": "Import Data",
+          "heading_import_data": "Import Data",
+          "description_select_import": "Select a data source and import content into the knowledge base",
+          "label_data_source_select": "Data Source",
+          "option_from_file": "From File",
+          "option_from_url": "From URL",
+          "plugin_current_version_fallback": "unknown",
+          "plugin_latest_version_fallback": "unknown",
+          "plugin_versions_known_check": "unknown unknown",
+          "recommend_new_feature": "It is recommended to switch to the new knowledge base feature.",
+          "rerank_model_label": "Rerank model: {rerank_model}",
+          "rerank_model_value": "Not set",
+          "usage_tip": "💡 Usage: In the chat page, type \"/kb use {collection_name}\"",
+          "import_tab": "Import Data",
+          "import_data_heading": "Import Data",
+          "import_description": "Select a data source and import content into the knowledge base",
+          "data_source_label": "Select Data Source",
+          "from_file_option": "From File",
+          "from_url_option": "From URL",
+          "plugin_version_check_condition": "未知 未知"
+        },
+        "longtermmemory": {
+          "accelerating_development": "Accelerating development...",
+          "search_memory_failed": "Failed to search memory data:",
+          "add_memory_failed": "Failed to add memory data:",
+          "get_memory_details_failed": "Failed to get memory details:",
+          "parse_metadata_error": "Error parsing metadata:"
+        }
+      },
+      "knowledge_base": {
+        "documentdetail": {
+          "char_count_display": "{char_count} characters",
+          "selected_chunk_char_count": "{char_count} characters",
+          "load_document_details_failed": "Failed to load document details",
+          "load_chunks_failed": "Failed to load chunk list",
+          "char_count_label": "{char_count} characters"
+        },
+        "kbdetail": {
+          "load_failed_snackbar": "Load failed",
+          "load_kb_details_failed": "Failed to load knowledge base details"
+        },
+        "kblist": {
+          "kb_description_fallback": "No description available",
+          "switch_to_legacy_kb": "Switch to legacy knowledge base"
+        },
+        "components": {
+          "documentstab": {
+            "search_documents_placeholder": "Search documents...",
+            "max_files_hint": "Up to 10 files can be uploaded",
+            "selected_files_count": "{file_count} files selected",
+            "clear_selection": "Clear",
+            "tavily_config_message": "Failed to check web search configuration. Configure a Tavily key to use this feature.",
+            "configure_button": "Configure",
+            "concurrent_tasks_hint": "Maximum number of concurrent tasks",
+            "max_retries_hint": "Maximum retry attempts on failure",
+            "cancel_delete": "Cancel",
+            "confirm_delete": "Delete",
+            "load_documents_failed": "Failed to load document list",
+            "max_files_limit": "Can select up to 10 files at most",
+            "uploading_background": "Uploading {file_count} files in the background...",
+            "extracting_url_background": "Extracting content from URL in the background...",
+            "upload_success": "Successfully uploaded {successCount} documents",
+            "upload_summary": "Upload completed: {successCount} succeeded, {failedCount} failed",
+            "upload_failed": "Upload failed: {error}",
+            "status_waiting": "Waiting...",
+            "status_extracting": "Extracting content...",
+            "status_cleaning": "Cleaning content...",
+            "status_parsing": "Parsing document...",
+            "chunking_progress": "Chunking text...",
+            "embedding_progress": "Generating embeddings...",
+            "tavily_key_success": "Tavily API Key configured successfully",
+            "tavily_config_status_message": "Failed to check web search configuration. Configure a Tavily key to use this feature.",
+            "max_files_selected_warning": "Can select up to 10 files at most",
+            "upload_completed_summary": "Upload completed: {successCount} succeeded, {failedCount} failed",
+            "upload_failed_error": "Upload failed: {error}",
+            "chunking_status": "Chunking text...",
+            "embedding_status": "Generating embeddings..."
+          },
+          "settingstab": {
+            "embedding_change_warning": "Note:",
+            "confirm_embedding_change_title": "Confirm embedding model change",
+            "embedding_change_effects_title": "Warning:",
+            "effect_existing_vectors_invalid": "Existing vector data will become invalid",
+            "effect_retrieval_may_fail": "Retrieval function may not work properly",
+            "effect_reupload_recommended": "Recommended to delete existing documents and re-upload",
+            "effect_vectors_incompatible": "Vectors generated by different embedding models are incompatible",
+            "confirm_change_message": "to",
+            "cancel_button": "Cancel",
+            "confirm_change_button": "Confirm Change",
+            "confirm_model_change_title": "Confirm embedding model change",
+            "change_effects_warning": "Warning:",
+            "effect_recommend_reupload": "Recommended to delete existing documents and re-upload",
+            "effect_models_incompatible": "Vectors generated by different embedding models are incompatible",
+            "confirm_change_prompt": "to"
+          },
+          "tavilykeydialog": {
+            "dialog_title": "Configure Tavily API Key",
+            "description": "Tavily official website",
+            "cancel_button": "Cancel",
+            "save_button": "Save",
+            "error_key_empty": "API Key cannot be empty",
+            "error_fetch_config_failed": "Failed to get current configuration",
+            "error_save_failed": "Save failed, please check if the Key is correct",
+            "save_failed_unknown_error": "Save failed, an unknown error occurred"
+          }
+        }
+      }
+    }
+  },
+  "create": {
+    "nameRequired": "If the knowledge base name is modified later, it must be updated in the configuration file again.",
+    "embeddingModelLabel": "The embedding model cannot be changed after selection. Please create a new knowledge base if you need to use a different model."
+  },
+  "upload": {
+    "batchSize": "Number of texts processed per batch"
+  },
+  "collapse": "expandedEntries[entryIndex] ? (t('core.common.collapse') || 'Collapse') : (t('core.common.expand') || 'Expand')"
 }

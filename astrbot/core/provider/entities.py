@@ -20,6 +20,7 @@ from astrbot.core.agent.message import (
 )
 from astrbot.core.agent.tool import ToolSet
 from astrbot.core.db.po import Conversation
+from astrbot.core.lang import t
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.utils.io import download_image_by_url
 
@@ -177,7 +178,12 @@ class ProviderRequest:
             content_blocks.append({"type": "text", "text": self.prompt})
         elif self.image_urls:
             # 如果没有文本但有图片，添加占位文本
-            content_blocks.append({"type": "text", "text": "[图片]"})
+            content_blocks.append(
+                {
+                    "type": "text",
+                    "text": t("core-provider-entities-image_content_placeholder"),
+                }
+            )
 
         # 2. 额外的内容块（系统提醒、指令等）
         if self.extra_user_content_parts:
@@ -196,7 +202,12 @@ class ProviderRequest:
                 else:
                     image_data = await self._encode_image_bs64(image_url)
                 if not image_data:
-                    logger.warning(f"图片 {image_url} 得到的结果为空，将忽略。")
+                    logger.warning(
+                        t(
+                            "core-provider-entities-empty_image_result_warning",
+                            image_url=image_url,
+                        )
+                    )
                     continue
                 content_blocks.append(
                     {"type": "image_url", "image_url": {"url": image_data}},

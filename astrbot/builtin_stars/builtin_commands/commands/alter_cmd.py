@@ -1,6 +1,6 @@
 from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.core import t
+from astrbot.core.lang import t
 from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
 from astrbot.core.star.filter.permission import PermissionTypeFilter

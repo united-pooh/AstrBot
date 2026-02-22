@@ -20,6 +20,7 @@ from astrbot import logger
 from astrbot.api.provider import Provider
 from astrbot.core.agent.message import ContentPart, ImageURLPart, Message, TextPart
 from astrbot.core.agent.tool import ToolSet
+from astrbot.core.lang import t
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.provider.entities import LLMResponse, TokenUsage, ToolCallsResult
 from astrbot.core.utils.io import download_image_by_url
@@ -35,7 +36,7 @@ from ..register import register_provider_adapter
 
 @register_provider_adapter(
     "openai_chat_completion",
-    "OpenAI API Chat Completion 提供商适配器",
+    t("core-provider-sources-openai_source-chat_completion_adapter"),
 )
 class ProviderOpenAIOfficial(Provider):
     _ERROR_TEXT_CANDIDATE_MAX_CHARS = 4096
@@ -145,7 +146,7 @@ class ProviderOpenAIOfficial(Provider):
         image_fallback_used: bool = False,
     ) -> tuple:
         logger.warning(
-            "检测到图片请求失败（%s），已移除图片并重试（保留文本内容）。",
+            t("core-provider-sources-openai_source-image_request_failed_retry"),
             reason,
         )
         new_contexts = await self._remove_image_from_context(context_query)
@@ -219,7 +220,9 @@ class ProviderOpenAIOfficial(Provider):
                 models_str.append(model.id)
             return models_str
         except NotFoundError as e:
-            raise Exception(f"获取模型列表失败：{e}")
+            raise Exception(
+                t("core-provider-sources-openai_source-fetch_model_list_failed", e=e)
+            )
 
     async def _query(self, payloads: dict, tools: ToolSet | None) -> LLMResponse:
         if tools:
@@ -256,7 +259,11 @@ class ProviderOpenAIOfficial(Provider):
 
         if not isinstance(completion, ChatCompletion):
             raise Exception(
-                f"API 返回的 completion 类型错误：{type(completion)}: {completion}。",
+                t(
+                    "core-provider-sources-openai_source-api_completion_type_error",
+                    completion=type(completion),
+                    completion_2=completion,
+                ),
             )
 
         logger.debug(f"completion: {completion}")
@@ -469,7 +476,7 @@ class ProviderOpenAIOfficial(Provider):
         llm_response = LLMResponse("assistant")
 
         if len(completion.choices) == 0:
-            raise Exception("API 返回的 completion 为空。")
+            raise Exception(t("core-provider-sources-openai_source-completion_empty"))
         choice = completion.choices[0]
 
         # parse the text completion
@@ -505,7 +512,9 @@ class ProviderOpenAIOfficial(Provider):
                 if tools is None:
                     # 工具集未提供
                     # Should be unreachable
-                    raise Exception("工具集未提供")
+                    raise Exception(
+                        t("core-provider-sources-openai_source-toolset_not_provided")
+                    )
                 for tool in tools.func_list:
                     if (
                         tool_call.type == "function"
@@ -532,11 +541,21 @@ class ProviderOpenAIOfficial(Provider):
         # specially handle finish reason
         if choice.finish_reason == "content_filter":
             raise Exception(
-                "API 返回的 completion 由于内容安全过滤被拒绝(非 AstrBot)。",
+                t("core-provider-sources-openai_source-completion_rejected_safety"),
             )
         if llm_response.completion_text is None and not llm_response.tools_call_args:
-            logger.error(f"API 返回的 completion 无法解析：{completion}。")
-            raise Exception(f"API 返回的 completion 无法解析：{completion}。")
+            logger.error(
+                t(
+                    "core-provider-sources-openai_source-completion_parse_failed_log",
+                    completion=completion,
+                )
+            )
+            raise Exception(
+                t(
+                    "core-provider-sources-openai_source-completion_parse_failed",
+                    completion=completion,
+                )
+            )
 
         llm_response.raw_completion = completion
         llm_response.id = completion.id
@@ -624,7 +643,10 @@ class ProviderOpenAIOfficial(Provider):
         """处理API错误并尝试恢复"""
         if "429" in str(e):
             logger.warning(
-                f"API 调用过于频繁，尝试使用其他 Key 重试。当前 Key: {chosen_key[:12]}",
+                t(
+                    "core-provider-sources-openai_source-api_rate_limit_retry",
+                    chosen_key=chosen_key[:12],
+                ),
             )
             # 最后一次不等待
             if retry_cnt < max_retries - 1:
@@ -644,7 +666,10 @@ class ProviderOpenAIOfficial(Provider):
             raise e
         if "maximum context length" in str(e):
             logger.warning(
-                f"上下文长度超过限制。尝试弹出最早的记录然后重试。当前记录条数: {len(context_query)}",
+                t(
+                    "core-provider-sources-openai_source-context_length_exceeded_pop_retry",
+                    context_query=context_query,
+                ),
             )
             await self.pop_record(context_query)
             payloads["messages"] = context_query
@@ -690,7 +715,10 @@ class ProviderOpenAIOfficial(Provider):
         ):
             # openai, ollama, gemini openai, siliconcloud 的错误提示与 code 不统一，只能通过字符串匹配
             logger.info(
-                f"{self.get_model()} 不支持函数工具调用，已自动去除，不影响使用。",
+                t(
+                    "core-provider-sources-openai_source-model_no_tool_support",
+                    get_model=self.get_model(),
+                ),
             )
             payloads.pop("tools", None)
             return (
@@ -705,7 +733,9 @@ class ProviderOpenAIOfficial(Provider):
         # logger.error(f"发生了错误。Provider 配置如下: {self.provider_config}")
 
         if "tool" in str(e).lower() and "support" in str(e).lower():
-            logger.error("疑似该模型不支持函数调用工具调用。请输入 /tool off_all")
+            logger.error(
+                t("core-provider-sources-openai_source-model_no_tool_support_detected")
+            )
 
         if is_connection_error(e):
             proxy = self.provider_config.get("proxy", "")
@@ -775,9 +805,14 @@ class ProviderOpenAIOfficial(Provider):
                     break
 
         if retry_cnt == max_retries - 1 or llm_response is None:
-            logger.error(f"API 调用失败，重试 {max_retries} 次仍然失败。")
+            logger.error(
+                t(
+                    "core-provider-sources-openai_source-api_call_failed_after_retries_log",
+                    max_retries=max_retries,
+                )
+            )
             if last_exception is None:
-                raise Exception("未知错误")
+                raise Exception(t("core-provider-sources-openai_source-unknown_error"))
             raise last_exception
         return llm_response
 
@@ -842,9 +877,16 @@ class ProviderOpenAIOfficial(Provider):
                     break
 
         if retry_cnt == max_retries - 1:
-            logger.error(f"API 调用失败，重试 {max_retries} 次仍然失败。")
+            logger.error(
+                t(
+                    "core-provider-sources-openai_source-api_call_failed_after_retries_log_2",
+                    max_retries=max_retries,
+                )
+            )
             if last_exception is None:
-                raise Exception("未知错误")
+                raise Exception(
+                    t("core-provider-sources-openai_source-unknown_error_2")
+                )
             raise last_exception
 
     async def _remove_image_from_context(self, contexts: list):
@@ -861,7 +903,14 @@ class ProviderOpenAIOfficial(Provider):
                     new_content.append(item)
                 if not new_content:
                     # 用户只发了图片
-                    new_content = [{"type": "text", "text": "[图片]"}]
+                    new_content = [
+                        {
+                            "type": "text",
+                            "text": t(
+                                "core-provider-sources-openai_source-fallback_image_placeholder"
+                            ),
+                        }
+                    ]
                 context["content"] = new_content
             new_contexts.append(context)
         return new_contexts
@@ -893,7 +942,12 @@ class ProviderOpenAIOfficial(Provider):
             else:
                 image_data = await self.encode_image_bs64(image_url)
             if not image_data:
-                logger.warning(f"图片 {image_url} 得到的结果为空，将忽略。")
+                logger.warning(
+                    t(
+                        "core-provider-sources-openai_source-image_empty_result_ignored",
+                        image_url=image_url,
+                    )
+                )
                 return None
             return {
                 "type": "image_url",
@@ -908,7 +962,14 @@ class ProviderOpenAIOfficial(Provider):
             content_blocks.append({"type": "text", "text": text})
         elif image_urls:
             # 如果没有文本但有图片，添加占位文本
-            content_blocks.append({"type": "text", "text": "[图片]"})
+            content_blocks.append(
+                {
+                    "type": "text",
+                    "text": t(
+                        "core-provider-sources-openai_source-hardcoded_text_image_placeholder"
+                    ),
+                }
+            )
         elif extra_user_content_parts:
             # 如果只有额外内容块，也需要添加占位文本
             content_blocks.append({"type": "text", "text": " "})
@@ -923,7 +984,12 @@ class ProviderOpenAIOfficial(Provider):
                     if image_part:
                         content_blocks.append(image_part)
                 else:
-                    raise ValueError(f"不支持的额外内容块类型: {type(part)}")
+                    raise ValueError(
+                        t(
+                            "core-provider-sources-openai_source-unsupported_content_part_type",
+                            part=type(part),
+                        )
+                    )
 
         # 3. 图片内容
         if image_urls:

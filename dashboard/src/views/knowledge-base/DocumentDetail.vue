@@ -121,7 +121,7 @@
 
             <template #item.char_count="{ item }">
               <v-chip size="small" variant="outlined">
-                {{ item.char_count }} 字符
+                {{ t('src.views.knowledge_base.documentdetail.char_count_label', { char_count: item.char_count }) }}
               </v-chip>
             </template>
 
@@ -203,7 +203,7 @@
                 <v-icon>mdi-text</v-icon>
               </template>
               <v-list-item-title>{{ t('view.charCount') }}</v-list-item-title>
-              <v-list-item-subtitle>{{ selectedChunk?.char_count || 0 }} 字符</v-list-item-subtitle>
+              <v-list-item-subtitle>{{ t('src.views.knowledge_base.documentdetail.selected_chunk_char_count', { char_count: selectedChunk?.char_count || 0 }) }}</v-list-item-subtitle>
             </v-list-item>
 
             <v-list-item>
@@ -243,7 +243,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
-import { useModuleI18n } from '@/i18n/composables'
+import { useModuleI18n } from '@/i18n/composables';
 import { askForConfirmation, useConfirmDialog } from '@/utils/confirmDialog'
 
 const { tm: t } = useModuleI18n('features/knowledge-base/document')
@@ -309,7 +309,7 @@ const loadDocument = async () => {
     }
   } catch (error) {
     console.error('Failed to load document:', error)
-    showSnackbar('加载文档详情失败', 'error')
+    showSnackbar(t('src.views.knowledge_base.documentdetail.load_document_details_failed'), 'error')
   } finally {
     loading.value = false
   }
@@ -333,7 +333,7 @@ const loadChunks = async () => {
     }
   } catch (error) {
     console.error('Failed to load chunks:', error)
-    showSnackbar('加载分块列表失败', 'error')
+    showSnackbar(t('src.views.knowledge_base.documentdetail.load_chunks_failed'), 'error')
   } finally {
     loadingChunks.value = false
   }

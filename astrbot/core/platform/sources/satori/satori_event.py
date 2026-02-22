@@ -15,6 +15,7 @@ from astrbot.api.message_components import (
     Video,
 )
 from astrbot.api.platform import AstrBotMessage, PlatformMetadata
+from astrbot.core.lang import t
 
 if TYPE_CHECKING:
     from .satori_adapter import SatoriPlatformAdapter
@@ -107,7 +108,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
             return None
 
         except Exception as e:
-            logger.error(f"Satori 消息发送异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_event-message_send_exception",
+                    e=e,
+                )
+            )
             return None
 
     async def send(self, message: MessageChain) -> None:
@@ -154,9 +160,16 @@ class SatoriPlatformEvent(AstrMessageEvent):
                 user_id,
             )
             if not result:
-                logger.error("Satori 消息发送失败")
+                logger.error(
+                    t("core-platform-sources-satori-satori_event-message_send_failed")
+                )
         except Exception as e:
-            logger.error(f"Satori 消息发送异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_event-message_send_exception_repeated",
+                    e=e,
+                )
+            )
 
         await super().send(message)
 
@@ -195,7 +208,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
                                     )
                                     await self.send(img_chain)
                             except Exception as e:
-                                logger.error(f"图片转换为base64失败: {e}")
+                                logger.error(
+                                    t(
+                                        "core-platform-sources-satori-satori_event-image_to_base64_failed",
+                                        e=e,
+                                    )
+                                )
                         else:
                             content_parts.append(str(component))
 
@@ -205,7 +223,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
                 await self.send(temp_chain)
 
         except Exception as e:
-            logger.error(f"Satori 流式消息发送异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_event-streaming_send_failed",
+                    e=e,
+                )
+            )
 
         return await super().send_streaming(generator, use_fallback)
 
@@ -232,12 +255,15 @@ class SatoriPlatformEvent(AstrMessageEvent):
                     if image_base64:
                         return f'<img src="data:image/jpeg;base64,{image_base64}"/>'
                 except Exception as e:
-                    logger.error(f"图片转换为base64失败: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-satori-satori_event-image_to_base64_failed_2",
+                            e=e,
+                        )
+                    )
 
             elif isinstance(component, File):
-                return (
-                    f'<file src="{component.file}" name="{component.name or "文件"}"/>'
-                )
+                return f'<file src="{component.file}" name="{component.name or t("core-platform-sources-satori-satori_event-file_component_xml")}"/>'
 
             elif isinstance(component, Record):
                 try:
@@ -245,7 +271,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
                     if record_base64:
                         return f'<audio src="data:audio/wav;base64,{record_base64}"/>'
                 except Exception as e:
-                    logger.error(f"语音转换为base64失败: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-satori-satori_event-voice_to_base64_failed",
+                            e=e,
+                        )
+                    )
 
             elif isinstance(component, Reply):
                 return f'<reply id="{component.id}"/>'
@@ -256,7 +287,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
                     if video_path_url:
                         return f'<video src="{video_path_url}"/>'
                 except Exception as e:
-                    logger.error(f"视频文件转换失败: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-satori-satori_event-video_conversion_failed",
+                            e=e,
+                        )
+                    )
 
             elif isinstance(component, Forward):
                 return f'<message id="{component.id}" forward/>'
@@ -265,7 +301,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
             return ""
 
         except Exception as e:
-            logger.error(f"转换消息组件失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_event-component_conversion_failed",
+                    e=e,
+                )
+            )
             return ""
 
     async def _convert_node_to_satori(self, node: Node) -> str:
@@ -284,7 +325,9 @@ class SatoriPlatformEvent(AstrMessageEvent):
 
             # 如果内容为空，添加默认内容
             if not content.strip():
-                content = "[转发消息]"
+                content = t(
+                    "core-platform-sources-satori-satori_event-forwarded_message_placeholder"
+                )
 
             # 构建 Satori 格式的转发节点
             author_attrs = []
@@ -298,7 +341,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
             return f"<message><author {author_attr_str}/>{content}</message>"
 
         except Exception as e:
-            logger.error(f"转换转发节点失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_event-forward_node_conversion_failed",
+                    e=e,
+                )
+            )
             return ""
 
     @classmethod
@@ -325,12 +373,15 @@ class SatoriPlatformEvent(AstrMessageEvent):
                     if image_base64:
                         return f'<img src="data:image/jpeg;base64,{image_base64}"/>'
                 except Exception as e:
-                    logger.error(f"图片转换为base64失败: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-satori-satori_event-image_to_base64_failed_3",
+                            e=e,
+                        )
+                    )
 
             elif isinstance(component, File):
-                return (
-                    f'<file src="{component.file}" name="{component.name or "文件"}"/>'
-                )
+                return f'<file src="{component.file}" name="{component.name or t("core-platform-sources-satori-satori_event-file_component_xml_2")}"/>'
 
             elif isinstance(component, Record):
                 try:
@@ -338,7 +389,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
                     if record_base64:
                         return f'<audio src="data:audio/wav;base64,{record_base64}"/>'
                 except Exception as e:
-                    logger.error(f"语音转换为base64失败: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-satori-satori_event-voice_to_base64_failed_2",
+                            e=e,
+                        )
+                    )
 
             elif isinstance(component, Reply):
                 return f'<reply id="{component.id}"/>'
@@ -349,7 +405,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
                     if video_path_url:
                         return f'<video src="{video_path_url}"/>'
                 except Exception as e:
-                    logger.error(f"视频文件转换失败: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-satori-satori_event-video_conversion_failed_2",
+                            e=e,
+                        )
+                    )
 
             elif isinstance(component, Forward):
                 return f'<message id="{component.id}" forward/>'
@@ -358,7 +419,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
             return ""
 
         except Exception as e:
-            logger.error(f"转换消息组件失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_event-component_conversion_failed_2",
+                    e=e,
+                )
+            )
             return ""
 
     @classmethod
@@ -378,7 +444,9 @@ class SatoriPlatformEvent(AstrMessageEvent):
 
             # 如果内容为空，添加默认内容
             if not content.strip():
-                content = "[转发消息]"
+                content = t(
+                    "core-platform-sources-satori-satori_event-forwarded_message_placeholder_2"
+                )
 
             author_attrs = []
             if node.uin:
@@ -391,7 +459,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
             return f"<message><author {author_attr_str}/>{content}</message>"
 
         except Exception as e:
-            logger.error(f"转换转发节点失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_event-forward_node_conversion_failed_2",
+                    e=e,
+                )
+            )
             return ""
 
     async def _convert_nodes_to_satori(self, nodes: Nodes) -> str:
@@ -409,7 +482,12 @@ class SatoriPlatformEvent(AstrMessageEvent):
             return ""
 
         except Exception as e:
-            logger.error(f"转换合并转发消息失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_event-merged_forward_conversion_failed",
+                    e=e,
+                )
+            )
             return ""
 
     @classmethod
@@ -428,5 +506,10 @@ class SatoriPlatformEvent(AstrMessageEvent):
             return ""
 
         except Exception as e:
-            logger.error(f"转换合并转发消息失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_event-merged_forward_conversion_failed_2",
+                    e=e,
+                )
+            )
             return ""

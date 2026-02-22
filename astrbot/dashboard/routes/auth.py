@@ -5,7 +5,8 @@ import jwt
 from quart import request
 
 from astrbot import logger
-from astrbot.core import DEMO_MODE, t
+from astrbot.core import DEMO_MODE
+from astrbot.core.lang import t
 
 from .route import Response, Route, RouteContext
 
@@ -66,7 +67,11 @@ class AuthRoute(Route):
         if new_pwd:
             confirm_pwd = post_data.get("confirm_password", None)
             if confirm_pwd != new_pwd:
-                return Response().error("两次输入的新密码不一致").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-auth-new_passwords_do_not_match"))
+                    .__dict__
+                )
             self.config["dashboard"]["password"] = new_pwd
         if new_username:
             self.config["dashboard"]["username"] = new_username

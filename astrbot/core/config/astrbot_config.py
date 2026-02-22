@@ -3,6 +3,7 @@ import json
 import logging
 import os
 
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
 from .default import DEFAULT_CONFIG, DEFAULT_VALUE_MAP
@@ -70,7 +71,11 @@ class AstrBotConfig(dict):
             for k, v in schema.items():
                 if v["type"] not in DEFAULT_VALUE_MAP:
                     raise TypeError(
-                        f"不受支持的配置类型 {v['type']}。支持的类型有：{DEFAULT_VALUE_MAP.keys()}",
+                        t(
+                            "core-config-astrbot_config-unsupported_config_type",
+                            v=v["type"],
+                            keys=DEFAULT_VALUE_MAP.keys(),
+                        ),
                     )
                 if "default" in v:
                     default = v["default"]
@@ -101,7 +106,13 @@ class AstrBotConfig(dict):
             if key not in conf:
                 # 配置项不存在，插入默认值
                 path_ = path + "." + key if path else key
-                logger.info(f"检查到配置项 {path_} 不存在，已插入默认值 {value}")
+                logger.info(
+                    t(
+                        "core-config-astrbot_config-inserted_default_value",
+                        path_=path_,
+                        value=value,
+                    )
+                )
                 new_conf[key] = value
                 has_new = True
             elif conf[key] is None:
@@ -131,15 +142,27 @@ class AstrBotConfig(dict):
         for key in list(conf.keys()):
             if key not in refer_conf:
                 path_ = path + "." + key if path else key
-                logger.info(f"检查到配置项 {path_} 不存在，将从当前配置中删除")
+                logger.info(
+                    t(
+                        "core-config-astrbot_config-config_item_not_found_remove",
+                        path_=path_,
+                    )
+                )
                 has_new = True
 
         # 顺序不一致也算作变更
         if list(conf.keys()) != list(new_conf.keys()):
             if path:
-                logger.info(f"检查到配置项 {path} 的子项顺序不一致，已重新排序")
+                logger.info(
+                    t(
+                        "core-config-astrbot_config-subitem_order_inconsistent_resorted",
+                        path=path,
+                    )
+                )
             else:
-                logger.info("检查到配置项顺序不一致，已重新排序")
+                logger.info(
+                    t("core-config-astrbot_config-config_order_inconsistent_resorted")
+                )
             has_new = True
 
         # 更新原始配置
@@ -169,7 +192,7 @@ class AstrBotConfig(dict):
             del self[key]
             self.save_config()
         except KeyError:
-            raise AttributeError(f"没有找到 Key: '{key}'")
+            raise AttributeError(t("core-config-astrbot_config-key_not_found", key=key))
 
     def __setattr__(self, key, value) -> None:
         self[key] = value

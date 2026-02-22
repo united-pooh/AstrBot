@@ -23,7 +23,7 @@
         <v-dialog v-model="dialog" max-width="480">
             <v-card>
                 <v-card-title class="d-flex align-center justify-space-between">
-                    <span>选择配置文件</span>
+                    <span>{{ t('src.components.chat.configselector.label_select_profile') }}</span>
                     <v-btn icon variant="text" @click="closeDialog">
                         <v-icon>mdi-close</v-icon>
                     </v-btn>
@@ -51,20 +51,20 @@
                             </template>
                         </v-list-item>
                         <div v-if="configOptions.length === 0" class="text-center text-body-2 text-medium-emphasis">
-                            暂无可选配置，请先在配置页创建。
+                            {{ t('src.components.chat.configselector.no_profiles_message') }}
                         </div>
                     </v-list>
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn variant="text" @click="closeDialog">取消</v-btn>
+                    <v-btn variant="text" @click="closeDialog">{{ t('src.components.chat.configselector.btn_cancel') }}</v-btn>
                     <v-btn
                         color="primary"
                         @click="confirmSelection"
                         :disabled="!tempSelectedConfig"
                         :loading="saving"
                     >
-                        应用
+                        {{ t('src.components.chat.configselector.btn_apply') }}
                     </v-btn>
                 </v-card-actions>
             </v-card>
@@ -76,7 +76,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from '@/utils/toast';
-import { useModuleI18n } from '@/i18n/composables';
+import { useModuleI18n, t } from '@/i18n/composables';
 import {
     getStoredDashboardUsername,
     getStoredSelectedChatConfigId,
@@ -167,7 +167,7 @@ async function fetchConfigList() {
         const res = await axios.get('/api/config/abconfs');
         configOptions.value = res.data.data?.info_list || [];
     } catch (error) {
-        console.error('加载配置文件列表失败', error);
+        console.error(t('src.components.chat.configselector.error_load_profile_list'), error);
         configOptions.value = [];
     } finally {
         loadingConfigs.value = false;
@@ -183,7 +183,7 @@ async function fetchRoutingEntries() {
             confId: confId as string
         }));
     } catch (error) {
-        console.error('获取配置路由失败', error);
+        console.error(t('src.components.chat.configselector.error_get_config_route'), error);
         routingEntries.value = [];
     }
 }
@@ -221,7 +221,7 @@ async function getAgentRunnerType(confId: string): Promise<string> {
         configCache.value[confId] = type;
         return type;
     } catch (error) {
-        console.error('获取配置文件详情失败', error);
+        console.error(t('src.components.chat.configselector.error_get_profile_details'), error);
         return 'local';
     }
 }
@@ -254,8 +254,8 @@ async function applySelectionToBackend(confId: string): Promise<boolean> {
         return true;
     } catch (error) {
         const err = error as any;
-        console.error('更新配置文件失败', err);
-        toast.error(err?.response?.data?.message || '配置文件应用失败');
+        console.error(t('src.components.chat.configselector.error_update_profile'), err);
+        toast.error(err?.response?.data?.message || t('src.components.chat.configselector.error_apply_profile_toast'));
         return false;
     } finally {
         saving.value = false;

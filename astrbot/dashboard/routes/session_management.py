@@ -6,6 +6,7 @@ from astrbot.core import logger, sp
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
 from astrbot.core.db import BaseDatabase
 from astrbot.core.db.po import ConversationV2, Preference
+from astrbot.core.lang import t
 from astrbot.core.provider.entities import ProviderType
 
 from .route import Response, Route, RouteContext
@@ -223,7 +224,12 @@ class SessionManagementRoute(Route):
                         for kb in kbs
                     ]
                 except Exception as e:
-                    logger.warning(f"获取知识库列表失败: {e!s}")
+                    logger.warning(
+                        t(
+                            "dashboard-routes-session_management-failed_to_fetch_knowledge_base_list",
+                            e=e,
+                        )
+                    )
 
             return (
                 Response()
@@ -245,8 +251,19 @@ class SessionManagementRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"获取规则列表失败: {e!s}")
-            return Response().error(f"获取规则列表失败: {e!s}").__dict__
+            logger.error(
+                t("dashboard-routes-session_management-failed_to_fetch_rule_list", e=e)
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-failed_to_fetch_rule_list_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def update_session_rule(self):
         """更新某个 umo 的自定义规则
@@ -265,11 +282,36 @@ class SessionManagementRoute(Route):
             rule_value = data.get("rule_value")
 
             if not umo:
-                return Response().error("缺少必要参数: umo").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-missing_required_parameter_umo"
+                        )
+                    )
+                    .__dict__
+                )
             if not rule_key:
-                return Response().error("缺少必要参数: rule_key").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-missing_required_parameter_rule_key"
+                        )
+                    )
+                    .__dict__
+                )
             if rule_key not in AVAILABLE_SESSION_RULE_KEYS:
-                return Response().error(f"不支持的规则键: {rule_key}").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-unsupported_rule_key",
+                            rule_key=rule_key,
+                        )
+                    )
+                    .__dict__
+                )
 
             if rule_key == "session_plugin_config":
                 rule_value = {
@@ -281,12 +323,34 @@ class SessionManagementRoute(Route):
 
             return (
                 Response()
-                .ok({"message": f"规则 {rule_key} 已更新", "umo": umo})
+                .ok(
+                    {
+                        "message": t(
+                            "dashboard-routes-session_management-rule_updated",
+                            rule_key=rule_key,
+                        ),
+                        "umo": umo,
+                    }
+                )
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"更新会话规则失败: {e!s}")
-            return Response().error(f"更新会话规则失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-session_management-failed_to_update_session_rules",
+                    e=e,
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-failed_to_update_session_rules_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def delete_session_rule(self):
         """删除某个 umo 的自定义规则
@@ -303,25 +367,75 @@ class SessionManagementRoute(Route):
             rule_key = data.get("rule_key")
 
             if not umo:
-                return Response().error("缺少必要参数: umo").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-missing_required_parameter_umo"
+                        )
+                    )
+                    .__dict__
+                )
 
             if rule_key:
                 # 删除单个规则
                 if rule_key not in AVAILABLE_SESSION_RULE_KEYS:
-                    return Response().error(f"不支持的规则键: {rule_key}").__dict__
+                    return (
+                        Response()
+                        .error(
+                            t(
+                                "dashboard-routes-session_management-unsupported_rule_key",
+                                rule_key=rule_key,
+                            )
+                        )
+                        .__dict__
+                    )
                 await sp.session_remove(umo, rule_key)
                 return (
                     Response()
-                    .ok({"message": f"规则 {rule_key} 已删除", "umo": umo})
+                    .ok(
+                        {
+                            "message": t(
+                                "dashboard-routes-session_management-rule_deleted",
+                                rule_key=rule_key,
+                            ),
+                            "umo": umo,
+                        }
+                    )
                     .__dict__
                 )
             else:
                 # 删除该 umo 的所有规则
                 await sp.clear_async("umo", umo)
-                return Response().ok({"message": "所有规则已删除", "umo": umo}).__dict__
+                return (
+                    Response()
+                    .ok(
+                        {
+                            "message": t(
+                                "dashboard-routes-session_management-all_rules_deleted"
+                            ),
+                            "umo": umo,
+                        }
+                    )
+                    .__dict__
+                )
         except Exception as e:
-            logger.error(f"删除会话规则失败: {e!s}")
-            return Response().error(f"删除会话规则失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-session_management-failed_to_delete_session_rule",
+                    e=e,
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-delete_session_rule_failed",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def batch_delete_session_rule(self):
         """批量删除多个 umo 的自定义规则
@@ -336,10 +450,22 @@ class SessionManagementRoute(Route):
             umos = data.get("umos", [])
 
             if not umos:
-                return Response().error("缺少必要参数: umos").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-missing_required_parameter_umos"
+                        )
+                    )
+                    .__dict__
+                )
 
             if not isinstance(umos, list):
-                return Response().error("参数 umos 必须是数组").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-session_management-umos_must_be_array"))
+                    .__dict__
+                )
 
             # 批量删除
             deleted_count = 0
@@ -349,7 +475,13 @@ class SessionManagementRoute(Route):
                     await sp.clear_async("umo", umo)
                     deleted_count += 1
                 except Exception as e:
-                    logger.error(f"删除 umo {umo} 的规则失败: {e!s}")
+                    logger.error(
+                        t(
+                            "dashboard-routes-session_management-delete_umo_rules_failed",
+                            umo=umo,
+                            e=e,
+                        )
+                    )
                     failed_umos.append(umo)
 
             if failed_umos:
@@ -357,7 +489,11 @@ class SessionManagementRoute(Route):
                     Response()
                     .ok(
                         {
-                            "message": f"已删除 {deleted_count} 条规则，{len(failed_umos)} 条删除失败",
+                            "message": t(
+                                "dashboard-routes-session_management-bulk_delete_result",
+                                deleted_count=deleted_count,
+                                failed_umos=failed_umos,
+                            ),
                             "deleted_count": deleted_count,
                             "failed_umos": failed_umos,
                         }
@@ -369,15 +505,32 @@ class SessionManagementRoute(Route):
                     Response()
                     .ok(
                         {
-                            "message": f"已删除 {deleted_count} 条规则",
+                            "message": t(
+                                "dashboard-routes-session_management-batch_delete_summary",
+                                deleted_count=deleted_count,
+                            ),
                             "deleted_count": deleted_count,
                         }
                     )
                     .__dict__
                 )
         except Exception as e:
-            logger.error(f"批量删除会话规则失败: {e!s}")
-            return Response().error(f"批量删除会话规则失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-session_management-bulk_delete_session_rules_failed",
+                    e=e,
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-bulk_delete_session_rules_error_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def list_umos(self):
         """列出所有有对话记录的 umo，从 Conversations 表中找
@@ -397,8 +550,19 @@ class SessionManagementRoute(Route):
 
             return Response().ok({"umos": umos}).__dict__
         except Exception as e:
-            logger.error(f"获取 UMO 列表失败: {e!s}")
-            return Response().error(f"获取 UMO 列表失败: {e!s}").__dict__
+            logger.error(
+                t("dashboard-routes-session_management-get_umo_list_failed", e=e)
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-get_umo_list_error_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def list_all_umos_with_status(self):
         """获取所有有对话记录的 UMO 及其服务状态（支持分页、搜索、筛选）
@@ -552,8 +716,22 @@ class SessionManagementRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"获取会话状态列表失败: {e!s}")
-            return Response().error(f"获取会话状态列表失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-session_management-get_session_status_list_failed",
+                    e=e,
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-get_session_status_list_error_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def batch_update_service(self):
         """批量更新多个 UMO 的服务状态 (LLM/TTS/Session)
@@ -579,17 +757,42 @@ class SessionManagementRoute(Route):
 
             # 如果没有任何修改
             if llm_enabled is None and tts_enabled is None and session_enabled is None:
-                return Response().error("至少需要指定一个要修改的状态").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-at_least_one_status_required"
+                        )
+                    )
+                    .__dict__
+                )
 
             # 如果指定了 scope，获取符合条件的所有 umo
             if scope and not umos:
                 # 如果是自定义分组
                 if scope == "custom_group":
                     if not group_id:
-                        return Response().error("请指定分组 ID").__dict__
+                        return (
+                            Response()
+                            .error(
+                                t(
+                                    "dashboard-routes-session_management-group_id_required"
+                                )
+                            )
+                            .__dict__
+                        )
                     groups = self._get_groups()
                     if group_id not in groups:
-                        return Response().error(f"分组 '{group_id}' 不存在").__dict__
+                        return (
+                            Response()
+                            .error(
+                                t(
+                                    "dashboard-routes-session_management-group_not_found",
+                                    group_id=group_id,
+                                )
+                            )
+                            .__dict__
+                        )
                     umos = groups[group_id].get("umos", [])
                 else:
                     async with self.db_helper.get_db() as session:
@@ -615,7 +818,15 @@ class SessionManagementRoute(Route):
                         umos = all_umos
 
             if not umos:
-                return Response().error("没有找到符合条件的会话").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-no_matching_sessions_found"
+                        )
+                    )
+                    .__dict__
+                )
 
             # 批量更新
             success_count = 0
@@ -646,22 +857,50 @@ class SessionManagementRoute(Route):
                     )
                     success_count += 1
                 except Exception as e:
-                    logger.error(f"更新 {umo} 服务状态失败: {e!s}")
+                    logger.error(
+                        t(
+                            "dashboard-routes-session_management-update_umo_service_status_failed",
+                            umo=umo,
+                            e=e,
+                        )
+                    )
                     failed_umos.append(umo)
 
             status_changes = []
             if llm_enabled is not None:
-                status_changes.append(f"LLM={'启用' if llm_enabled else '禁用'}")
+                status_changes.append(
+                    t("dashboard-routes-session_management-llm_status_changed-true")
+                    if llm_enabled
+                    else t(
+                        "dashboard-routes-session_management-llm_status_changed-false"
+                    )
+                )
             if tts_enabled is not None:
-                status_changes.append(f"TTS={'启用' if tts_enabled else '禁用'}")
+                status_changes.append(
+                    t("dashboard-routes-session_management-tts_status_changed-true")
+                    if tts_enabled
+                    else t(
+                        "dashboard-routes-session_management-tts_status_changed-false"
+                    )
+                )
             if session_enabled is not None:
-                status_changes.append(f"会话={'启用' if session_enabled else '禁用'}")
+                status_changes.append(
+                    t("dashboard-routes-session_management-session_status_changed-true")
+                    if session_enabled
+                    else t(
+                        "dashboard-routes-session_management-session_status_changed-false"
+                    )
+                )
 
             return (
                 Response()
                 .ok(
                     {
-                        "message": f"已更新 {success_count} 个会话 ({', '.join(status_changes)})",
+                        "message": t(
+                            "dashboard-routes-session_management-sessions_updated_summary",
+                            success_count=success_count,
+                            status_changes=", ".join(status_changes),
+                        ),
                         "success_count": success_count,
                         "failed_count": len(failed_umos),
                         "failed_umos": failed_umos,
@@ -670,8 +909,22 @@ class SessionManagementRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"批量更新服务状态失败: {e!s}")
-            return Response().error(f"批量更新服务状态失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-session_management-bulk_update_service_status_failed",
+                    e=e,
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-bulk_update_service_status_error_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def batch_update_provider(self):
         """批量更新多个 UMO 的 Provider 配置
@@ -694,7 +947,9 @@ class SessionManagementRoute(Route):
             if not provider_type or not provider_id:
                 return (
                     Response()
-                    .error("缺少必要参数: provider_type, provider_id")
+                    .error(
+                        t("dashboard-routes-session_management-missing_provider_params")
+                    )
                     .__dict__
                 )
 
@@ -707,7 +962,12 @@ class SessionManagementRoute(Route):
             if provider_type not in provider_type_map:
                 return (
                     Response()
-                    .error(f"不支持的 provider_type: {provider_type}")
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-unsupported_provider_type",
+                            provider_type=provider_type,
+                        )
+                    )
                     .__dict__
                 )
 
@@ -719,10 +979,27 @@ class SessionManagementRoute(Route):
                 # 如果是自定义分组
                 if scope == "custom_group":
                     if not group_id:
-                        return Response().error("请指定分组 ID").__dict__
+                        return (
+                            Response()
+                            .error(
+                                t(
+                                    "dashboard-routes-session_management-group_id_required_2"
+                                )
+                            )
+                            .__dict__
+                        )
                     groups = self._get_groups()
                     if group_id not in groups:
-                        return Response().error(f"分组 '{group_id}' 不存在").__dict__
+                        return (
+                            Response()
+                            .error(
+                                t(
+                                    "dashboard-routes-session_management-group_not_found",
+                                    group_id=group_id,
+                                )
+                            )
+                            .__dict__
+                        )
                     umos = groups[group_id].get("umos", [])
                 else:
                     async with self.db_helper.get_db() as session:
@@ -748,7 +1025,15 @@ class SessionManagementRoute(Route):
                         umos = all_umos
 
             if not umos:
-                return Response().error("没有找到符合条件的会话").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-no_matching_sessions_found_2"
+                        )
+                    )
+                    .__dict__
+                )
 
             # 批量更新
             success_count = 0
@@ -764,14 +1049,25 @@ class SessionManagementRoute(Route):
                     )
                     success_count += 1
                 except Exception as e:
-                    logger.error(f"更新 {umo} Provider 失败: {e!s}")
+                    logger.error(
+                        t(
+                            "dashboard-routes-session_management-update_umo_provider_failed",
+                            umo=umo,
+                            e=e,
+                        )
+                    )
                     failed_umos.append(umo)
 
             return (
                 Response()
                 .ok(
                     {
-                        "message": f"已更新 {success_count} 个会话的 {provider_type} 为 {provider_id}",
+                        "message": t(
+                            "dashboard-routes-session_management-batch_update_provider_success",
+                            success_count=success_count,
+                            provider_type=provider_type,
+                            provider_id=provider_id,
+                        ),
                         "success_count": success_count,
                         "failed_count": len(failed_umos),
                         "failed_umos": failed_umos,
@@ -780,8 +1076,22 @@ class SessionManagementRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"批量更新 Provider 失败: {e!s}")
-            return Response().error(f"批量更新 Provider 失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-session_management-bulk_update_providers_failed",
+                    e=e,
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-batch_update_providers_failed",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     # ==================== 分组管理 API ====================
 
@@ -810,8 +1120,19 @@ class SessionManagementRoute(Route):
                 )
             return Response().ok({"groups": groups_list}).__dict__
         except Exception as e:
-            logger.error(f"获取分组列表失败: {e!s}")
-            return Response().error(f"获取分组列表失败: {e!s}").__dict__
+            logger.error(
+                t("dashboard-routes-session_management-get_group_list_failed", e=e)
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-get_group_list_failed_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def create_group(self):
         """创建新分组"""
@@ -821,7 +1142,11 @@ class SessionManagementRoute(Route):
             umos = data.get("umos", [])
 
             if not name:
-                return Response().error("分组名称不能为空").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-session_management-group_name_required"))
+                    .__dict__
+                )
 
             groups = self._get_groups()
 
@@ -841,7 +1166,10 @@ class SessionManagementRoute(Route):
                 Response()
                 .ok(
                     {
-                        "message": f"分组 '{name}' 创建成功",
+                        "message": t(
+                            "dashboard-routes-session_management-group_created_success",
+                            name=name,
+                        ),
                         "group": {
                             "id": group_id,
                             "name": name,
@@ -853,8 +1181,19 @@ class SessionManagementRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"创建分组失败: {e!s}")
-            return Response().error(f"创建分组失败: {e!s}").__dict__
+            logger.error(
+                t("dashboard-routes-session_management-create_group_failed", e=e)
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-create_group_failed_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def update_group(self):
         """更新分组（改名、增删成员）"""
@@ -867,12 +1206,27 @@ class SessionManagementRoute(Route):
             remove_umos = data.get("remove_umos", [])
 
             if not group_id:
-                return Response().error("分组 ID 不能为空").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-session_management-group_id_required_dup2")
+                    )
+                    .__dict__
+                )
 
             groups = self._get_groups()
 
             if group_id not in groups:
-                return Response().error(f"分组 '{group_id}' 不存在").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-group_not_found",
+                            group_id=group_id,
+                        )
+                    )
+                    .__dict__
+                )
 
             group = groups[group_id]
 
@@ -898,7 +1252,10 @@ class SessionManagementRoute(Route):
                 Response()
                 .ok(
                     {
-                        "message": f"分组 '{group['name']}' 更新成功",
+                        "message": t(
+                            "dashboard-routes-session_management-group_updated_success",
+                            name=group["name"],
+                        ),
                         "group": {
                             "id": group_id,
                             "name": group["name"],
@@ -910,8 +1267,19 @@ class SessionManagementRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"更新分组失败: {e!s}")
-            return Response().error(f"更新分组失败: {e!s}").__dict__
+            logger.error(
+                t("dashboard-routes-session_management-update_group_failed", e=e)
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-update_group_failed_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def delete_group(self):
         """删除分组"""
@@ -920,19 +1288,58 @@ class SessionManagementRoute(Route):
             group_id = data.get("id")
 
             if not group_id:
-                return Response().error("分组 ID 不能为空").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-update_group_id_required"
+                        )
+                    )
+                    .__dict__
+                )
 
             groups = self._get_groups()
 
             if group_id not in groups:
-                return Response().error(f"分组 '{group_id}' 不存在").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-session_management-group_not_found",
+                            group_id=group_id,
+                        )
+                    )
+                    .__dict__
+                )
 
             group_name = groups[group_id].get("name", group_id)
             del groups[group_id]
 
             self._save_groups(groups)
 
-            return Response().ok({"message": f"分组 '{group_name}' 已删除"}).__dict__
+            return (
+                Response()
+                .ok(
+                    {
+                        "message": t(
+                            "dashboard-routes-session_management-group_deleted_success",
+                            group_name=group_name,
+                        )
+                    }
+                )
+                .__dict__
+            )
         except Exception as e:
-            logger.error(f"删除分组失败: {e!s}")
-            return Response().error(f"删除分组失败: {e!s}").__dict__
+            logger.error(
+                t("dashboard-routes-session_management-delete_group_failed", e=e)
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-session_management-delete_group_failed_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )

@@ -57,6 +57,7 @@ import { ref, computed, onBeforeUnmount, watch } from 'vue';
 import { useTheme } from 'vuetify';
 import { useVADRecording } from '@/composables/useVADRecording';
 import SiriOrb from './LiveOrb.vue';
+import { t } from '@/i18n/composables';
 
 const emit = defineEmits<{
     'close': [];
@@ -118,10 +119,10 @@ let currentStamp = '';
 
 const statusText = computed(() => {
     if (!isActive.value) return 'Astr Live';
-    if (isProcessing.value) return '正在处理...';
-    if (isSpeaking.value) return '正在说话...';
-    if (isListening.value) return '正在听...';
-    return '准备就绪';
+    if (isProcessing.value) return t('src.components.chat.livemode.status_processing');
+    if (isSpeaking.value) return t('src.components.chat.livemode.status_speaking');
+    if (isListening.value) return t('src.components.chat.livemode.status_listening');
+    return t('src.components.chat.livemode.status_ready');
 });
 
 const getIcon = computed(() => {
@@ -183,7 +184,7 @@ async function startLiveMode() {
         await vadRecording.startRecording(
             // onSpeechStart 回调
             () => {
-                console.log('[Live Mode] VAD 检测到开始说话');
+                console.log(t('src.components.chat.livemode.log_vad_speech_start'));
                 isListening.value = false;
                 currentStamp = generateStamp();
 
@@ -198,7 +199,7 @@ async function startLiveMode() {
             },
             // onSpeechEnd 回调
             (audio: Float32Array) => {
-                console.log('[Live Mode] VAD 检测到语音结束，音频长度:', audio.length);
+                console.log(t('src.components.chat.livemode.log_vad_speech_end'), audio.length);
 
                 // 将完整音频转换为 PCM16 并发送
                 if (ws && ws.readyState === WebSocket.OPEN) {
@@ -239,8 +240,8 @@ async function startLiveMode() {
         isListening.value = true;
 
     } catch (error) {
-        console.error('启动 Live Mode 失败:', error);
-        alert('启动失败，请检查麦克风权限或网络连接');
+        console.error(t('src.components.chat.livemode.error_start_live_mode'), error);
+        alert(t('src.components.chat.livemode.alert_start_failed'));
         await stopLiveMode();
     }
 }
@@ -276,7 +277,7 @@ function connectWebSocket(): Promise<void> {
         // 获取存储的 token
         const token = localStorage.getItem('token');
         if (!token) {
-            reject(new Error('未登录，请先登录'));
+            reject(new Error(t('src.components.chat.livemode.reject_not_logged_in')));
             return;
         }
 
@@ -286,25 +287,25 @@ function connectWebSocket(): Promise<void> {
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-            console.log('[Live Mode] WebSocket 连接成功');
+            console.log(t('src.components.chat.livemode.websocket_connected_success'));
             resolve();
         };
 
         ws.onerror = (error) => {
-            console.error('[Live Mode] WebSocket 错误:', error);
+            console.error(t('src.components.chat.livemode.websocket_error'), error);
             reject(error);
         };
 
         ws.onmessage = handleWebSocketMessage;
 
         ws.onclose = () => {
-            console.log('[Live Mode] WebSocket 连接关闭');
+            console.log(t('src.components.chat.livemode.websocket_connection_closed'));
         };
 
         // 超时处理
         setTimeout(() => {
             if (ws?.readyState !== WebSocket.OPEN) {
-                reject(new Error('WebSocket 连接超时'));
+                reject(new Error(t('src.components.chat.livemode.websocket_connection_timeout')));
             }
         }, 5000);
     });
@@ -358,8 +359,8 @@ function handleWebSocketMessage(event: MessageEvent) {
                 break;
 
             case 'error':
-                console.error('[Live Mode] 错误:', message.data);
-                alert('处理出错: ' + message.data);
+                console.error(t('src.components.chat.livemode.error_live_mode'), message.data);
+                alert(t('src.components.chat.livemode.alert_processing_error') + message.data);
                 isProcessing.value = false;
                 isListening.value = true;
                 break;
@@ -369,7 +370,7 @@ function handleWebSocketMessage(event: MessageEvent) {
                 break;
         }
     } catch (error) {
-        console.error('[Live Mode] 处理消息失败:', error);
+        console.error(t('src.components.chat.livemode.failed_process_message'), error);
     }
 }
 
@@ -391,7 +392,7 @@ function playAudioChunk(base64Data: string) {
         processRawAudioQueue();
 
     } catch (error) {
-        console.error('[Live Mode] 接收音频数据失败:', error);
+        console.error(t('src.components.chat.livemode.failed_receive_audio'), error);
     }
 }
 
@@ -415,7 +416,7 @@ async function processRawAudioQueue() {
                     playNextAudio();
                 }
             } catch (err) {
-                console.error('[Live Mode] 解码音频失败:', err);
+                console.error(t('src.components.chat.livemode.failed_decode_audio'), err);
             }
         }
     } finally {
@@ -463,7 +464,7 @@ function playNextAudio() {
         };
 
     } catch (error) {
-        console.error('[Live Mode] 播放音频失败:', error);
+        console.error(t('src.components.chat.livemode.play_audio_failed'), error);
         isPlayingAudio = false;
         isPlaying.value = false;
         playNextAudio(); // 尝试播放下一个
@@ -680,3 +681,4 @@ onBeforeUnmount(() => {
     z-index: 100;
 }
 </style>
+

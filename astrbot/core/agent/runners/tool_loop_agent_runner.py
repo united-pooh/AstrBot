@@ -18,6 +18,7 @@ from astrbot import logger
 from astrbot.core.agent.message import ImageURLPart, TextPart, ThinkPart
 from astrbot.core.agent.tool import ToolSet
 from astrbot.core.agent.tool_image_cache import tool_image_cache
+from astrbot.core.lang import t
 from astrbot.core.message.components import Json
 from astrbot.core.message.message_event_result import (
     MessageChain,
@@ -349,11 +350,17 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             self.final_llm_resp = llm_resp
             self.stats.end_time = time.time()
             self._transition_state(AgentState.ERROR)
+            error_text = llm_resp.completion_text or t(
+                "core-agent-runners-tool_loop_agent_runner-unknown_error"
+            )
             yield AgentResponse(
                 type="err",
                 data=AgentResponseData(
                     chain=MessageChain().message(
-                        f"LLM 响应错误: {llm_resp.completion_text or '未知错误'}",
+                        t(
+                            "core-agent-runners-tool_loop_agent_runner-llm_response_error",
+                            error=error_text,
+                        ),
                     ),
                 ),
             )
@@ -515,7 +522,9 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             self.run_context.messages.append(
                 Message(
                     role="user",
-                    content="工具调用次数已达到上限，请停止使用工具，并根据已经收集到的信息，对你的任务和发现进行总结，然后直接回复用户。",
+                    content=t(
+                        "core-agent-runners-tool_loop_agent_runner-tool_call_limit_reached_message"
+                    ),
                 )
             )
             # 再执行最后一步
@@ -529,7 +538,12 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
     ) -> T.AsyncGenerator[_HandleFunctionToolsResult, None]:
         """处理函数工具调用。"""
         tool_call_result_blocks: list[ToolCallMessageSegment] = []
-        logger.info(f"Agent 使用工具: {llm_response.tools_call_name}")
+        logger.info(
+            t(
+                "core-agent-runners-tool_loop_agent_runner-agent_using_tool",
+                llm_response=llm_response,
+            )
+        )
 
         # 执行函数调用
         for func_tool_name, func_tool_args, func_tool_id in zip(
@@ -566,10 +580,21 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                 else:
                     func_tool = req.func_tool.get_tool(func_tool_name)
 
-                logger.info(f"使用工具：{func_tool_name}，参数：{func_tool_args}")
+                logger.info(
+                    t(
+                        "core-agent-runners-tool_loop_agent_runner-using_tool_with_args",
+                        func_tool_name=func_tool_name,
+                        func_tool_args=func_tool_args,
+                    )
+                )
 
                 if not func_tool:
-                    logger.warning(f"未找到指定的工具: {func_tool_name}，将跳过。")
+                    logger.warning(
+                        t(
+                            "core-agent-runners-tool_loop_agent_runner-tool_not_found_skip",
+                            func_tool_name=func_tool_name,
+                        )
+                    )
                     tool_call_result_blocks.append(
                         ToolCallMessageSegment(
                             role="tool",
@@ -584,7 +609,11 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                 # 获取实际的 handler 函数
                 if func_tool.handler:
                     logger.debug(
-                        f"工具 {func_tool_name} 期望的参数: {func_tool.parameters}",
+                        t(
+                            "core-agent-runners-tool_loop_agent_runner-tool_expected_parameters",
+                            func_tool_name=func_tool_name,
+                            func_tool=func_tool,
+                        ),
                     )
                     if func_tool.parameters and func_tool.parameters.get("properties"):
                         expected_params = set(func_tool.parameters["properties"].keys())
@@ -601,7 +630,11 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                     )
                     if ignored_params:
                         logger.warning(
-                            f"工具 {func_tool_name} 忽略非期望参数: {ignored_params}",
+                            t(
+                                "core-agent-runners-tool_loop_agent_runner-tool_ignores_unexpected_params",
+                                func_tool_name=func_tool_name,
+                                ignored_params=ignored_params,
+                            ),
                         )
                 else:
                     # 如果没有 handler（如 MCP 工具），使用所有参数
@@ -711,7 +744,10 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                         # 这里我们将直接结束 Agent Loop
                         # 发送消息逻辑在 ToolExecutor 中处理了
                         logger.warning(
-                            f"{func_tool_name} 没有返回值，或者已将结果直接发送给用户。"
+                            t(
+                                "core-agent-runners-tool_loop_agent_runner-tool_no_return_or_sent",
+                                func_tool_name=func_tool_name,
+                            )
                         )
                         self._transition_state(AgentState.DONE)
                         self.stats.end_time = time.time()
@@ -725,7 +761,10 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                     else:
                         # 不应该出现其他类型
                         logger.warning(
-                            f"Tool 返回了不支持的类型: {type(resp)}。",
+                            t(
+                                "core-agent-runners-tool_loop_agent_runner-unsupported_tool_response_type",
+                                resp=type(resp),
+                            ),
                         )
                         tool_call_result_blocks.append(
                             ToolCallMessageSegment(

@@ -13,6 +13,7 @@ import aiohttp
 from Crypto.Cipher import AES
 
 from astrbot.api import logger
+from astrbot.core.lang import t
 
 
 # 常量定义
@@ -133,7 +134,13 @@ def safe_json_loads(json_str: str, default: Any = None) -> Any:
     try:
         return json.loads(json_str)
     except (json.JSONDecodeError, TypeError) as e:
-        logger.warning(f"JSON 解析失败: {e}, 原始字符串: {json_str}")
+        logger.warning(
+            t(
+                "core-platform-sources-wecom_ai_bot-wecomai_utils-json_parsing_failed",
+                e=e,
+                json_str=json_str,
+            )
+        )
         return default
 
 
@@ -167,26 +174,43 @@ async def process_encrypted_image(
 
     """
     # 1. 下载加密图片
-    logger.info("开始下载加密图片: %s", image_url)
+    logger.info(
+        t(
+            "core-platform-sources-wecom_ai_bot-wecomai_utils-start_downloading_encrypted_image"
+        ),
+        image_url,
+    )
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(image_url, timeout=15) as response:
                 response.raise_for_status()
                 encrypted_data = await response.read()
-        logger.info("图片下载成功，大小: %d 字节", len(encrypted_data))
+        logger.info(
+            t(
+                "core-platform-sources-wecom_ai_bot-wecomai_utils-image_downloaded_successfully"
+            ),
+            len(encrypted_data),
+        )
     except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-        error_msg = f"下载图片失败: {e!s}"
+        error_msg = t(
+            "core-platform-sources-wecom_ai_bot-wecomai_utils-image_download_failed",
+            e=e,
+        )
         logger.error(error_msg)
         return False, error_msg
 
     # 2. 准备AES密钥和IV
     if not aes_key_base64:
-        raise ValueError("AES密钥不能为空")
+        raise ValueError(
+            t("core-platform-sources-wecom_ai_bot-wecomai_utils-aes_key_empty")
+        )
 
     # Base64解码密钥 (自动处理填充)
     aes_key = base64.b64decode(aes_key_base64 + "=" * (-len(aes_key_base64) % 4))
     if len(aes_key) != 32:
-        raise ValueError("无效的AES密钥长度: 应为32字节")
+        raise ValueError(
+            t("core-platform-sources-wecom_ai_bot-wecomai_utils-invalid_aes_key_length")
+        )
 
     iv = aes_key[:16]  # 初始向量为密钥前16字节
 
@@ -197,13 +221,21 @@ async def process_encrypted_image(
     # 4. 去除PKCS#7填充 (Python 3兼容写法)
     pad_len = decrypted_data[-1]  # 直接获取最后一个字节的整数值
     if pad_len > 32:  # AES-256块大小为32字节
-        raise ValueError("无效的填充长度 (大于32字节)")
+        raise ValueError(
+            t("core-platform-sources-wecom_ai_bot-wecomai_utils-invalid_padding_length")
+        )
 
     decrypted_data = decrypted_data[:-pad_len]
-    logger.info("图片解密成功，解密后大小: %d 字节", len(decrypted_data))
+    logger.info(
+        t("core-platform-sources-wecom_ai_bot-wecomai_utils-image_decrypt_success"),
+        len(decrypted_data),
+    )
 
     # 5. 转换为base64编码
     base64_data = base64.b64encode(decrypted_data).decode("utf-8")
-    logger.info("图片已转换为base64编码，编码后长度: %d", len(base64_data))
+    logger.info(
+        t("core-platform-sources-wecom_ai_bot-wecomai_utils-image_base64_converted"),
+        len(base64_data),
+    )
 
     return True, base64_data

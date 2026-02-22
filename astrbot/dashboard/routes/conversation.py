@@ -8,6 +8,7 @@ from quart import request, send_file
 from astrbot.core import logger
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
 from astrbot.core.db import BaseDatabase
+from astrbot.core.lang import t
 
 from .route import Response, Route, RouteContext
 
@@ -80,8 +81,20 @@ class ConversationRoute(Route):
                     exclude_platforms=exclude_platform_list,
                 )
             except Exception as e:
-                logger.error(f"数据库查询出错: {e!s}\n{traceback.format_exc()}")
-                return Response().error(f"数据库查询出错: {e!s}").__dict__
+                logger.error(
+                    t(
+                        "dashboard-routes-conversation-database_query_error",
+                        e=e,
+                        format_exc=traceback.format_exc(),
+                    )
+                )
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-conversation-db_query_error_response", e=e)
+                    )
+                    .__dict__
+                )
 
             # 计算总页数
             total_pages = (
@@ -100,9 +113,19 @@ class ConversationRoute(Route):
             return Response().ok(result).__dict__
 
         except Exception as e:
-            error_msg = f"获取对话列表失败: {e!s}\n{traceback.format_exc()}"
+            error_msg = t(
+                "dashboard-routes-conversation-fetch_conversation_list_failed",
+                e=e,
+                format_exc=traceback.format_exc(),
+            )
             logger.error(error_msg)
-            return Response().error(f"获取对话列表失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(
+                    t("dashboard-routes-conversation-get_conversation_list_failed", e=e)
+                )
+                .__dict__
+            )
 
     async def get_conv_detail(self):
         """获取指定对话详情（通过POST请求）"""
@@ -112,14 +135,26 @@ class ConversationRoute(Route):
             cid = data.get("cid")
 
             if not user_id or not cid:
-                return Response().error("缺少必要参数: user_id 和 cid").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-conversation-return_missing_user_id_cid")
+                    )
+                    .__dict__
+                )
 
             conversation = await self.conv_mgr.get_conversation(
                 unified_msg_origin=user_id,
                 conversation_id=cid,
             )
             if not conversation:
-                return Response().error("对话不存在").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-conversation-return_conversation_not_found")
+                    )
+                    .__dict__
+                )
 
             return (
                 Response()
@@ -138,8 +173,23 @@ class ConversationRoute(Route):
             )
 
         except Exception as e:
-            logger.error(f"获取对话详情失败: {e!s}\n{traceback.format_exc()}")
-            return Response().error(f"获取对话详情失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-conversation-get_conversation_details_failed",
+                    e=e,
+                    format_exc=traceback.format_exc(),
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-conversation-get_conversation_detail_failed",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def upd_conv(self):
         """更新对话信息(标题和角色ID)"""
@@ -151,13 +201,27 @@ class ConversationRoute(Route):
             persona_id = data.get("persona_id", "")
 
             if not user_id or not cid:
-                return Response().error("缺少必要参数: user_id 和 cid").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-conversation-return_missing_params_details")
+                    )
+                    .__dict__
+                )
             conversation = await self.conv_mgr.get_conversation(
                 unified_msg_origin=user_id,
                 conversation_id=cid,
             )
             if not conversation:
-                return Response().error("对话不存在").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-conversation-return_conversation_not_exist_details"
+                        )
+                    )
+                    .__dict__
+                )
             if title is not None or persona_id is not None:
                 await self.conv_mgr.update_conversation(
                     unified_msg_origin=user_id,
@@ -165,11 +229,33 @@ class ConversationRoute(Route):
                     title=title,
                     persona_id=persona_id,
                 )
-            return Response().ok({"message": "对话信息更新成功"}).__dict__
+            return (
+                Response()
+                .ok(
+                    {
+                        "message": t(
+                            "dashboard-routes-conversation-return_update_success"
+                        )
+                    }
+                )
+                .__dict__
+            )
 
         except Exception as e:
-            logger.error(f"更新对话信息失败: {e!s}\n{traceback.format_exc()}")
-            return Response().error(f"更新对话信息失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-conversation-update_conversation_info_failed",
+                    e=e,
+                    format_exc=traceback.format_exc(),
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t("dashboard-routes-conversation-update_conversation_failed", e=e)
+                )
+                .__dict__
+            )
 
     async def del_conv(self):
         """删除对话"""
@@ -182,7 +268,11 @@ class ConversationRoute(Route):
                 conversations = data.get("conversations", [])
                 if not conversations:
                     return (
-                        Response().error("批量删除时conversations参数不能为空").__dict__
+                        Response()
+                        .error(
+                            t("dashboard-routes-conversation-return_batch_delete_empty")
+                        )
+                        .__dict__
                     )
 
                 deleted_count = 0
@@ -194,7 +284,11 @@ class ConversationRoute(Route):
 
                     if not user_id or not cid:
                         failed_items.append(
-                            f"user_id:{user_id}, cid:{cid} - 缺少必要参数",
+                            t(
+                                "dashboard-routes-conversation-log_missing_params_delete",
+                                user_id=user_id,
+                                cid=cid,
+                            ),
                         )
                         continue
 
@@ -207,9 +301,15 @@ class ConversationRoute(Route):
                     except Exception as e:
                         failed_items.append(f"user_id:{user_id}, cid:{cid} - {e!s}")
 
-                message = f"成功删除 {deleted_count} 个对话"
+                message = t(
+                    "dashboard-routes-conversation-message_delete_success_count",
+                    deleted_count=deleted_count,
+                )
                 if failed_items:
-                    message += f"，失败 {len(failed_items)} 个"
+                    message += t(
+                        "dashboard-routes-conversation-append_failed_count",
+                        failed_items=failed_items,
+                    )
 
                 return (
                     Response()
@@ -228,17 +328,42 @@ class ConversationRoute(Route):
             cid = data.get("cid")
 
             if not user_id or not cid:
-                return Response().error("缺少必要参数: user_id 和 cid").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-conversation-missing_user_id_cid_delete")
+                    )
+                    .__dict__
+                )
 
             await self.core_lifecycle.conversation_manager.delete_conversation(
                 unified_msg_origin=user_id,
                 conversation_id=cid,
             )
-            return Response().ok({"message": "对话删除成功"}).__dict__
+            return (
+                Response()
+                .ok({"message": t("dashboard-routes-conversation-delete_success")})
+                .__dict__
+            )
 
         except Exception as e:
-            logger.error(f"删除对话失败: {e!s}\n{traceback.format_exc()}")
-            return Response().error(f"删除对话失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-conversation-delete_conversation_failed",
+                    e=e,
+                    format_exc=traceback.format_exc(),
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-conversation-delete_conversation_failed_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def update_history(self):
         """更新对话历史内容"""
@@ -249,10 +374,20 @@ class ConversationRoute(Route):
             history = data.get("history")
 
             if not user_id or not cid:
-                return Response().error("缺少必要参数: user_id 和 cid").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-conversation-missing_user_id_cid_update")
+                    )
+                    .__dict__
+                )
 
             if history is None:
-                return Response().error("缺少必要参数: history").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-conversation-missing_history_param"))
+                    .__dict__
+                )
 
             # 历史记录必须是合法的 JSON 字符串
             try:
@@ -263,7 +398,9 @@ class ConversationRoute(Route):
                     json.loads(history)
             except json.JSONDecodeError:
                 return (
-                    Response().error("history 必须是有效的 JSON 字符串或数组").__dict__
+                    Response()
+                    .error(t("dashboard-routes-conversation-invalid_history_format"))
+                    .__dict__
                 )
 
             conversation = await self.conv_mgr.get_conversation(
@@ -271,7 +408,11 @@ class ConversationRoute(Route):
                 conversation_id=cid,
             )
             if not conversation:
-                return Response().error("对话不存在").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-conversation-conversation_not_found"))
+                    .__dict__
+                )
 
             history = json.loads(history) if isinstance(history, str) else history
 
@@ -281,11 +422,36 @@ class ConversationRoute(Route):
                 history=history,
             )
 
-            return Response().ok({"message": "对话历史更新成功"}).__dict__
+            return (
+                Response()
+                .ok(
+                    {
+                        "message": t(
+                            "dashboard-routes-conversation-history_update_success"
+                        )
+                    }
+                )
+                .__dict__
+            )
 
         except Exception as e:
-            logger.error(f"更新对话历史失败: {e!s}\n{traceback.format_exc()}")
-            return Response().error(f"更新对话历史失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-conversation-update_conversation_history_failed",
+                    e=e,
+                    format_exc=traceback.format_exc(),
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-conversation-update_history_failed_response",
+                        e=e,
+                    )
+                )
+                .__dict__
+            )
 
     async def export_conversations(self):
         """批量导出对话为 JSONL 格式"""
@@ -294,7 +460,11 @@ class ConversationRoute(Route):
             conversations_to_export = data.get("conversations", [])
 
             if not conversations_to_export:
-                return Response().error("导出列表不能为空").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-conversation-export_list_empty"))
+                    .__dict__
+                )
 
             # 收集所有对话的内容
             jsonl_lines = []
@@ -307,7 +477,11 @@ class ConversationRoute(Route):
 
                 if not user_id or not cid:
                     failed_items.append(
-                        f"user_id:{user_id}, cid:{cid} - 缺少必要参数",
+                        t(
+                            "dashboard-routes-conversation-log_missing_params_export",
+                            user_id=user_id,
+                            cid=cid,
+                        ),
                     )
                     continue
 
@@ -319,7 +493,11 @@ class ConversationRoute(Route):
 
                     if not conversation:
                         failed_items.append(
-                            f"user_id:{user_id}, cid:{cid} - 对话不存在"
+                            t(
+                                "dashboard-routes-conversation-log_conversation_not_found_export",
+                                user_id=user_id,
+                                cid=cid,
+                            )
                         )
                         continue
 
@@ -345,11 +523,20 @@ class ConversationRoute(Route):
                 except Exception as e:
                     failed_items.append(f"user_id:{user_id}, cid:{cid} - {e!s}")
                     logger.error(
-                        f"导出对话失败: user_id={user_id}, cid={cid}, error={e!s}"
+                        t(
+                            "dashboard-routes-conversation-export_conversation_failed_log",
+                            user_id=user_id,
+                            cid=cid,
+                            e=e,
+                        )
                     )
 
             if exported_count == 0:
-                return Response().error("没有成功导出任何对话").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-conversation-export_none_successful"))
+                    .__dict__
+                )
 
             # 创建 JSONL 内容
             jsonl_content = "\n".join(jsonl_lines)
@@ -371,5 +558,17 @@ class ConversationRoute(Route):
             )
 
         except Exception as e:
-            logger.error(f"批量导出对话失败: {e!s}\n{traceback.format_exc()}")
-            return Response().error(f"批量导出对话失败: {e!s}").__dict__
+            logger.error(
+                t(
+                    "dashboard-routes-conversation-batch_export_failed",
+                    e=e,
+                    format_exc=traceback.format_exc(),
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t("dashboard-routes-conversation-batch_export_failed_response", e=e)
+                )
+                .__dict__
+            )

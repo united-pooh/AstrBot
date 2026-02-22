@@ -19,5 +19,10 @@
   "validation": {
     "valid": "Validation Passed",
     "completed": "Operation Completed"
+  },
+  "src": {
+    "app": {
+      "btn_close": "Close"
+    }
   }
-} 
+}

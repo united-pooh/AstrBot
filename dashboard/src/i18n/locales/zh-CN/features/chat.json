@@ -1,5 +1,5 @@
 {
-  "title": "聊天吧!",
+  "title": "聊天吧！",
   "subtitle": "与AI助手进行对话",
   "input": {
     "placeholder": "开始输入...",
@@ -8,7 +8,7 @@
     "upload": "上传文件",
     "voice": "语音输入",
     "recordingPrompt": "录音中，请说话...",
-    "chatPrompt": "聊天吧!",
+    "chatPrompt": "聊天吧！",
     "dropToUpload": "松开鼠标上传文件"
   },
   "message": {
@@ -56,7 +56,7 @@
     "output": "输出"
   },
   "conversation": {
-    "newConversation": "新的聊天",
+    "newConversation": "新对话",
     "noHistory": "暂无对话历史",
     "systemStatus": "系统状态",
     "llmService": "LLM 服务",
@@ -68,9 +68,10 @@
     "confirmDelete": "确定要删除“{name}”吗？此操作无法撤销。"
   },
   "modes": {
-    "darkMode": "切换到夜间模式",
-    "lightMode": "切换到日间模式"
-  },  "shortcuts": {
+    "darkMode": "切换到深色模式",
+    "lightMode": "切换到浅色模式"
+  },
+  "shortcuts": {
     "help": "获取帮助",
     "voiceRecord": "录制语音",
     "pasteImage": "粘贴图片"
@@ -135,5 +136,98 @@
   "errors": {
     "sendMessageFailed": "发送消息失败，请重试",
     "createSessionFailed": "创建会话失败，请刷新页面重试"
+  },
+  "src": {
+    "components": {
+      "chat": {
+        "chat": {
+          "selected_text_fallback": "[媒体内容]"
+        },
+        "configselector": {
+          "label_select_config": "选择配置文件",
+          "no_configs_available": "暂无可选配置，请先在配置页创建。",
+          "btn_cancel": "取消",
+          "btn_apply": "应用",
+          "error_load_config_list": "加载配置文件列表失败",
+          "error_get_config_route": "获取配置路由失败",
+          "error_get_config_details": "获取配置文件详情失败",
+          "error_update_config": "更新配置文件失败",
+          "error_apply_config_toast": "配置文件应用失败",
+          "label_select_profile": "选择配置文件",
+          "no_profiles_message": "暂无可选配置，请先在配置页创建。",
+          "error_load_profile_list": "加载配置文件列表失败",
+          "error_get_profile_details": "获取配置文件详情失败",
+          "error_update_profile": "更新配置文件失败",
+          "error_apply_profile_toast": "配置文件应用失败"
+        },
+        "livemode": {
+          "status_processing": "正在处理...",
+          "status_speaking": "正在说话...",
+          "status_listening": "正在听...",
+          "status_ready": "准备就绪",
+          "log_vad_speech_start": "[实时模式] VAD 检测到开始说话",
+          "log_vad_speech_end": "[实时模式] VAD 检测到语音结束，音频长度：",
+          "error_start_live_mode": "启动实时模式失败：",
+          "alert_start_failed": "启动失败，请检查麦克风权限或网络连接",
+          "reject_not_logged_in": "未登录，请先登录",
+          "log_websocket_connected": "[实时模式] WebSocket 连接成功",
+          "error_websocket_error": "[实时模式] WebSocket 错误：",
+          "log_websocket_closed": "[实时模式] WebSocket 连接关闭",
+          "reject_websocket_timeout": "WebSocket 连接超时",
+          "error_live_mode": "[实时模式] 错误：",
+          "alert_processing_error": "处理出错：",
+          "failed_process_message": "[实时模式] 处理消息失败：",
+          "failed_receive_audio": "[实时模式] 接收音频数据失败：",
+          "failed_decode_audio": "[实时模式] 解码音频失败：",
+          "error_play_audio_failed": "[实时模式] 播放音频失败：",
+          "websocket_connected_success": "[实时模式] WebSocket 连接成功",
+          "websocket_error": "[实时模式] WebSocket 错误：",
+          "websocket_connection_closed": "[实时模式] WebSocket 连接关闭",
+          "websocket_connection_timeout": "WebSocket 连接超时",
+          "play_audio_failed": "[实时模式] 播放音频失败："
+        },
+        "messagelist": {
+          "label_quote": "引用",
+          "fallback_media_content": "[媒体内容]",
+          "success_code_copied": "代码已复制到剪贴板",
+          "error_copy_failed": "复制失败：",
+          "success_code_copied_fallback": "代码已复制到剪贴板 (fallback)",
+          "error_copy_failed_fallback": "复制失败 (fallback):",
+          "append_images_count": "[包含 {imageCount} 张图片]",
+          "append_audio_content": "[包含音频内容]",
+          "fallback_media_only": "[媒体内容]",
+          "copy_success_log": "消息已复制到剪贴板",
+          "copy_error_log": "复制失败：",
+          "copy_success_fallback_log": "消息已复制到剪贴板 (fallback)",
+          "copy_error_fallback_log": "复制失败 (fallback):",
+          "copy_code_button_title": "复制代码",
+          "quote": "引用",
+          "media_content_fallback": "[媒体内容]",
+          "code_copied": "代码已复制到剪贴板",
+          "copy_failed": "复制失败：",
+          "code_copied_fallback": "代码已复制到剪贴板 (备用方式)",
+          "copy_failed_fallback": "复制失败 (备用方式):",
+          "append_image_count": "[包含 {imageCount} 张图片]",
+          "media_content_only": "[媒体内容]"
+        },
+        "providerconfigdialog": {
+          "cancel_button": "取消",
+          "add_button": "添加",
+          "id_modification_warning": "不建议修改 ID，可能会导致指向该模型的相关配置（如默认模型、插件相关配置等）失效。",
+          "id_modify_warning": "不建议修改 ID，可能会导致指向该模型的相关配置（如默认模型、插件相关配置等）失效。"
+        },
+        "providermodelmenu": {
+          "supports_image_input_tooltip": "支持图像输入",
+          "supports_tool_call_tooltip": "支持工具调用",
+          "supports_reasoning_tooltip": "支持推理",
+          "fetch_providers_error_log": "获取提供商列表失败：",
+          "supports_image_tooltip": "支持图像输入"
+        },
+        "standalonechat": {
+          "test_config_title": "测试配置：{configId}",
+          "test_config_label": "测试配置：{configId}"
+        }
+      }
+    }
   }
-} 
+}

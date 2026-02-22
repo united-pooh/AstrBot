@@ -20,6 +20,7 @@ from astrbot.core.backup.exporter import AstrBotExporter
 from astrbot.core.backup.importer import AstrBotImporter
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
 from astrbot.core.db import BaseDatabase
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import (
     get_astrbot_backups_path,
     get_astrbot_data_path,
@@ -227,13 +228,20 @@ class BackupRoute(Route):
 
                 for upload_id in expired_sessions:
                     await self._cleanup_upload_session(upload_id)
-                    logger.info(f"清理过期的上传会话: {upload_id}")
+                    logger.info(
+                        t(
+                            "dashboard-routes-backup-cleaning_expired_upload_session",
+                            upload_id=upload_id,
+                        )
+                    )
 
             except asyncio.CancelledError:
                 # 任务被取消，正常退出
                 break
             except Exception as e:
-                logger.error(f"清理过期上传会话失败: {e}")
+                logger.error(
+                    t("dashboard-routes-backup-cleanup_expired_session_failed", e=e)
+                )
 
     async def _cleanup_upload_session(self, upload_id: str) -> None:
         """清理上传会话"""
@@ -244,7 +252,9 @@ class BackupRoute(Route):
                 try:
                     shutil.rmtree(chunk_dir)
                 except Exception as e:
-                    logger.warning(f"清理分片目录失败: {e}")
+                    logger.warning(
+                        t("dashboard-routes-backup-cleanup_chunk_directory_failed", e=e)
+                    )
             del self.upload_sessions[upload_id]
 
     def _get_backup_manifest(self, zip_path: str) -> dict | None:
@@ -265,7 +275,7 @@ class BackupRoute(Route):
                     # 没有 manifest.json，不是有效的 AstrBot 备份
                     return None
         except Exception as e:
-            logger.debug(f"读取备份 manifest 失败: {e}")
+            logger.debug(t("dashboard-routes-backup-read_backup_manifest_failed", e=e))
         return None  # 无法读取，不是有效备份
 
     async def list_backups(self):
@@ -300,7 +310,12 @@ class BackupRoute(Route):
                 # 如果返回 None，说明不是有效的 AstrBot 备份，跳过
                 manifest = self._get_backup_manifest(file_path)
                 if manifest is None:
-                    logger.debug(f"跳过无效备份文件: {filename}")
+                    logger.debug(
+                        t(
+                            "dashboard-routes-backup-skipping_invalid_backup_file",
+                            filename=filename,
+                        )
+                    )
                     continue
 
                 stat = os.stat(file_path)
@@ -312,7 +327,10 @@ class BackupRoute(Route):
                         "type": manifest.get(
                             "origin", "exported"
                         ),  # 老版本没有 origin 默认为 exported
-                        "astrbot_version": manifest.get("astrbot_version", "未知"),
+                        "astrbot_version": manifest.get(
+                            "astrbot_version",
+                            t("dashboard-routes-backup-astrbot_version_field"),
+                        ),
                         "exported_at": manifest.get("exported_at"),
                     }
                 )
@@ -338,9 +356,13 @@ class BackupRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"获取备份列表失败: {e}")
+            logger.error(t("dashboard-routes-backup-get_backup_list_failed", e=e))
             logger.error(traceback.format_exc())
-            return Response().error(f"获取备份列表失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-error_get_backup_list_failed", e=e))
+                .__dict__
+            )
 
     async def export_backup(self):
         """创建备份
@@ -369,14 +391,22 @@ class BackupRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"创建备份失败: {e}")
+            logger.error(t("dashboard-routes-backup-create_backup_failed", e=e))
             logger.error(traceback.format_exc())
-            return Response().error(f"创建备份失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-create_backup_failed", e=e))
+                .__dict__
+            )
 
     async def _background_export_task(self, task_id: str) -> None:
         """后台导出任务"""
         try:
-            self._update_progress(task_id, status="processing", message="正在初始化...")
+            self._update_progress(
+                task_id,
+                status="processing",
+                message=t("dashboard-routes-backup-update_progress_initializing"),
+            )
 
             # 获取知识库管理器
             kb_manager = getattr(self.core_lifecycle, "kb_manager", None)
@@ -407,7 +437,13 @@ class BackupRoute(Route):
                 },
             )
         except Exception as e:
-            logger.error(f"后台导出任务 {task_id} 失败: {e}")
+            logger.error(
+                t(
+                    "dashboard-routes-backup-background_export_task_failed",
+                    task_id=task_id,
+                    e=e,
+                )
+            )
             logger.error(traceback.format_exc())
             self._set_task_result(task_id, "failed", error=str(e))
 
@@ -426,11 +462,19 @@ class BackupRoute(Route):
         try:
             files = await request.files
             if "file" not in files:
-                return Response().error("缺少备份文件").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-missing_backup_file"))
+                    .__dict__
+                )
 
             file = files["file"]
             if not file.filename or not file.filename.endswith(".zip"):
-                return Response().error("请上传 ZIP 格式的备份文件").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-please_upload_zip_format"))
+                    .__dict__
+                )
 
             # 清洗文件名并生成唯一名称，防止路径遍历和覆盖
             safe_filename = secure_filename(file.filename)
@@ -442,7 +486,11 @@ class BackupRoute(Route):
             await file.save(zip_path)
 
             logger.info(
-                f"上传的备份文件已保存: {unique_filename} (原始名称: {file.filename})"
+                t(
+                    "dashboard-routes-backup-uploaded_file_saved",
+                    unique_filename=unique_filename,
+                    file=file,
+                )
             )
 
             return (
@@ -457,9 +505,13 @@ class BackupRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"上传备份文件失败: {e}")
+            logger.error(t("dashboard-routes-backup-upload_backup_file_failed", e=e))
             logger.error(traceback.format_exc())
-            return Response().error(f"上传备份文件失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-upload_backup_failed", e=e))
+                .__dict__
+            )
 
     async def upload_init(self):
         """初始化分片上传
@@ -481,13 +533,31 @@ class BackupRoute(Route):
             total_size = data.get("total_size", 0)
 
             if not filename:
-                return Response().error("缺少 filename 参数").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-backup-hardcoded-error_missing_filename")
+                    )
+                    .__dict__
+                )
 
             if not filename.endswith(".zip"):
-                return Response().error("请上传 ZIP 格式的备份文件").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-backup-hardcoded-error_zip_format_required")
+                    )
+                    .__dict__
+                )
 
             if total_size <= 0:
-                return Response().error("无效的文件大小").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-backup-hardcoded-error_invalid_file_size")
+                    )
+                    .__dict__
+                )
 
             # 由后端计算分片总数，确保前后端一致
             import math
@@ -519,8 +589,11 @@ class BackupRoute(Route):
             }
 
             logger.info(
-                f"初始化分片上传: upload_id={upload_id}, "
-                f"filename={unique_filename}, total_chunks={total_chunks}"
+                t(
+                    "dashboard-routes-backup-hardcoded-log_init_multipart_upload",
+                    upload_id=upload_id,
+                )
+                + f"filename={unique_filename}, total_chunks={total_chunks}"
             )
 
             return (
@@ -536,9 +609,15 @@ class BackupRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"初始化分片上传失败: {e}")
+            logger.error(
+                t("dashboard-routes-backup-hardcoded-log_init_multipart_failed", e=e)
+            )
             logger.error(traceback.format_exc())
-            return Response().error(f"初始化分片上传失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-init_chunk_upload_failed", e=e))
+                .__dict__
+            )
 
     async def upload_chunk(self):
         """上传分片
@@ -562,25 +641,61 @@ class BackupRoute(Route):
             chunk_index_str = form.get("chunk_index")
 
             if not upload_id or chunk_index_str is None:
-                return Response().error("缺少必要参数").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-backup-hardcoded-error_missing_required_params"
+                        )
+                    )
+                    .__dict__
+                )
 
             try:
                 chunk_index = int(chunk_index_str)
             except ValueError:
-                return Response().error("无效的分片索引").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-backup-hardcoded-error_invalid_chunk_index")
+                    )
+                    .__dict__
+                )
 
             if "chunk" not in files:
-                return Response().error("缺少分片数据").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-backup-hardcoded-error_missing_chunk_data")
+                    )
+                    .__dict__
+                )
 
             # 验证上传会话
             if upload_id not in self.upload_sessions:
-                return Response().error("上传会话不存在或已过期").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-backup-hardcoded-error_upload_session_invalid"
+                        )
+                    )
+                    .__dict__
+                )
 
             session = self.upload_sessions[upload_id]
 
             # 验证分片索引
             if chunk_index < 0 or chunk_index >= session["total_chunks"]:
-                return Response().error("分片索引超出范围").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-backup-hardcoded-error_chunk_index_out_of_range"
+                        )
+                    )
+                    .__dict__
+                )
 
             # 保存分片
             chunk_file = files["chunk"]
@@ -595,8 +710,11 @@ class BackupRoute(Route):
             total_chunks = session["total_chunks"]
 
             logger.debug(
-                f"接收分片: upload_id={upload_id}, "
-                f"chunk={chunk_index + 1}/{total_chunks}"
+                t(
+                    "dashboard-routes-backup-hardcoded-log_receiving_chunk",
+                    upload_id=upload_id,
+                )
+                + f"chunk={chunk_index + 1}/{total_chunks}"
             )
 
             return (
@@ -611,9 +729,15 @@ class BackupRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"上传分片失败: {e}")
+            logger.error(
+                t("dashboard-routes-backup-hardcoded-log_upload_chunk_failed", e=e)
+            )
             logger.error(traceback.format_exc())
-            return Response().error(f"上传分片失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-chunk_upload_failed", e=e))
+                .__dict__
+            )
 
     def _mark_backup_as_uploaded(self, zip_path: str) -> None:
         """修改备份文件的 manifest.json，将 origin 设置为 uploaded
@@ -640,9 +764,19 @@ class BackupRoute(Route):
                 new_manifest = json.dumps(manifest, ensure_ascii=False, indent=2)
                 zf.writestr("manifest.json", new_manifest)
 
-            logger.debug(f"已标记备份为上传来源: {zip_path}")
+            logger.debug(
+                t(
+                    "dashboard-routes-backup-hardcoded-log_mark_backup_source_success",
+                    zip_path=zip_path,
+                )
+            )
         except Exception as e:
-            logger.warning(f"标记备份来源失败: {e}")
+            logger.warning(
+                t(
+                    "dashboard-routes-backup-hardcoded-log_mark_backup_source_failed",
+                    e=e,
+                )
+            )
 
     async def upload_complete(self):
         """完成分片上传
@@ -661,11 +795,25 @@ class BackupRoute(Route):
             upload_id = data.get("upload_id")
 
             if not upload_id:
-                return Response().error("缺少 upload_id 参数").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-backup-hardcoded-error_missing_upload_id")
+                    )
+                    .__dict__
+                )
 
             # 验证上传会话
             if upload_id not in self.upload_sessions:
-                return Response().error("上传会话不存在或已过期").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-backup-hardcoded-error_session_not_found_or_expired"
+                        )
+                    )
+                    .__dict__
+                )
 
             session = self.upload_sessions[upload_id]
 
@@ -677,7 +825,12 @@ class BackupRoute(Route):
                 missing = set(range(total)) - received
                 return (
                     Response()
-                    .error(f"分片不完整，缺少: {sorted(missing)[:10]}...")
+                    .error(
+                        t(
+                            "dashboard-routes-backup-incomplete_shard_missing_keys",
+                            missing=sorted(missing)[:10],
+                        )
+                    )
                     .__dict__
                 )
 
@@ -706,7 +859,12 @@ class BackupRoute(Route):
                 self._mark_backup_as_uploaded(output_path)
 
                 logger.info(
-                    f"分片上传完成: {filename}, size={file_size}, chunks={total}"
+                    t(
+                        "dashboard-routes-backup-chunked_upload_completed",
+                        filename=filename,
+                        file_size=file_size,
+                        total=total,
+                    )
                 )
 
                 # 清理分片目录
@@ -730,9 +888,15 @@ class BackupRoute(Route):
                 raise e
 
         except Exception as e:
-            logger.error(f"完成分片上传失败: {e}")
+            logger.error(
+                t("dashboard-routes-backup-complete_chunked_upload_failed", e=e)
+            )
             logger.error(traceback.format_exc())
-            return Response().error(f"完成分片上传失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-complete_chunk_upload_failed", e=e))
+                .__dict__
+            )
 
     async def upload_abort(self):
         """取消分片上传
@@ -747,22 +911,44 @@ class BackupRoute(Route):
             upload_id = data.get("upload_id")
 
             if not upload_id:
-                return Response().error("缺少 upload_id 参数").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-missing_upload_id"))
+                    .__dict__
+                )
 
             if upload_id not in self.upload_sessions:
                 # 会话已不存在，可能已过期或已完成
-                return Response().ok(message="上传已取消").__dict__
+                return (
+                    Response()
+                    .ok(message=t("dashboard-routes-backup-upload_canceled_success"))
+                    .__dict__
+                )
 
             # 清理会话
             await self._cleanup_upload_session(upload_id)
 
-            logger.info(f"取消分片上传: {upload_id}")
+            logger.info(
+                t("dashboard-routes-backup-cancel_chunked_upload", upload_id=upload_id)
+            )
 
-            return Response().ok(message="上传已取消").__dict__
+            return (
+                Response()
+                .ok(
+                    message=t(
+                        "dashboard-routes-backup-upload_canceled_success_response"
+                    )
+                )
+                .__dict__
+            )
         except Exception as e:
-            logger.error(f"取消上传失败: {e}")
+            logger.error(t("dashboard-routes-backup-cancel_upload_failed", e=e))
             logger.error(traceback.format_exc())
-            return Response().error(f"取消上传失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-cancel_upload_failed", e=e))
+                .__dict__
+            )
 
     async def check_backup(self):
         """预检查备份文件
@@ -780,15 +966,32 @@ class BackupRoute(Route):
             data = await request.json
             filename = data.get("filename")
             if not filename:
-                return Response().error("缺少 filename 参数").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-missing_filename"))
+                    .__dict__
+                )
 
             # 安全检查 - 防止路径遍历
             if ".." in filename or "/" in filename or "\\" in filename:
-                return Response().error("无效的文件名").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-invalid_filename"))
+                    .__dict__
+                )
 
             zip_path = os.path.join(self.backup_dir, filename)
             if not os.path.exists(zip_path):
-                return Response().error(f"备份文件不存在: {filename}").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-backup-backup_file_not_found",
+                            filename=filename,
+                        )
+                    )
+                    .__dict__
+                )
 
             # 获取知识库管理器（用于构造 importer）
             kb_manager = getattr(self.core_lifecycle, "kb_manager", None)
@@ -804,9 +1007,13 @@ class BackupRoute(Route):
 
             return Response().ok(check_result.to_dict()).__dict__
         except Exception as e:
-            logger.error(f"预检查备份文件失败: {e}")
+            logger.error(t("dashboard-routes-backup-precheck_backup_failed", e=e))
             logger.error(traceback.format_exc())
-            return Response().error(f"预检查备份文件失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-precheck_backup_failed", e=e))
+                .__dict__
+            )
 
     async def import_backup(self):
         """执行备份导入
@@ -827,22 +1034,39 @@ class BackupRoute(Route):
             confirmed = data.get("confirmed", False)
 
             if not filename:
-                return Response().error("缺少 filename 参数").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-missing_filename_import"))
+                    .__dict__
+                )
 
             if not confirmed:
                 return (
                     Response()
-                    .error("请先确认导入。导入将会清空并覆盖现有数据，此操作不可撤销。")
+                    .error(t("dashboard-routes-backup-import_confirmation_required"))
                     .__dict__
                 )
 
             # 安全检查 - 防止路径遍历
             if ".." in filename or "/" in filename or "\\" in filename:
-                return Response().error("无效的文件名").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-invalid_filename_import"))
+                    .__dict__
+                )
 
             zip_path = os.path.join(self.backup_dir, filename)
             if not os.path.exists(zip_path):
-                return Response().error(f"备份文件不存在: {filename}").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-backup-backup_file_not_found_import",
+                            filename=filename,
+                        )
+                    )
+                    .__dict__
+                )
 
             # 生成任务ID
             task_id = str(uuid.uuid4())
@@ -864,14 +1088,22 @@ class BackupRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"导入备份失败: {e}")
+            logger.error(t("dashboard-routes-backup-import_backup_failed", e=e))
             logger.error(traceback.format_exc())
-            return Response().error(f"导入备份失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-import_backup_failed", e=e))
+                .__dict__
+            )
 
     async def _background_import_task(self, task_id: str, zip_path: str) -> None:
         """后台导入任务"""
         try:
-            self._update_progress(task_id, status="processing", message="正在初始化...")
+            self._update_progress(
+                task_id,
+                status="processing",
+                message=t("dashboard-routes-backup-update_progress_initializing"),
+            )
 
             # 获取知识库管理器
             kb_manager = getattr(self.core_lifecycle, "kb_manager", None)
@@ -906,7 +1138,13 @@ class BackupRoute(Route):
                     error="; ".join(result.errors),
                 )
         except Exception as e:
-            logger.error(f"后台导入任务 {task_id} 失败: {e}")
+            logger.error(
+                t(
+                    "dashboard-routes-backup-logger_import_task_failed",
+                    task_id=task_id,
+                    e=e,
+                )
+            )
             logger.error(traceback.format_exc())
             self._set_task_result(task_id, "failed", error=str(e))
 
@@ -919,10 +1157,18 @@ class BackupRoute(Route):
         try:
             task_id = request.args.get("task_id")
             if not task_id:
-                return Response().error("缺少参数 task_id").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_missing_task_id"))
+                    .__dict__
+                )
 
             if task_id not in self.backup_tasks:
-                return Response().error("找不到该任务").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_task_not_found"))
+                    .__dict__
+                )
 
             task_info = self.backup_tasks[task_id]
             status = task_info["status"]
@@ -947,9 +1193,13 @@ class BackupRoute(Route):
 
             return Response().ok(response_data).__dict__
         except Exception as e:
-            logger.error(f"获取任务进度失败: {e}")
+            logger.error(t("dashboard-routes-backup-logger_get_progress_failed", e=e))
             logger.error(traceback.format_exc())
-            return Response().error(f"获取任务进度失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-get_task_progress_failed", e=e))
+                .__dict__
+            )
 
     async def download_backup(self):
         """下载备份文件
@@ -966,30 +1216,58 @@ class BackupRoute(Route):
             token = request.args.get("token")
 
             if not filename:
-                return Response().error("缺少参数 filename").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_missing_filename"))
+                    .__dict__
+                )
 
             if not token:
-                return Response().error("缺少参数 token").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_missing_token"))
+                    .__dict__
+                )
 
             # 验证 JWT token
             try:
                 jwt_secret = self.config.get("dashboard", {}).get("jwt_secret")
                 if not jwt_secret:
-                    return Response().error("服务器配置错误").__dict__
+                    return (
+                        Response()
+                        .error(t("dashboard-routes-backup-error_server_config"))
+                        .__dict__
+                    )
 
                 jwt.decode(token, jwt_secret, algorithms=["HS256"])
             except jwt.ExpiredSignatureError:
-                return Response().error("Token 已过期，请刷新页面后重试").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_token_expired"))
+                    .__dict__
+                )
             except jwt.InvalidTokenError:
-                return Response().error("Token 无效").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_invalid_token"))
+                    .__dict__
+                )
 
             # 安全检查 - 防止路径遍历
             if ".." in filename or "/" in filename or "\\" in filename:
-                return Response().error("无效的文件名").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_invalid_filename"))
+                    .__dict__
+                )
 
             file_path = os.path.join(self.backup_dir, filename)
             if not os.path.exists(file_path):
-                return Response().error("备份文件不存在").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_backup_not_exist"))
+                    .__dict__
+                )
 
             return await send_file(
                 file_path,
@@ -998,9 +1276,15 @@ class BackupRoute(Route):
                 conditional=True,  # 启用 Range 请求支持（断点续传）
             )
         except Exception as e:
-            logger.error(f"下载备份失败: {e}")
+            logger.error(
+                t("dashboard-routes-backup-logger_download_backup_failed", e=e)
+            )
             logger.error(traceback.format_exc())
-            return Response().error(f"下载备份失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-download_backup_failed", e=e))
+                .__dict__
+            )
 
     async def delete_backup(self):
         """删除备份文件
@@ -1012,22 +1296,42 @@ class BackupRoute(Route):
             data = await request.json
             filename = data.get("filename")
             if not filename:
-                return Response().error("缺少参数 filename").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_missing_filename_download"))
+                    .__dict__
+                )
 
             # 安全检查 - 防止路径遍历
             if ".." in filename or "/" in filename or "\\" in filename:
-                return Response().error("无效的文件名").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_invalid_filename_download"))
+                    .__dict__
+                )
 
             file_path = os.path.join(self.backup_dir, filename)
             if not os.path.exists(file_path):
-                return Response().error("备份文件不存在").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-error_backup_not_exist_download"))
+                    .__dict__
+                )
 
             os.remove(file_path)
-            return Response().ok(message="删除备份成功").__dict__
+            return (
+                Response()
+                .ok(message=t("dashboard-routes-backup-success_backup_deleted"))
+                .__dict__
+            )
         except Exception as e:
-            logger.error(f"删除备份失败: {e}")
+            logger.error(t("dashboard-routes-backup-logger_delete_backup_failed", e=e))
             logger.error(traceback.format_exc())
-            return Response().error(f"删除备份失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-delete_backup_failed", e=e))
+                .__dict__
+            )
 
     async def rename_backup(self):
         """重命名备份文件
@@ -1042,14 +1346,26 @@ class BackupRoute(Route):
             new_name = data.get("new_name")
 
             if not filename:
-                return Response().error("缺少参数 filename").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-missing_filename_dup2"))
+                    .__dict__
+                )
 
             if not new_name:
-                return Response().error("缺少参数 new_name").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-missing_new_name"))
+                    .__dict__
+                )
 
             # 安全检查 - 防止路径遍历
             if ".." in filename or "/" in filename or "\\" in filename:
-                return Response().error("无效的文件名").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-invalid_filename"))
+                    .__dict__
+                )
 
             # 清洗新文件名（移除路径和危险字符）
             new_name = secure_filename(new_name)
@@ -1060,7 +1376,11 @@ class BackupRoute(Route):
 
             # 验证新文件名不为空
             if not new_name or new_name.replace("_", "") == "":
-                return Response().error("新文件名无效").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-invalid_new_filename"))
+                    .__dict__
+                )
 
             # 强制使用 .zip 扩展名
             new_filename = f"{new_name}.zip"
@@ -1068,17 +1388,36 @@ class BackupRoute(Route):
             # 检查原文件是否存在
             old_path = os.path.join(self.backup_dir, filename)
             if not os.path.exists(old_path):
-                return Response().error("备份文件不存在").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-backup-backup_not_found"))
+                    .__dict__
+                )
 
             # 检查新文件名是否已存在
             new_path = os.path.join(self.backup_dir, new_filename)
             if os.path.exists(new_path):
-                return Response().error(f"文件名 '{new_filename}' 已存在").__dict__
+                return (
+                    Response()
+                    .error(
+                        t(
+                            "dashboard-routes-backup-filename_exists",
+                            new_filename=new_filename,
+                        )
+                    )
+                    .__dict__
+                )
 
             # 执行重命名
             os.rename(old_path, new_path)
 
-            logger.info(f"备份文件重命名: {filename} -> {new_filename}")
+            logger.info(
+                t(
+                    "dashboard-routes-backup-backup_renamed",
+                    filename=filename,
+                    new_filename=new_filename,
+                )
+            )
 
             return (
                 Response()
@@ -1091,6 +1430,10 @@ class BackupRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"重命名备份失败: {e}")
+            logger.error(t("dashboard-routes-backup-rename_backup_failed_log", e=e))
             logger.error(traceback.format_exc())
-            return Response().error(f"重命名备份失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-backup-rename_backup_failed", e=e))
+                .__dict__
+            )

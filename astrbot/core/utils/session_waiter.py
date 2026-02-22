@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 import astrbot.core.message.components as Comp
+from astrbot.core.lang import t
 from astrbot.core.platform import AstrMessageEvent
 
 USER_SESSIONS: dict[str, "SessionWaiter"] = {}  # 存储 SessionWaiter 实例
@@ -77,7 +78,9 @@ class SessionController:
             await asyncio.wait_for(event.wait(), timeout)
         except asyncio.TimeoutError:
             if not self.future.done():
-                self.future.set_exception(TimeoutError("等待超时"))
+                self.future.set_exception(
+                    TimeoutError(t("core-utils-session_waiter-wait_timeout"))
+                )
         except asyncio.CancelledError:
             pass  # 避免报错
         # finally:
@@ -191,7 +194,9 @@ def session_waiter(timeout: int = 30, record_history_chains: bool = False):
             if not session_filter:
                 session_filter = DefaultSessionFilter()
             if not isinstance(session_filter, SessionFilter):
-                raise ValueError("session_filter 必须是 SessionFilter")
+                raise ValueError(
+                    t("core-utils-session_waiter-invalid_session_filter_type")
+                )
 
             session_id = session_filter.filter(event)
             FILTERS.append(session_filter)

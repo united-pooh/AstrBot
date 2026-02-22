@@ -7,6 +7,7 @@ import wave
 from io import BytesIO
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 
@@ -36,7 +37,7 @@ async def wav_to_tencent_silk(wav_path: str, output_path: str) -> int:
         import pilk
     except (ImportError, ModuleNotFoundError) as _:
         raise Exception(
-            "pilk 模块未安装，请前往管理面板->平台日志->安装pip库 安装 pilk 这个库",
+            t("core-utils-tencent_record_helper-pilk_not_installed"),
         )
     # with wave.open(wav_path, 'rb') as wav:
     #     wav_data = wav.readframes(wav.getnframes())
@@ -70,7 +71,9 @@ async def convert_to_pcm_wav(input_path: str, output_path: str) -> str:
         ff = FFmpeg()
         ff.convert(input_file=input_path, output_file=output_path)
     except Exception as e:
-        logger.debug(f"pyffmpeg 转换失败: {e}, 尝试使用 ffmpeg 命令行进行转换")
+        logger.debug(
+            t("core-utils-tencent_record_helper-pyffmpeg_fallback_to_cli", e=e)
+        )
 
         p = await asyncio.create_subprocess_exec(
             "ffmpeg",
@@ -99,7 +102,9 @@ async def convert_to_pcm_wav(input_path: str, output_path: str) -> str:
 
     if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
         return output_path
-    raise RuntimeError("生成的WAV文件不存在或为空")
+    raise RuntimeError(
+        t("core-utils-tencent_record_helper-generated_wav_missing_or_empty")
+    )
 
 
 async def audio_to_tencent_silk_base64(audio_path: str) -> tuple[str, float]:
@@ -115,7 +120,9 @@ async def audio_to_tencent_silk_base64(audio_path: str) -> tuple[str, float]:
     try:
         import pilk
     except ImportError as e:
-        raise Exception("未安装 pilk: pip install pilk") from e
+        raise Exception(
+            t("core-utils-tencent_record_helper-pilk_missing_exception")
+        ) from e
 
     temp_dir = get_astrbot_temp_path()
     os.makedirs(temp_dir, exist_ok=True)

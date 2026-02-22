@@ -10,6 +10,7 @@ from typing import Any
 from astrbot import logger
 from astrbot.core.agent.tool import ToolSet
 from astrbot.core.db.po import Conversation
+from astrbot.core.lang import t
 from astrbot.core.message.components import (
     At,
     AtAll,
@@ -133,22 +134,26 @@ class AstrMessageEvent(abc.ABC):
             if isinstance(i, Plain):
                 parts.append(i.text)
             elif isinstance(i, Image):
-                parts.append("[图片]")
+                parts.append(t("core-platform-astr_message_event-append_image"))
             elif isinstance(i, Face):
-                parts.append(f"[表情:{i.id}]")
+                parts.append(
+                    t("core-platform-astr_message_event-face_placeholder", i=i)
+                )
             elif isinstance(i, At):
                 parts.append(f"[At:{i.qq}]")
             elif isinstance(i, AtAll):
-                parts.append("[At:全体成员]")
+                parts.append(t("core-platform-astr_message_event-append_at_all"))
             elif isinstance(i, Forward):
                 # 转发消息
-                parts.append("[转发消息]")
+                parts.append(t("core-platform-astr_message_event-append_forwarded"))
             elif isinstance(i, Reply):
                 # 引用回复
                 if i.message_str:
-                    parts.append(f"[引用消息({i.sender_nickname}: {i.message_str})]")
+                    parts.append(
+                        t("core-platform-astr_message_event-reply_placeholder", i=i)
+                    )
                 else:
-                    parts.append("[引用消息]")
+                    parts.append(t("core-platform-astr_message_event-append_reply"))
             else:
                 parts.append(f"[{i.type}]")
             parts.append(" ")
@@ -203,7 +208,13 @@ class AstrMessageEvent(abc.ABC):
 
     def clear_extra(self) -> None:
         """清除额外的信息。"""
-        logger.info(f"清除 {self.get_platform_name()} 的额外信息: {self._extras}")
+        logger.info(
+            t(
+                "core-platform-astr_message_event-clearing_extras",
+                get_platform_name=self.get_platform_name(),
+                extras=self._extras,
+            )
+        )
         self._extras.clear()
 
     def is_private_chat(self) -> bool:

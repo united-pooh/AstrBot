@@ -1,6 +1,7 @@
 import aiohttp
 
 from astrbot import logger
+from astrbot.core.lang import t
 
 from ..entities import ProviderType, RerankResult
 from ..provider import RerankProvider
@@ -9,7 +10,7 @@ from ..register import register_provider_adapter
 
 @register_provider_adapter(
     "vllm_rerank",
-    "VLLM Rerank 适配器",
+    t("core-provider-sources-vllm_rerank_source-adapter_title"),
     provider_type=ProviderType.RERANK,
 )
 class VLLMRerankProvider(RerankProvider):
@@ -54,7 +55,10 @@ class VLLMRerankProvider(RerankProvider):
 
             if not results:
                 logger.warning(
-                    f"Rerank API 返回了空的列表数据。原始响应: {response_data}",
+                    t(
+                        "core-provider-sources-vllm_rerank_source-empty_rerank_response",
+                        response_data=response_data,
+                    ),
                 )
 
             return [

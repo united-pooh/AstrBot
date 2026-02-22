@@ -9,6 +9,7 @@ from .conversation import ConversationRoute
 from .cron import CronRoute
 from .file import FileRoute
 from .knowledge_base import KnowledgeBaseRoute
+from .lang_route import LangRoute
 from .log import LogRoute
 from .open_api import OpenApiRoute
 from .persona import PersonaRoute
@@ -21,7 +22,6 @@ from .static_file import StaticFileRoute
 from .subagent import SubAgentRoute
 from .tools import ToolsRoute
 from .update import UpdateRoute
-from .lang_route import LangRoute
 
 __all__ = [
     "ApiKeyRoute",

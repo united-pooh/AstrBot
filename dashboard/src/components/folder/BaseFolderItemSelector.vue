@@ -3,13 +3,13 @@
         <!-- 触发按钮区域 -->
         <div class="d-flex align-center justify-space-between">
             <span v-if="!modelValue" style="color: rgb(var(--v-theme-primaryText));">
-                {{ labels.notSelected || '未选择' }}
+                {{ labels.notSelected || t('src.components.folder.basefolderitemselector.text_none_selected') }}
             </span>
             <span v-else>
                 {{ displayValue }}
             </span>
             <v-btn size="small" color="primary" variant="tonal" @click="openDialog">
-                {{ labels.buttonText || '选择...' }}
+                {{ labels.buttonText || t('src.components.folder.basefolderitemselector.button_select') }}
             </v-btn>
         </div>
 
@@ -18,7 +18,7 @@
             <v-card class="selector-dialog-card">
                 <v-card-title class="dialog-title d-flex align-center py-4 px-5">
                     <v-icon class="mr-3" color="primary">mdi-account-circle</v-icon>
-                    <span>{{ labels.dialogTitle || '选择项目' }}</span>
+                    <span>{{ labels.dialogTitle || t('src.components.folder.basefolderitemselector.dialog_title_select_item') }}</span>
                 </v-card-title>
 
                 <v-divider />
@@ -30,7 +30,7 @@
                             <div class="sidebar-header pa-3 pb-2">
                                 <span class="text-caption text-medium-emphasis font-weight-medium">
                                     <v-icon size="small" class="mr-1">mdi-folder-multiple</v-icon>
-                                    文件夹
+                                    {{ t('src.components.folder.basefolderitemselector.label_folder') }}
                                 </span>
                             </div>
                             <v-list density="compact" nav class="tree-list pa-2" bg-color="transparent">
@@ -40,7 +40,7 @@
                                     <template v-slot:prepend>
                                         <v-icon size="20" :color="currentFolderId === null ? 'primary' : ''">mdi-home</v-icon>
                                     </template>
-                                    <v-list-item-title class="text-body-2">{{ labels.rootFolder || '根目录' }}</v-list-item-title>
+                                    <v-list-item-title class="text-body-2">{{ labels.rootFolder || t('src.components.folder.basefolderitemselector.root_folder_label') }}</v-list-item-title>
                                 </v-list-item>
 
                                 <!-- 文件夹树 -->
@@ -86,7 +86,7 @@
                                 <!-- 子文件夹 -->
                                 <v-list v-if="!itemsLoading" lines="two" class="pa-3 items-content">
                                     <template v-if="currentSubFolders.length > 0">
-                                        <div class="section-label text-caption text-medium-emphasis mb-2 px-2">子文件夹</div>
+                                        <div class="section-label text-caption text-medium-emphasis mb-2 px-2">{{ t('src.components.folder.basefolderitemselector.section_subfolders') }}</div>
                                         <v-list-item v-for="folder in currentSubFolders" :key="'folder-' + folder.folder_id"
                                             @click="navigateToFolder(folder.folder_id)" rounded="lg" class="mb-1 folder-item">
                                             <template v-slot:prepend>
@@ -103,7 +103,12 @@
 
                                     <!-- 项目列表 -->
                                     <template v-if="currentItems.length > 0">
-                                        <div class="section-label text-caption text-medium-emphasis mb-2 px-2" :class="{ 'mt-4': currentSubFolders.length > 0 }">可选项目</div>
+                                        <div
+                                            class="section-label text-caption text-medium-emphasis mb-2 px-2"
+                                            :class="{ 'mt-4': currentSubFolders.length > 0 }"
+                                        >
+                                            {{ t('src.components.folder.basefolderitemselector.optional_items') }}
+                                        </div>
                                         <v-list-item v-for="item in currentItems" :key="'item-' + getItemId(item)"
                                             :value="getItemId(item)" @click="selectItem(item)"
                                             :active="selectedItemId === getItemId(item)" rounded="lg" class="mb-1 persona-item"
@@ -138,7 +143,7 @@
                                     <div v-if="currentSubFolders.length === 0 && currentItems.length === 0"
                                         class="empty-state text-center py-12">
                                         <v-icon size="64" color="grey-lighten-2">mdi-folder-open-outline</v-icon>
-                                        <p class="text-grey mt-4 text-body-2">{{ labels.emptyFolder || labels.noItems || '此文件夹为空' }}</p>
+                                        <p class="text-grey mt-4 text-body-2">{{ labels.emptyFolder || labels.noItems || t('src.components.folder.basefolderitemselector.empty_folder_message') }}</p>
                                     </div>
                                 </v-list>
                             </div>
@@ -149,12 +154,12 @@
                 <v-card-actions class="pa-4">
                     <v-btn v-if="showCreateButton" variant="text" color="primary" prepend-icon="mdi-plus"
                         @click="$emit('create')">
-                        {{ labels.createButton || '新建' }}
+                        {{ labels.createButton || t('src.components.folder.basefolderitemselector.create_button') }}
                     </v-btn>
                     <v-spacer></v-spacer>
-                    <v-btn variant="text" @click="cancelSelection">{{ labels.cancelButton || '取消' }}</v-btn>
+                    <v-btn variant="text" @click="cancelSelection">{{ labels.cancelButton || t('src.components.folder.basefolderitemselector.cancel_button') }}</v-btn>
                     <v-btn color="primary" @click="confirmSelection" :disabled="!selectedItemId">
-                        {{ labels.confirmButton || '确认' }}
+                        {{ labels.confirmButton || t('src.components.folder.basefolderitemselector.confirm_button') }}
                     </v-btn>
                 </v-card-actions>
             </v-card>
@@ -166,6 +171,7 @@
 import { defineComponent, type PropType } from 'vue';
 import BaseMoveTargetNode from './BaseMoveTargetNode.vue';
 import type { FolderTreeNode, FolderItemSelectorLabels, SelectableItem } from './types';
+import { t } from '@/i18n/composables';
 
 export default defineComponent({
     name: 'BaseFolderItemSelector',
@@ -281,7 +287,7 @@ export default defineComponent({
         breadcrumbItems(): any[] {
             const items: any[] = [
                 {
-                    title: this.labels.rootFolder || '根目录',
+                    title: this.labels.rootFolder || t('src.components.folder.basefolderitemselector.root_folder_title'),
                     folderId: null,
                     disabled: this.currentFolderId === null,
                     isRoot: true
@@ -301,6 +307,8 @@ export default defineComponent({
         }
     },
     methods: {
+        t,
+
         getItemId(item: SelectableItem): string {
             return String(item[this.itemIdField] || item.id || '');
         },
@@ -536,3 +544,4 @@ export default defineComponent({
     }
 }
 </style>
+

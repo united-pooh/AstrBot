@@ -4,6 +4,7 @@ import uuid
 
 import aiohttp
 
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 from ..entities import ProviderType
@@ -53,7 +54,11 @@ class ProviderGSVITTS(TTSProvider):
                 else:
                     error_text = await response.text()
                     raise Exception(
-                        f"GSVI TTS API 请求失败，状态码: {response.status}，错误: {error_text}",
+                        t(
+                            "core-provider-sources-gsvi_tts_source-api_request_failed",
+                            response=response,
+                            error_text=error_text,
+                        ),
                     )
 
         return path

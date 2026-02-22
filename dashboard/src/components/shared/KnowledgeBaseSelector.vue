@@ -96,7 +96,7 @@
 import { ref, watch } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
-import { useModuleI18n } from '@/i18n/composables'
+import { useModuleI18n, t } from '@/i18n/composables';
 
 const props = defineProps({
   modelValue: {
@@ -146,11 +146,11 @@ async function loadKnowledgeBases() {
     if (response.data.status === 'ok') {
       knowledgeBaseList.value = response.data.data.items || []
     } else {
-      console.error('加载知识库列表失败:', response.data.message)
+      console.error(t('src.components.shared.knowledgebaseselector.failed_to_load_kb_list_response'), response.data.message)
       knowledgeBaseList.value = []
     }
   } catch (error) {
-    console.error('加载知识库列表失败:', error)
+    console.error(t('src.components.shared.knowledgebaseselector.failed_to_load_kb_list_error'), error)
     knowledgeBaseList.value = []
   } finally {
     loading.value = false

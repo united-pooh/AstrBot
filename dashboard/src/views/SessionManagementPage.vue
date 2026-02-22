@@ -56,9 +56,9 @@
                     </template>
                     <div>
                       <p>UMO: {{ item.umo }}</p>
-                      <p v-if="item.platform">平台: {{ item.platform }}</p>
-                      <p v-if="item.message_type">消息类型: {{ item.message_type }}</p>
-                      <p v-if="item.session_id">会话 ID: {{ item.session_id }}</p>
+                      <p v-if="item.platform">{{ t('src.views.sessionmanagementpage.display_platform', { platform: item.platform }) }}</p>
+                      <p v-if="item.message_type">{{ t('src.views.sessionmanagementpage.display_message_type', { message_type: item.message_type }) }}</p>
+                      <p v-if="item.session_id">{{ t('src.views.sessionmanagementpage.display_session_id', { session_id: item.session_id }) }}</p>
                     </div>
                   </v-tooltip>
                 </div>
@@ -156,14 +156,14 @@
       <!-- 分组管理面板 -->
       <v-card flat class="mt-4">
         <v-card-title class="d-flex align-center py-3 px-4">
-          <span class="text-h6">分组管理</span>
+          <span class="text-h6">{{ t('src.views.sessionmanagementpage.title_group_management') }}</span>
           <v-chip size="small" class="ml-2" color="secondary" variant="outlined">
-            {{ groups.length }} 个分组
+            {{ t('src.views.sessionmanagementpage.label_group_count', { groups: groups.length }) }}
           </v-chip>
           <v-spacer></v-spacer>
           <v-btn v-if="selectedItems.length > 0 && groups.length > 0" color="info" variant="tonal" size="small" class="mr-2">
             <v-icon start>mdi-folder-plus</v-icon>
-            添加到分组
+            {{ t('src.views.sessionmanagementpage.add_to_group') }}
             <v-menu activator="parent">
               <v-list density="compact">
                 <v-list-item v-for="g in groups" :key="g.id" @click="addSelectedToGroup(g.id)">
@@ -173,7 +173,7 @@
             </v-menu>
           </v-btn>
           <v-btn color="success" variant="tonal" size="small" @click="openCreateGroupDialog" prepend-icon="mdi-folder-plus">
-            新建分组
+            {{ t('src.views.sessionmanagementpage.new_group') }}
           </v-btn>
         </v-card-title>
         <v-card-text v-if="groups.length > 0">
@@ -183,7 +183,7 @@
                 <div class="d-flex align-center justify-space-between">
                   <div>
                     <div class="font-weight-bold">{{ group.name }}</div>
-                    <div class="text-caption text-grey">{{ group.umo_count }} 个会话</div>
+                    <div class="text-caption text-grey">{{ t('src.views.sessionmanagementpage.session_count', { group: group.umo_count }) }}</div>
                   </div>
                   <div>
                     <v-btn icon size="small" variant="text" @click="openEditGroupDialog(group)">
@@ -199,7 +199,7 @@
           </v-row>
         </v-card-text>
         <v-card-text v-else class="text-center text-grey py-6">
-          暂无分组，点击「新建分组」创建
+          {{ t('src.views.sessionmanagementpage.no_groups_prompt') }}
         </v-card-text>
       </v-card>
 
@@ -207,15 +207,15 @@
       <v-dialog v-model="groupDialog" max-width="800" @after-enter="loadAvailableUmos">
         <v-card>
           <v-card-title class="py-3 px-4">
-            {{ groupDialogMode === 'create' ? '新建分组' : '编辑分组' }}
+            {{ groupDialogMode === 'create' ? t('src.views.sessionmanagementpage.create_or_edit_group.true') : t('src.views.sessionmanagementpage.create_or_edit_group.false') }}
           </v-card-title>
           <v-card-text>
-            <v-text-field v-model="editingGroup.name" label="分组名称" variant="outlined" hide-details class="mb-4"></v-text-field>
+            <v-text-field v-model="editingGroup.name" :label="t('src.views.sessionmanagementpage.group_name_field')" variant="outlined" hide-details class="mb-4"></v-text-field>
             <v-row dense>
               <!-- 左侧：可选会话 -->
               <v-col cols="5">
-                <div class="text-subtitle-2 mb-2">可选会话 ({{ unselectedUmos.length }})</div>
-                <v-text-field v-model="groupMemberSearch" placeholder="搜索..." variant="outlined" density="compact" hide-details class="mb-2" clearable prepend-inner-icon="mdi-magnify"></v-text-field>
+                <div class="text-subtitle-2 mb-2">{{ t('src.views.sessionmanagementpage.available_sessions_title', { unselectedUmos: unselectedUmos.length }) }}</div>
+                <v-text-field v-model="groupMemberSearch" :placeholder="t('src.views.sessionmanagementpage.available_search_field')" variant="outlined" density="compact" hide-details class="mb-2" clearable prepend-inner-icon="mdi-magnify"></v-text-field>
                 <v-list density="compact" class="transfer-list" lines="one">
                   <v-list-item v-for="umo in filteredUnselectedUmos" :key="umo" @click="addToGroup(umo)" class="transfer-item">
                     <template v-slot:prepend>
@@ -224,7 +224,7 @@
                     <v-list-item-title class="text-caption">{{ formatUmoShort(umo) }}</v-list-item-title>
                   </v-list-item>
                   <v-list-item v-if="filteredUnselectedUmos.length === 0 && !loadingUmos">
-                    <v-list-item-title class="text-caption text-grey text-center">无匹配项</v-list-item-title>
+                    <v-list-item-title class="text-caption text-grey text-center">{{ t('src.views.sessionmanagementpage.no_matches_available') }}</v-list-item-title>
                   </v-list-item>
                   <v-list-item v-if="loadingUmos">
                     <v-list-item-title class="text-center"><v-progress-circular indeterminate size="20"></v-progress-circular></v-list-item-title>
@@ -242,8 +242,8 @@
               </v-col>
               <!-- 右侧：已选会话 -->
               <v-col cols="5">
-                <div class="text-subtitle-2 mb-2">已选会话 ({{ editingGroup.umos.length }})</div>
-                <v-text-field v-model="groupSelectedSearch" placeholder="搜索..." variant="outlined" density="compact" hide-details class="mb-2" clearable prepend-inner-icon="mdi-magnify"></v-text-field>
+                <div class="text-subtitle-2 mb-2">{{ t('src.views.sessionmanagementpage.selected_sessions_title', { editingGroup: editingGroup.umos.length }) }}</div>
+                <v-text-field v-model="groupSelectedSearch" :placeholder="t('src.views.sessionmanagementpage.selected_search_field')" variant="outlined" density="compact" hide-details class="mb-2" clearable prepend-inner-icon="mdi-magnify"></v-text-field>
                 <v-list density="compact" class="transfer-list" lines="one">
                   <v-list-item v-for="umo in filteredSelectedUmos" :key="umo" @click="removeFromGroup(umo)" class="transfer-item">
                     <template v-slot:prepend>
@@ -252,7 +252,7 @@
                     <v-list-item-title class="text-caption">{{ formatUmoShort(umo) }}</v-list-item-title>
                   </v-list-item>
                   <v-list-item v-if="editingGroup.umos.length === 0">
-                    <v-list-item-title class="text-caption text-grey text-center">暂无成员</v-list-item-title>
+                    <v-list-item-title class="text-caption text-grey text-center">{{ t('src.views.sessionmanagementpage.no_members_selected') }}</v-list-item-title>
                   </v-list-item>
                 </v-list>
               </v-col>
@@ -260,8 +260,8 @@
           </v-card-text>
           <v-card-actions class="px-4 pb-4">
             <v-spacer></v-spacer>
-            <v-btn variant="text" @click="groupDialog = false">取消</v-btn>
-            <v-btn color="primary" variant="tonal" @click="saveGroup">保存</v-btn>
+            <v-btn variant="text" @click="groupDialog = false">{{ t('src.views.sessionmanagementpage.cancel_button') }}</v-btn>
+            <v-btn color="primary" variant="tonal" @click="saveGroup">{{ t('src.views.sessionmanagementpage.save_button') }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -721,7 +721,7 @@ export default {
       ]
       // 添加自定义分组选项
       if (this.groups.length > 0) {
-        options.push({ label: '── 自定义分组 ──', value: '_divider', disabled: true })
+        options.push({ label: t('src.views.sessionmanagementpage.custom_groups_divider'), value: '_divider', disabled: true })
         this.groups.forEach(g => {
           options.push({ label: `📁 ${g.name} (${g.umo_count})`, value: `custom_group:${g.id}` })
         })
@@ -731,7 +731,7 @@ export default {
 
     groupOptions() {
       return this.groups.map(g => ({
-        label: `${g.name} (${g.umo_count} 个会话)`,
+        label: this.t('src.views.sessionmanagementpage.group_option_label', { name: g.name, umo_count: g.umo_count }),
         value: g.id
       }))
     },
@@ -1331,7 +1331,7 @@ export default {
         if (scope === 'selected') {
           umos = this.selectedItems.map(item => item.umo)
           if (umos.length === 0) {
-            this.showError('请先选择要操作的会话')
+            this.showError(t('src.views.sessionmanagementpage.error_no_session_selected'))
             this.batchUpdating = false
             return
           }
@@ -1371,7 +1371,7 @@ export default {
         }
 
         if (tasks.length === 0) {
-          this.showError('请至少选择一项要修改的配置')
+          this.showError(t('src.views.sessionmanagementpage.error_no_config_selected'))
           this.batchUpdating = false
           return
         }
@@ -1380,17 +1380,17 @@ export default {
         const allOk = results.every(r => r.data.status === 'ok')
 
         if (allOk) {
-          this.showSuccess('批量更新成功')
+          this.showSuccess(t('src.views.sessionmanagementpage.success_batch_update'))
           this.batchLlmStatus = null
           this.batchTtsStatus = null
           this.batchChatProvider = null
           this.batchTtsProvider = null
           await this.loadData()
         } else {
-          this.showError('部分更新失败')
+          this.showError(t('src.views.sessionmanagementpage.error_partial_update_failed'))
         }
       } catch (error) {
-        this.showError(error.response?.data?.message || '批量更新失败')
+        this.showError(error.response?.data?.message || t('src.views.sessionmanagementpage.batch_update_failed'))
       }
       this.batchUpdating = false
     },
@@ -1405,7 +1405,7 @@ export default {
           this.groups = response.data.data.groups || []
         }
       } catch (error) {
-        console.error('加载分组失败:', error)
+        console.error(t('src.views.sessionmanagementpage.load_groups_failed'), error)
       }
       this.groupsLoading = false
     },
@@ -1419,7 +1419,7 @@ export default {
           this.availableUmos = response.data.data.umos || []
         }
       } catch (error) {
-        console.error('加载会话列表失败:', error)
+        console.error(t('src.views.sessionmanagementpage.load_sessions_failed'), error)
       }
       this.loadingUmos = false
     },
@@ -1477,7 +1477,7 @@ export default {
 
     async saveGroup() {
       if (!this.editingGroup.name.trim()) {
-        this.showError('分组名称不能为空')
+        this.showError(t('src.views.sessionmanagementpage.group_name_required'))
         return
       }
 
@@ -1504,12 +1504,12 @@ export default {
           this.showError(response.data.message)
         }
       } catch (error) {
-        this.showError(error.response?.data?.message || '保存分组失败')
+        this.showError(error.response?.data?.message || t('src.views.sessionmanagementpage.save_group_failed'))
       }
     },
 
     async deleteGroup(group) {
-      const message = `确定要删除分组 "${group.name}" 吗？`
+      const message = this.t('src.views.sessionmanagementpage.confirm_delete_group', { name: group.name })
       if (!(await askForConfirmationDialog(message, this.confirmDialog))) return
 
       try {
@@ -1521,7 +1521,7 @@ export default {
           this.showError(response.data.message)
         }
       } catch (error) {
-        this.showError(error.response?.data?.message || '删除分组失败')
+        this.showError(error.response?.data?.message || t('src.views.sessionmanagementpage.delete_group_failed'))
       }
     },
 
@@ -1532,7 +1532,7 @@ export default {
 
     async addSelectedToGroup(groupId) {
       if (this.selectedItems.length === 0) {
-        this.showError('请先选择要添加的会话')
+        this.showError(t('src.views.sessionmanagementpage.select_sessions_required'))
         return
       }
 
@@ -1542,13 +1542,13 @@ export default {
           add_umos: this.selectedItems.map(item => item.umo)
         })
         if (response.data.status === 'ok') {
-          this.showSuccess(`已添加 ${this.selectedItems.length} 个会话到分组`)
+          this.showSuccess(this.t('src.views.sessionmanagementpage.sessions_added_success', { length: this.selectedItems.length }))
           await this.loadGroups()
         } else {
           this.showError(response.data.message)
         }
       } catch (error) {
-        this.showError(error.response?.data?.message || '添加失败')
+        this.showError(error.response?.data?.message || t('src.views.sessionmanagementpage.add_failed'))
       }
     },
   },

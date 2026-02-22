@@ -4,6 +4,7 @@
 """
 
 from astrbot.core.knowledge_base.parsers.base import BaseParser, ParseResult
+from astrbot.core.lang import t
 
 
 class TextParser(BaseParser):
@@ -36,7 +37,12 @@ class TextParser(BaseParser):
             except UnicodeDecodeError:
                 continue
         else:
-            raise ValueError(f"无法解码文件: {file_name}")
+            raise ValueError(
+                t(
+                    "core-knowledge_base-parsers-text_parser-decode_failed",
+                    file_name=file_name,
+                )
+            )
 
         # 文本文件无多媒体资源
         return ParseResult(text=text, media=[])

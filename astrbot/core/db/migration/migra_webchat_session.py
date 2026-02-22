@@ -15,6 +15,7 @@ from sqlmodel import col
 from astrbot.api import logger, sp
 from astrbot.core.db import BaseDatabase
 from astrbot.core.db.po import ConversationV2, PlatformMessageHistory, PlatformSession
+from astrbot.core.lang import t
 
 
 async def migrate_webchat_session(db_helper: BaseDatabase) -> None:
@@ -30,7 +31,7 @@ async def migrate_webchat_session(db_helper: BaseDatabase) -> None:
     if migration_done:
         return
 
-    logger.info("开始执行数据库迁移（WebChat 会话迁移）...")
+    logger.info(t("core-db-migration-migra_webchat_session-start_migration"))
 
     try:
         async with db_helper.get_db() as session:
@@ -51,13 +52,20 @@ async def migrate_webchat_session(db_helper: BaseDatabase) -> None:
             webchat_users = result.all()
 
             if not webchat_users:
-                logger.info("没有找到需要迁移的 WebChat 数据")
+                logger.info(
+                    t("core-db-migration-migra_webchat_session-no_data_to_migrate")
+                )
                 await sp.put_async(
                     "global", "global", "migration_done_webchat_session_1", True
                 )
                 return
 
-            logger.info(f"找到 {len(webchat_users)} 个 WebChat 会话需要迁移")
+            logger.info(
+                t(
+                    "core-db-migration-migra_webchat_session-info_found_webchat_to_migrate",
+                    webchat_users=webchat_users,
+                )
+            )
 
             # 检查已存在的会话
             existing_query = select(col(PlatformSession.session_id))
@@ -93,7 +101,12 @@ async def migrate_webchat_session(db_helper: BaseDatabase) -> None:
 
                 # 检查是否已经存在该会话
                 if session_id in existing_session_ids:
-                    logger.debug(f"会话 {session_id} 已存在，跳过")
+                    logger.debug(
+                        t(
+                            "core-db-migration-migra_webchat_session-session_already_exists_skip",
+                            session_id=session_id,
+                        )
+                    )
                     skipped_count += 1
                     continue
 
@@ -118,14 +131,23 @@ async def migrate_webchat_session(db_helper: BaseDatabase) -> None:
                 await session.commit()
 
                 logger.info(
-                    f"WebChat 会话迁移完成！成功迁移: {len(sessions_to_add)}, 跳过: {skipped_count}",
+                    t(
+                        "core-db-migration-migra_webchat_session-info_webchat_migration_completed",
+                        sessions_to_add=sessions_to_add,
+                        skipped_count=skipped_count,
+                    ),
                 )
             else:
-                logger.info("没有新会话需要迁移")
+                logger.info(
+                    t("core-db-migration-migra_webchat_session-no_new_sessions")
+                )
 
         # 标记迁移完成
         await sp.put_async("global", "global", "migration_done_webchat_session_1", True)
 
     except Exception as e:
-        logger.error(f"迁移过程中发生错误: {e}", exc_info=True)
+        logger.error(
+            t("core-db-migration-migra_webchat_session-migration_error", e=e),
+            exc_info=True,
+        )
         raise

@@ -177,7 +177,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import axios from 'axios'
-import { useModuleI18n } from '@/i18n/composables'
+import { useModuleI18n, t } from '@/i18n/composables';
 import ProviderPage from '@/views/ProviderPage.vue'
 
 const props = defineProps({
@@ -271,7 +271,7 @@ async function loadProviders() {
         : providers
     }
   } catch (error) {
-    console.error('加载提供商列表失败:', error)
+    console.error(t('src.components.shared.providerselector.error_load_provider_list'), error)
     providerList.value = []
   } finally {
     loading.value = false

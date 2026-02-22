@@ -8,6 +8,7 @@ from xinference_client.client.restful.async_restful_client import (
 )
 
 from astrbot import logger
+from astrbot.core.lang import t
 
 from ..entities import ProviderType, RerankResult
 from ..provider import RerankProvider
@@ -16,7 +17,7 @@ from ..register import register_provider_adapter
 
 @register_provider_adapter(
     "xinference_rerank",
-    "Xinference Rerank 适配器",
+    t("core-provider-sources-xinference_rerank_source-adapter_title"),
     provider_type=ProviderType.RERANK,
 )
 class XinferenceRerankProvider(RerankProvider):

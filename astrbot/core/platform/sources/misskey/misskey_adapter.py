@@ -12,6 +12,7 @@ from astrbot.api.platform import (
     PlatformMetadata,
     register_platform_adapter,
 )
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import MessageSession
 
 from .misskey_api import MisskeyAPI
@@ -45,7 +46,9 @@ DEFAULT_UPLOAD_CONCURRENCY = 3
 
 
 @register_platform_adapter(
-    "misskey", "Misskey 平台适配器", support_streaming_message=False
+    "misskey",
+    t("core-platform-sources-misskey-misskey_adapter-adapter_registration"),
+    support_streaming_message=False,
 )
 class MisskeyPlatformAdapter(Platform):
     def __init__(
@@ -115,7 +118,9 @@ class MisskeyPlatformAdapter(Platform):
 
         return PlatformMetadata(
             name="misskey",
-            description="Misskey 平台适配器",
+            description=t(
+                "core-platform-sources-misskey-misskey_adapter-description_misskey_adapter"
+            ),
             id=self.config.get("id", "misskey"),
             default_config_tmpl=default_config,
             support_streaming_message=False,
@@ -123,7 +128,11 @@ class MisskeyPlatformAdapter(Platform):
 
     async def run(self) -> None:
         if not self.instance_url or not self.access_token:
-            logger.error("[Misskey] 配置不完整，无法启动")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_adapter-error_incomplete_configuration"
+                )
+            )
             return
 
         self.api = MisskeyAPI(
@@ -141,10 +150,18 @@ class MisskeyPlatformAdapter(Platform):
             self.client_self_id = str(user_info.get("id", ""))
             self._bot_username = user_info.get("username", "")
             logger.info(
-                f"[Misskey] 已连接用户: {self._bot_username} (ID: {self.client_self_id})",
+                t(
+                    "core-platform-sources-misskey-misskey_adapter-log_connected_user",
+                    self=self,
+                ),
             )
         except Exception as e:
-            logger.error(f"[Misskey] 获取用户信息失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_adapter-error_fetch_user_info_failed",
+                    e=e,
+                )
+            )
             self._running = False
             return
 
@@ -243,7 +260,11 @@ class MisskeyPlatformAdapter(Platform):
             try:
                 connection_attempts += 1
                 if not self.api:
-                    logger.error("[Misskey] API 客户端未初始化")
+                    logger.error(
+                        t(
+                            "core-platform-sources-misskey-misskey_adapter-error_api_client_not_initialized"
+                        )
+                    )
                     break
 
                 streaming = self.api.get_streaming_client()
@@ -251,32 +272,50 @@ class MisskeyPlatformAdapter(Platform):
 
                 if await streaming.connect():
                     logger.info(
-                        f"[Misskey] WebSocket 已连接 (尝试 #{connection_attempts})",
+                        t(
+                            "core-platform-sources-misskey-misskey_adapter-websocket_connected_attempt",
+                            connection_attempts=connection_attempts,
+                        ),
                     )
                     connection_attempts = 0
                     await streaming.subscribe_channel("main")
                     if self.enable_chat:
                         await streaming.subscribe_channel("messaging")
                         await streaming.subscribe_channel("messagingIndex")
-                        logger.info("[Misskey] 聊天频道已订阅")
+                        logger.info(
+                            t(
+                                "core-platform-sources-misskey-misskey_adapter-chat_channel_subscribed"
+                            )
+                        )
 
                     backoff_delay = 1.0
                     await streaming.listen()
                 else:
                     logger.error(
-                        f"[Misskey] WebSocket 连接失败 (尝试 #{connection_attempts})",
+                        t(
+                            "core-platform-sources-misskey-misskey_adapter-websocket_connection_failed_attempt",
+                            connection_attempts=connection_attempts,
+                        ),
                     )
 
             except Exception as e:
                 logger.error(
-                    f"[Misskey] WebSocket 异常 (尝试 #{connection_attempts}): {e}",
+                    t(
+                        "core-platform-sources-misskey-misskey_adapter-websocket_error_attempt",
+                        connection_attempts=connection_attempts,
+                        e=e,
+                    ),
                 )
 
             if self._running:
                 jitter = random.uniform(0, 1.0)
                 sleep_time = backoff_delay + jitter
                 logger.info(
-                    f"[Misskey] {sleep_time:.1f}秒后重连 (下次尝试 #{connection_attempts + 1})",
+                    t(
+                        "core-platform-sources-misskey-misskey_adapter-reconnecting_countdown",
+                        sleep_time=sleep_time,
+                        connection_attempts=connection_attempts + 1,
+                    ),
                 )
                 await asyncio.sleep(sleep_time)
                 backoff_delay = min(backoff_delay * backoff_multiplier, max_backoff)
@@ -285,13 +324,20 @@ class MisskeyPlatformAdapter(Platform):
         try:
             notification_type = data.get("type")
             logger.debug(
-                f"[Misskey] 收到通知事件: type={notification_type}, user_id={data.get('userId', 'unknown')}",
+                t(
+                    "core-platform-sources-misskey-misskey_adapter-received_notification_event",
+                    notification_type=notification_type,
+                    unknown=data.get("userId", "unknown"),
+                ),
             )
             if notification_type in ["mention", "reply", "quote"]:
                 note = data.get("note")
                 if note and self._is_bot_mentioned(note):
                     logger.info(
-                        f"[Misskey] 处理贴文提及: {note.get('text', '')[:50]}...",
+                        t(
+                            "core-platform-sources-misskey-misskey_adapter-processing_post_mention",
+                            text=note.get("text", "")[:50],
+                        ),
                     )
                     message = await self.convert_message(note)
                     event = MisskeyPlatformEvent(
@@ -303,7 +349,12 @@ class MisskeyPlatformAdapter(Platform):
                     )
                     self.commit_event(event)
         except Exception as e:
-            logger.error(f"[Misskey] 处理通知失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_adapter-failed_to_process_notification",
+                    e=e,
+                )
+            )
 
     async def _handle_chat_message(self, data: dict[str, Any]) -> None:
         try:
@@ -312,7 +363,12 @@ class MisskeyPlatformAdapter(Platform):
             )
             room_id = data.get("toRoomId")
             logger.debug(
-                f"[Misskey] 收到聊天事件: sender_id={sender_id}, room_id={room_id}, is_self={sender_id == self.client_self_id}",
+                t(
+                    "core-platform-sources-misskey-misskey_adapter-received_chat_event",
+                    sender_id=sender_id,
+                    room_id=room_id,
+                    client_self_id=sender_id == self.client_self_id,
+                ),
             )
             if sender_id == self.client_self_id:
                 return
@@ -320,14 +376,28 @@ class MisskeyPlatformAdapter(Platform):
             if room_id:
                 raw_text = data.get("text", "")
                 logger.debug(
-                    f"[Misskey] 检查群聊消息: '{raw_text}', 机器人用户名: '{self._bot_username}'",
+                    t(
+                        "core-platform-sources-misskey-misskey_adapter-check_group_message",
+                        raw_text=raw_text,
+                        bot_username=self._bot_username,
+                    ),
                 )
 
                 message = await self.convert_room_message(data)
-                logger.info(f"[Misskey] 处理群聊消息: {message.message_str[:50]}...")
+                logger.info(
+                    t(
+                        "core-platform-sources-misskey-misskey_adapter-processing_group_message",
+                        message_str=message.message_str[:50],
+                    )
+                )
             else:
                 message = await self.convert_chat_message(data)
-                logger.info(f"[Misskey] 处理私聊消息: {message.message_str[:50]}...")
+                logger.info(
+                    t(
+                        "core-platform-sources-misskey-misskey_adapter-processing_private_message",
+                        message_str=message.message_str[:50],
+                    )
+                )
 
             event = MisskeyPlatformEvent(
                 message_str=message.message_str,
@@ -338,12 +408,21 @@ class MisskeyPlatformAdapter(Platform):
             )
             self.commit_event(event)
         except Exception as e:
-            logger.error(f"[Misskey] 处理聊天消息失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_adapter-failed_to_process_chat_message",
+                    e=e,
+                )
+            )
 
     async def _debug_handler(self, data: dict[str, Any]) -> None:
         event_type = data.get("type", "unknown")
         logger.debug(
-            f"[Misskey] 收到未处理事件: type={event_type}, channel={data.get('channel', 'unknown')}",
+            t(
+                "core-platform-sources-misskey-misskey_adapter-unhandled_event_received",
+                event_type=event_type,
+                unknown=data.get("channel", "unknown"),
+            ),
         )
 
     def _is_bot_mentioned(self, note: dict[str, Any]) -> bool:
@@ -371,7 +450,11 @@ class MisskeyPlatformAdapter(Platform):
         message_chain: MessageChain,
     ) -> None:
         if not self.api:
-            logger.error("[Misskey] API 客户端未初始化")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_adapter-api_client_not_initialized"
+                )
+            )
             return await super().send_by_session(session, message_chain)
 
         try:
@@ -408,7 +491,11 @@ class MisskeyPlatformAdapter(Platform):
 
             if not text or not text.strip():
                 if not has_file_components:
-                    logger.warning("[Misskey] 消息内容为空且无文件组件，跳过发送")
+                    logger.warning(
+                        t(
+                            "core-platform-sources-misskey-misskey_adapter-message_empty_no_files_skipping"
+                        )
+                    )
                     return await super().send_by_session(session, message_chain)
                 text = ""
 
@@ -504,7 +591,12 @@ class MisskeyPlatformAdapter(Platform):
                         ):
                             try:
                                 os.remove(local_path)
-                                logger.debug(f"[Misskey] 已清理临时文件: {local_path}")
+                                logger.debug(
+                                    t(
+                                        "core-platform-sources-misskey-misskey_adapter-cleaned_up_temporary_file",
+                                        local_path=local_path,
+                                    )
+                                )
                             except Exception:
                                 pass
 
@@ -529,7 +621,11 @@ class MisskeyPlatformAdapter(Platform):
 
             if len(file_components) > MAX_FILE_UPLOAD_COUNT:
                 logger.warning(
-                    f"[Misskey] 文件数量超过限制 ({len(file_components)} > {MAX_FILE_UPLOAD_COUNT})，只上传前{MAX_FILE_UPLOAD_COUNT}个文件",
+                    t(
+                        "core-platform-sources-misskey-misskey_adapter-warning_file_count_exceeded",
+                        file_components=file_components,
+                        MAX_FILE_UPLOAD_COUNT=MAX_FILE_UPLOAD_COUNT,
+                    ),
                 )
                 file_components = file_components[:MAX_FILE_UPLOAD_COUNT]
 
@@ -552,7 +648,11 @@ class MisskeyPlatformAdapter(Platform):
                         except Exception:
                             pass
             except Exception:
-                logger.debug("[Misskey] 并发上传过程中出现异常，继续发送文本")
+                logger.debug(
+                    t(
+                        "core-platform-sources-misskey-misskey_adapter-exception_during_concurrent_upload"
+                    )
+                )
 
             if session_id and is_valid_room_session_id(session_id):
                 from .misskey_utils import extract_room_id_from_session_id
@@ -582,7 +682,10 @@ class MisskeyPlatformAdapter(Platform):
                         payload["fileId"] = file_ids[0]
                         if len(file_ids) > 1:
                             logger.warning(
-                                f"[Misskey] 聊天消息只支持单个文件，忽略其余 {len(file_ids) - 1} 个文件",
+                                t(
+                                    "core-platform-sources-misskey-misskey_adapter-chat_single_file_only",
+                                    file_ids=len(file_ids) - 1,
+                                ),
                             )
                     await self.api.send_message(payload)
                 else:
@@ -602,7 +705,13 @@ class MisskeyPlatformAdapter(Platform):
                         default_visibility=self.default_visibility,
                     )
                     logger.debug(
-                        f"[Misskey] 解析可见性: visibility={visibility}, visible_user_ids={visible_user_ids}, session_id={session_id}, user_id_for_cache={user_id_for_cache}",
+                        t(
+                            "core-platform-sources-misskey-misskey_adapter-parse_visibility_log",
+                            visibility=visibility,
+                            visible_user_ids=visible_user_ids,
+                            session_id=session_id,
+                            user_id_for_cache=user_id_for_cache,
+                        ),
                     )
 
                     fields = self._extract_additional_fields(session, message_chain)
@@ -627,7 +736,12 @@ class MisskeyPlatformAdapter(Platform):
                     )
 
         except Exception as e:
-            logger.error(f"[Misskey] 发送消息失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_adapter-send_message_failed",
+                    e=e,
+                )
+            )
 
         return await super().send_by_session(session, message_chain)
 

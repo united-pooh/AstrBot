@@ -14,23 +14,24 @@ from hypercorn.config import Config as HyperConfig
 from quart import Quart, g, jsonify, request
 from quart.logging import default_handler
 
-from astrbot.core import logger, t
+from astrbot.core import logger
 from astrbot.core.config.default import VERSION
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
 from astrbot.core.db import BaseDatabase
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 from astrbot.core.utils.io import get_local_ip_addresses
 
 from .routes import *
 from .routes.api_key import ALL_OPEN_API_SCOPES
 from .routes.backup import BackupRoute
+from .routes.lang_route import LangRoute
 from .routes.live_chat import LiveChatRoute
 from .routes.platform import PlatformRoute
 from .routes.route import Response, RouteContext
 from .routes.session_management import SessionManagementRoute
 from .routes.subagent import SubAgentRoute
 from .routes.t2i import T2iRoute
-from .routes.lang_route import LangRoute
 
 
 class _AddrWithPort(Protocol):
@@ -324,7 +325,7 @@ class AstrBotDashboard:
                 t("dashboard-server-port-in-use", port=port, info=process_info)
             )
 
-            raise Exception(f"端口 {port} 已被占用")
+            raise Exception(t("dashboard-server-port_already_in_use", port=port))
 
         parts = [t("dashboard-server-started-banner", version=VERSION)]
         parts.append(

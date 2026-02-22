@@ -6,6 +6,7 @@ from typing import TypeAlias, Union
 
 from astrbot.core.agent.message import ContentPart, Message
 from astrbot.core.agent.tool import ToolSet
+from astrbot.core.lang import t
 from astrbot.core.provider.entities import (
     LLMResponse,
     ProviderMeta,
@@ -351,7 +352,12 @@ class EmbeddingProvider(AbstractProvider):
                             # 最后一次重试失败，记录失败的批次
                             failed_batches.append((batch_idx, batch_texts))
                             raise Exception(
-                                f"批次 {batch_idx} 处理失败，已重试 {max_retries} 次: {e!s}",
+                                t(
+                                    "core-provider-provider-batch_processing_failed",
+                                    batch_idx=batch_idx,
+                                    max_retries=max_retries,
+                                    e=e,
+                                ),
                             )
                         # 等待一段时间后重试，使用指数退避
                         await asyncio.sleep(2**attempt)
@@ -368,8 +374,10 @@ class EmbeddingProvider(AbstractProvider):
         # 检查是否有失败的任务
         errors = [r for r in results if isinstance(r, Exception)]
         if errors:
-            error_msg = (
-                f"有 {len(errors)} 个批次处理失败: {'; '.join(str(e) for e in errors)}"
+            error_msg = t(
+                "core-provider-provider-batches_failed",
+                errors=len(errors),
+                errors_2="; ".join(str(e) for e in errors),
             )
             raise Exception(error_msg)
 

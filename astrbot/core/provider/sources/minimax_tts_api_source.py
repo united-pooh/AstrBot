@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator
 import aiohttp
 
 from astrbot.api import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 from ..entities import ProviderType
@@ -134,7 +135,12 @@ class ProviderMiniMaxTTSAPI(TTSProvider):
                             buffer = buffer[-1024:]
 
         except aiohttp.ClientError as e:
-            raise Exception(f"MiniMax TTS API请求失败: {e!s}")
+            raise Exception(
+                t(
+                    "core-provider-sources-minimax_tts_api_source-api_request_failed",
+                    e=e,
+                )
+            )
 
     async def _audio_play(self, audio_stream: AsyncIterator[str]) -> bytes:
         """解码数据流到 audio 比特流"""

@@ -11,6 +11,7 @@ from dashscope.app.application_response import ApplicationResponse
 
 import astrbot.core.message.components as Comp
 from astrbot.core import logger, sp
+from astrbot.core.lang import t
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.provider.entities import (
     LLMResponse,
@@ -49,13 +50,19 @@ class DashscopeAgentRunner(BaseAgentRunner[TContext]):
 
         self.api_key = provider_config.get("dashscope_api_key", "")
         if not self.api_key:
-            raise Exception("阿里云百炼 API Key 不能为空。")
+            raise Exception(
+                t("core-agent-runners-dashscope-dashscope_agent_runner-api_key_empty")
+            )
         self.app_id = provider_config.get("dashscope_app_id", "")
         if not self.app_id:
-            raise Exception("阿里云百炼 APP ID 不能为空。")
+            raise Exception(
+                t("core-agent-runners-dashscope-dashscope_agent_runner-app_id_empty")
+            )
         self.dashscope_app_type = provider_config.get("dashscope_app_type", "")
         if not self.dashscope_app_type:
-            raise Exception("阿里云百炼 APP 类型不能为空。")
+            raise Exception(
+                t("core-agent-runners-dashscope-dashscope_agent_runner-app_type_empty")
+            )
 
         self.variables: dict = provider_config.get("variables", {}) or {}
         self.rag_options: dict = provider_config.get("rag_options", {})
@@ -103,15 +110,29 @@ class DashscopeAgentRunner(BaseAgentRunner[TContext]):
             async for response in self._execute_dashscope_request():
                 yield response
         except Exception as e:
-            logger.error(f"阿里云百炼请求失败：{str(e)}")
+            logger.error(
+                t(
+                    "core-agent-runners-dashscope-dashscope_agent_runner-error_dashscope_request_failed",
+                    e=e,
+                )
+            )
             self._transition_state(AgentState.ERROR)
             self.final_llm_resp = LLMResponse(
-                role="err", completion_text=f"阿里云百炼请求失败：{str(e)}"
+                role="err",
+                completion_text=t(
+                    "core-agent-runners-dashscope-dashscope_agent_runner-completion_text_dashscope_failed",
+                    e=e,
+                ),
             )
             yield AgentResponse(
                 type="err",
                 data=AgentResponseData(
-                    chain=MessageChain().message(f"阿里云百炼请求失败：{str(e)}")
+                    chain=MessageChain().message(
+                        t(
+                            "core-agent-runners-dashscope-dashscope_agent_runner-messagechain_dashscope_failed",
+                            e=e,
+                        )
+                    )
                 ),
             )
 
@@ -161,11 +182,15 @@ class DashscopeAgentRunner(BaseAgentRunner[TContext]):
 
         if chunk.status_code != 200:
             logger.error(
-                f"阿里云百炼请求失败: request_id={chunk.request_id}, code={chunk.status_code}, message={chunk.message}, 请参考文档：https://help.aliyun.com/zh/model-studio/developer-reference/error-code",
+                t(
+                    "core-agent-runners-dashscope-dashscope_agent_runner-dashscope_failed_with_request_id_and_code",
+                    chunk=chunk,
+                ),
             )
             self._transition_state(AgentState.ERROR)
-            error_msg = (
-                f"阿里云百炼请求失败: message={chunk.message} code={chunk.status_code}"
+            error_msg = t(
+                "core-agent-runners-dashscope-dashscope_agent_runner-dashscope_failed_message_and_code",
+                chunk=chunk,
             )
             self.final_llm_resp = LLMResponse(
                 role="err",
@@ -214,7 +239,10 @@ class DashscopeAgentRunner(BaseAgentRunner[TContext]):
             )
             ref_parts.append(f"{ref['index_id']}. {ref_title}\n")
         ref_str = "".join(ref_parts)
-        return f"\n\n回答来源:\n{ref_str}"
+        return t(
+            "core-agent-runners-dashscope-dashscope_agent_runner-answer_source_suffix",
+            ref_str=ref_str,
+        )
 
     async def _build_request_payload(
         self, prompt: str, session_id: str, contexts: list, system_prompt: str
@@ -376,7 +404,11 @@ class DashscopeAgentRunner(BaseAgentRunner[TContext]):
 
         # 检查图片输入
         if image_urls:
-            logger.warning("阿里云百炼暂不支持图片输入，将自动忽略图片内容。")
+            logger.warning(
+                t(
+                    "core-agent-runners-dashscope-dashscope_agent_runner-image_input_unsupported"
+                )
+            )
 
         # 构建请求payload
         payload = await self._build_request_payload(

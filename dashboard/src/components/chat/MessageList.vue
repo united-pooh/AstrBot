@@ -165,7 +165,7 @@
             <v-btn size="large" rounded="xl" @click="handleQuoteSelected" class="quote-btn"
                 :class="{ 'dark-mode': isDark }">
                 <v-icon left small>mdi-reply</v-icon>
-                引用
+                {{ t('src.components.chat.messagelist.quote') }}
             </v-btn>
         </div>
     </div>
@@ -430,7 +430,7 @@ export default {
             if (content.length > 50) {
                 content = content.substring(0, 50) + '...';
             }
-            return content || '[媒体内容]';
+            return content || t('src.components.chat.messagelist.media_content_fallback');
         },
 
         // 滚动到指定消息
@@ -498,9 +498,9 @@ export default {
         // 复制代码到剪贴板
         copyCodeToClipboard(code) {
             navigator.clipboard.writeText(code).then(() => {
-                console.log('代码已复制到剪贴板');
+                console.log(t('src.components.chat.messagelist.code_copied'));
             }).catch(err => {
-                console.error('复制失败:', err);
+                console.error(t('src.components.chat.messagelist.copy_failed'), err);
                 // 如果现代API失败，使用传统方法
                 const textArea = document.createElement('textarea');
                 textArea.value = code;
@@ -508,9 +508,9 @@ export default {
                 textArea.select();
                 try {
                     document.execCommand('copy');
-                    console.log('代码已复制到剪贴板 (fallback)');
+                    console.log(t('src.components.chat.messagelist.code_copied_fallback'));
                 } catch (fallbackErr) {
-                    console.error('复制失败 (fallback):', fallbackErr);
+                    console.error(t('src.components.chat.messagelist.copy_failed_fallback'), fallbackErr);
                 }
                 document.body.removeChild(textArea);
             });
@@ -531,27 +531,27 @@ export default {
                 const imageCount = messageParts.filter(part => part.type === 'image' && part.embedded_url).length;
                 if (imageCount > 0) {
                     if (textToCopy) textToCopy += '\n\n';
-                    textToCopy += `[包含 ${imageCount} 张图片]`;
+                    textToCopy += t('src.components.chat.messagelist.append_image_count', { imageCount });
                 }
 
                 // 检查是否有音频
                 const hasAudio = messageParts.some(part => part.type === 'record' && part.embedded_url);
                 if (hasAudio) {
                     if (textToCopy) textToCopy += '\n\n';
-                    textToCopy += '[包含音频内容]';
+                    textToCopy += t('src.components.chat.messagelist.append_audio_content');
                 }
             }
 
             // 如果没有任何内容，使用默认文本
             if (!textToCopy.trim()) {
-                textToCopy = '[媒体内容]';
+                textToCopy = t('src.components.chat.messagelist.media_content_only');
             }
 
             navigator.clipboard.writeText(textToCopy).then(() => {
-                console.log('消息已复制到剪贴板');
+                console.log(t('src.components.chat.messagelist.copy_success_log'));
                 this.showCopySuccess(messageIndex);
             }).catch(err => {
-                console.error('复制失败:', err);
+                console.error(t('src.components.chat.messagelist.copy_error_log'), err);
                 // 如果现代API失败，使用传统方法
                 const textArea = document.createElement('textarea');
                 textArea.value = textToCopy;
@@ -559,10 +559,10 @@ export default {
                 textArea.select();
                 try {
                     document.execCommand('copy');
-                    console.log('消息已复制到剪贴板 (fallback)');
+                    console.log(t('src.components.chat.messagelist.copy_success_fallback_log'));
                     this.showCopySuccess(messageIndex);
                 } catch (fallbackErr) {
-                    console.error('复制失败 (fallback):', fallbackErr);
+                    console.error(t('src.components.chat.messagelist.copy_error_fallback_log'), fallbackErr);
                 }
                 document.body.removeChild(textArea);
             });
@@ -608,7 +608,7 @@ export default {
                         const button = document.createElement('button');
                         button.className = 'copy-code-btn';
                         button.innerHTML = this.getCopyIconSvg();
-                        button.title = '复制代码';
+                        button.title = t('src.components.chat.messagelist.copy_code_button_title');
                         button.addEventListener('click', () => {
                             this.copyCodeToClipboard(codeBlock.textContent);
                             // 显示复制成功提示

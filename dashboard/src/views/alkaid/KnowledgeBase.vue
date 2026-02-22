@@ -3,7 +3,7 @@
         <div style="flex-grow: 1; width: 100%; border: 1px solid #eee; border-radius: 8px; padding: 16px">
             <v-banner lines="one">
                 <template v-slot:text>
-                    建议您更换使用新版知识库功能。
+                    {{ t('src.views.alkaid.knowledgebase.recommend_new_feature') }}
                 </template>
             </v-banner>
             <!-- knowledge card -->
@@ -164,15 +164,15 @@
                     <v-chip v-if="currentKB.rerank_provider_id" color="tertiary" variant="tonal" size="small"
                         rounded="sm">
                         <v-icon start size="small">mdi-sort-variant</v-icon>
-                        重排序模型: {{rerankProviderConfigs.
-                            find(provider => provider.id === currentKB.rerank_provider_id)?.rerank_model || '未设置'}}
+                        {{ t('src.views.alkaid.knowledgebase.rerank_model_label') }}
+                            find(provider => provider.id === currentKB.rerank_provider_id)?.rerank_model || t('src.views.alkaid.knowledgebase.rerank_model_value')}}
                     </v-chip>
-                    <small style="margin-left: 8px;">💡 使用方式: 在聊天页中输入 "/kb use {{ currentKB.collection_name }}"</small>
+                    <small style="margin-left: 8px;t('src.views.alkaid.knowledgebase.usage_tip')/kb use {{ currentKB.collection_name }}"</small>
                 </div>
 
                 <v-card-text>
                     <v-tabs v-model="activeTab">
-                        <v-tab value="import">导入数据</v-tab>
+                        <v-tab value="import">{{ t('src.views.alkaid.knowledgebase.import_tab') }}</v-tab>
                         <v-tab value="search">{{ tm('contentDialog.tabs.search') }}</v-tab>
                     </v-tabs>
 
@@ -181,12 +181,12 @@
                         <v-window-item value="import">
                             <div class="import-container pa-4">
                                 <div class="mb-8">
-                                    <h2>导入数据</h2>
-                                    <p class="text-subtitle-1">选择数据源并导入内容到知识库</p>
+                                    <h2>{{ t('src.views.alkaid.knowledgebase.import_data_heading') }}</h2>
+                                    <p class="text-subtitle-1">{{ t('src.views.alkaid.knowledgebase.import_description') }}</p>
                                 </div>
 
                                 <!-- 数据源选择下拉列表 -->
-                                <v-select v-model="dataSource" :items="dataSourceOptions" :label="'数据源选择'"
+                                <v-select v-model="dataSource" :items="dataSourceOptions" :label="t('src.views.alkaid.knowledgebase.data_source_label')"
                                     variant="outlined" item-title="title" item-value="value"
                                     prepend-inner-icon="mdi-database"></v-select>
 
@@ -433,7 +433,7 @@
 <script>
 import axios from 'axios';
 import ConsoleDisplayer from '@/components/shared/ConsoleDisplayer.vue';
-import { useModuleI18n } from '@/i18n/composables';
+import { useModuleI18n, t } from '@/i18n/composables';
 
 export default {
     name: 'KnowledgeBase',
@@ -497,8 +497,8 @@ export default {
             activeTab: 'import',
             dataSource: 'file',
             dataSourceOptions: [
-                { title: '从文件', value: 'file', icon: 'mdi-file-upload' },
-                { title: '从URL', value: 'url', icon: 'mdi-web' }
+                { title: t('src.views.alkaid.knowledgebase.from_file_option'), value: 'file', icon: 'mdi-file-upload' },
+                { title: t('src.views.alkaid.knowledgebase.from_url_option'), value: 'url', icon: 'mdi-web' }
             ],
             selectedFile: null,
             chunkSize: null,
@@ -623,7 +623,7 @@ export default {
                     }
                     if (response.data.data.length > 0) {
                         this.installed = true;
-                        this.pluginCurrentVersion = response.data.data[0].version || '未知';
+                        this.pluginCurrentVersion = response.data.data[0].version || t('src.views.alkaid.knowledgebase.plugin_current_version_fallback');
                         this.getKBCollections();
                         // 自动检查更新
                         this.checkPluginUpdate();
@@ -646,11 +646,11 @@ export default {
                 if (onlineResponse.data.status === 'ok') {
                     const knowledgeBasePlugin = onlineResponse.data.data['astrbot_plugin_knowledge_base'];
                     if (knowledgeBasePlugin) {
-                        this.pluginLatestVersion = knowledgeBasePlugin.version || '未知';
+                        this.pluginLatestVersion = knowledgeBasePlugin.version || t('src.views.alkaid.knowledgebase.plugin_latest_version_fallback');
 
                         // 比较版本
                         if (this.pluginCurrentVersion && this.pluginLatestVersion &&
-                            this.pluginCurrentVersion !== '未知' && this.pluginLatestVersion !== '未知') {
+                            this.pluginCurrentVersion !== t('src.views.alkaid.knowledgebase.plugin_version_check_condition') && this.pluginLatestVersion !== t('src.views.alkaid.knowledgebase.plugin_version_check_condition')) {
                             this.pluginHasUpdate = this.pluginCurrentVersion != this.pluginLatestVersion
                         }
 

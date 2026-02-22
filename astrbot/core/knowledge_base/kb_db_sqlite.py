@@ -13,6 +13,7 @@ from astrbot.core.knowledge_base.models import (
     KBMedia,
     KnowledgeBase,
 )
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_knowledge_base_path
 
 
@@ -167,7 +168,7 @@ class KBSQLiteDatabase:
     async def close(self) -> None:
         """关闭数据库连接"""
         await self.engine.dispose()
-        logger.info(f"知识库数据库已关闭: {self.db_path}")
+        logger.info(t("core-knowledge_base-kb_db_sqlite-database_closed", self=self))
 
     async def get_kb_by_id(self, kb_id: str) -> KnowledgeBase | None:
         """根据 ID 获取知识库"""

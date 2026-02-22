@@ -5,6 +5,7 @@ import typing
 from typing import Any
 
 from astrbot.core.config import AstrBotConfig
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 
 from ..star_handler import StarHandlerMetadata
@@ -105,7 +106,10 @@ class CommandFilter(HandlerFilter):
                 # GreedyStr 必须是最后一个参数
                 if i != len(param_items) - 1:
                     raise ValueError(
-                        f"参数 '{param_name}' (GreedyStr) 必须是最后一个参数。",
+                        t(
+                            "core-star-filter-command-greedy_last_param",
+                            param_name=param_name,
+                        ),
                     )
 
                 # 将剩余的所有部分合并成一个字符串
@@ -121,7 +125,10 @@ class CommandFilter(HandlerFilter):
                 ):
                     # 是类型
                     raise ValueError(
-                        f"必要参数缺失。该指令完整参数: {self.print_types()}",
+                        t(
+                            "core-star-filter-command-missing_required_params",
+                            print_types=self.print_types(),
+                        ),
                     )
                 # 是默认值
                 result[param_name] = param_type_or_default_val
@@ -145,7 +152,10 @@ class CommandFilter(HandlerFilter):
                             result[param_name] = False
                         else:
                             raise ValueError(
-                                f"参数 {param_name} 必须是布尔值（true/false, yes/no, 1/0）。",
+                                t(
+                                    "core-star-filter-command-boolean_param_invalid",
+                                    param_name=param_name,
+                                ),
                             )
                     elif isinstance(param_type_or_default_val, int):
                         result[param_name] = int(params[i])
@@ -168,7 +178,11 @@ class CommandFilter(HandlerFilter):
                             result[param_name] = param_type_or_default_val(params[i])
                 except ValueError:
                     raise ValueError(
-                        f"参数 {param_name} 类型错误。完整参数: {self.print_types()}",
+                        t(
+                            "core-star-filter-command-param_type_mismatch",
+                            param_name=param_name,
+                            print_types=self.print_types(),
+                        ),
                     )
         return result
 

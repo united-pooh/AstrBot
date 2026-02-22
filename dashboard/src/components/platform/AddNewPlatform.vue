@@ -115,13 +115,13 @@
                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
                   </div>
                   <div v-else-if="selectedConfigData && selectedConfigMetadata" class="config-preview-container">
-                    <h4 class="mb-3">配置文件预览</h4>
+                    <h4 class="mb-3">{{ t('src.components.platform.addnewplatform.config_preview_title') }}</h4>
                     <AstrBotCoreConfigWrapper :metadata="selectedConfigMetadata" :config_data="selectedConfigData"
                       readonly="true" />
                   </div>
                   <div v-else class="text-center py-4 text-grey">
                     <v-icon>mdi-information-outline</v-icon>
-                    <p class="mt-2">无法加载配置文件预览</p>
+                    <p class="mt-2">{{ t('src.components.platform.addnewplatform.unable_to_load_config_preview') }}</p>
                   </div>
                 </div> -->
 
@@ -305,7 +305,7 @@
 
 <script>
 import axios from 'axios';
-import { useModuleI18n } from '@/i18n/composables';
+import { useI18n, useModuleI18n } from '@/i18n/composables';
 import { getPlatformIcon, getPlatformDescription, getTutorialLink } from '@/utils/platformUtils';
 import AstrBotConfig from '@/components/shared/AstrBotConfig.vue';
 import AstrBotCoreConfigWrapper from '@/components/config/AstrBotCoreConfigWrapper.vue';
@@ -385,8 +385,9 @@ export default {
     };
   },
   setup() {
+    const { t } = useI18n();
     const { tm } = useModuleI18n('features/platform');
-    return { tm };
+    return { tm, t };
   },
   computed: {
     showDialog: {
@@ -584,7 +585,7 @@ export default {
         this.selectedConfigData = response.data.data.config;
         this.selectedConfigMetadata = response.data.data.metadata;
       } catch (error) {
-        console.error('获取配置文件预览数据失败:', error);
+        console.error(this.t('src.components.platform.addnewplatform.failed_to_fetch_config_preview'), error);
         this.selectedConfigData = null;
         this.selectedConfigMetadata = null;
       } finally {
@@ -600,7 +601,7 @@ export default {
         this.newConfigData = response.data.data.config;
         this.newConfigMetadata = response.data.data.metadata;
       } catch (error) {
-        console.error('获取默认配置模板失败:', error);
+        console.error(this.t('src.components.platform.addnewplatform.failed_to_fetch_default_template'), error);
         this.newConfigData = null;
         this.newConfigMetadata = null;
       } finally {
@@ -764,9 +765,9 @@ export default {
           conf_id: configId
         });
 
-        console.log(`成功更新路由表: ${umop} -> ${configId}`);
+        console.log(t('src.components.platform.addnewplatform.successfully_updated_routing_table', { umop: umop, configId: configId }));
       } catch (err) {
-        console.error('更新路由表失败:', err);
+        console.error(this.t('src.components.platform.addnewplatform.failed_to_update_routing_table'), err);
         const errorMessage = err.response?.data?.message || err.message;
         throw new Error(this.tm('messages.routingUpdateFailed', { message: errorMessage }));
       }
@@ -786,11 +787,11 @@ export default {
         });
 
         const newConfigId = createRes.data.data.conf_id;
-        console.log(`成功创建新配置文件 ${configName}，ID: ${newConfigId}`);
+        console.log(this.t('src.components.platform.addnewplatform.successfully_created_new_config', { configName, newConfigId }));
 
         return newConfigId;
       } catch (err) {
-        console.error('创建新配置文件失败:', err);
+        console.error(this.t('src.components.platform.addnewplatform.failed_to_create_new_config'), err);
         const errorMessage = err.response?.data?.message || err.message;
         throw new Error(this.tm('messages.createConfigFailed', { message: errorMessage }));
       }
@@ -887,7 +888,7 @@ export default {
           });
         }
       } catch (err) {
-        console.error('获取平台路由配置失败:', err);
+        console.error(this.t('src.components.platform.addnewplatform.failed_to_fetch_platform_routing'), err);
         this.platformRoutes = [];
       }
     },
@@ -971,7 +972,7 @@ export default {
           routing: fullRoutingTable
         });
       } catch (err) {
-        console.error('保存路由表失败:', err);
+        console.error(this.t('src.components.platform.addnewplatform.failed_to_save_routing_table'), err);
         const errorMessage = err.response?.data?.message || err.message;
         throw new Error(this.tm('messages.routingSaveFailed', { message: errorMessage }));
       }

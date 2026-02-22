@@ -5,7 +5,7 @@
     </div>
     <!-- <div id="graph-container-nonono"
       style="display: flex; justify-content: center; align-items: center; width: 100%; font-weight: 1000; font-size: 24px;">
-      加速开发中...
+      {{ t('src.views.alkaid.longtermmemory.accelerating_development') }}
     </div> -->
     <div id="graph-control-panel"
       style="min-width: 450px; border: 1px solid #eee; border-radius: 8px; padding: 16px; padding-bottom: 0px; margin-left: 16px; max-height: calc(100% - 40px);">
@@ -253,7 +253,7 @@
 <script>
 import axios from 'axios';
 // import * as d3 from "d3"; // npm install d3
-import { useModuleI18n } from '@/i18n/composables';
+import { useModuleI18n, t } from '@/i18n/composables';
 
 export default {
   name: 'LongTermMemory',
@@ -381,7 +381,7 @@ export default {
           }
         })
         .catch(error => {
-          console.error('搜索记忆数据失败:', error);
+          console.error(t('src.views.alkaid.longtermmemory.search_memory_failed'), error);
           this.$toast.error(this.tm('messages.searchError') + ': ' + (error.response?.data?.message || error.message));
         })
         .finally(() => {
@@ -417,7 +417,7 @@ export default {
           this.$toast.success(this.tm('messages.addSuccess'));
         })
         .catch(error => {
-          console.error('添加记忆数据失败:', error);
+          console.error(t('src.views.alkaid.longtermmemory.add_memory_failed'), error);
           this.$toast.error(this.tm('messages.addError') + ': ' + (error.response?.data?.message || error.message));
         })
         .finally(() => {
@@ -549,7 +549,7 @@ export default {
           }
         })
         .catch(error => {
-          console.error('获取记忆详情失败:', error);
+          console.error(t('src.views.alkaid.longtermmemory.get_memory_details_failed'), error);
           this.$toast.error(this.tm('messages.factDetailsError') + ': ' + (error.response?.data?.message || error.message));
         })
         .finally(() => {
@@ -578,7 +578,7 @@ export default {
         
         return { value: String(metadata) };
       } catch (e) {
-        console.error('解析元数据出错:', e);
+        console.error(t('src.views.alkaid.longtermmemory.parse_metadata_error'), e);
         return { error: this.tm('messages.metadataParseError') };
       }
     },

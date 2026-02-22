@@ -64,7 +64,7 @@
             </template>
           </v-tooltip>
 
-          <v-tooltip text="测试当前配置" location="left" v-if="!isSystemConfig">
+          <v-tooltip :text="t('src.views.configpage.tooltip_test_config')" location="left" v-if="!isSystemConfig">
             <template v-slot:activator="{ props }">
               <v-btn v-bind="props" icon="mdi-chat-processing" size="x-large" 
                 style="position: fixed; right: 52px; bottom: 196px;" color="secondary"
@@ -176,7 +176,7 @@
     <v-card class="test-chat-card" elevation="12">
       <div class="test-chat-header">
         <div>
-          <span class="text-h6">测试配置</span>
+          <span class="text-h6">{{ t('src.views.configpage.heading_test_config') }}</span>
           <div v-if="selectedConfigInfo.name" class="text-caption text-grey">
             {{ selectedConfigInfo.name }} ({{ testConfigId }})
           </div>
@@ -774,7 +774,7 @@ export default {
     },
     openTestChat() {
       if (!this.selectedConfigID) {
-        this.save_message = "请先选择一个配置文件";
+        this.save_message = t('src.views.configpage.message_select_config_first');
         this.save_message_snack = true;
         this.save_message_success = "warning";
         return;

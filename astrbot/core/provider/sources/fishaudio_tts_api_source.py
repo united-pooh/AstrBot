@@ -8,6 +8,7 @@ from httpx import AsyncClient
 from pydantic import BaseModel, conint
 
 from astrbot import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 from ..entities import ProviderType
@@ -52,7 +53,10 @@ class ProviderFishAudioTTSAPI(TTSProvider):
         super().__init__(provider_config, provider_settings)
         self.chosen_api_key: str = provider_config.get("api_key", "")
         self.reference_id: str = provider_config.get("fishaudio-tts-reference-id", "")
-        self.character: str = provider_config.get("fishaudio-tts-character", "可莉")
+        self.character: str = provider_config.get(
+            "fishaudio-tts-character",
+            t("core-provider-sources-fishaudio_tts_api_source-default_character"),
+        )
         self.api_base: str = provider_config.get(
             "api_base",
             "https://api.fish-audio.cn/v1",
@@ -63,7 +67,12 @@ class ProviderFishAudioTTSAPI(TTSProvider):
             self.timeout = 20
         self.proxy: str = provider_config.get("proxy", "")
         if self.proxy:
-            logger.info(f"[FishAudio TTS] 使用代理: {self.proxy}")
+            logger.info(
+                t(
+                    "core-provider-sources-fishaudio_tts_api_source-using_proxy",
+                    self=self,
+                )
+            )
         self.headers = {
             "Authorization": f"Bearer {self.chosen_api_key}",
         }
@@ -126,9 +135,16 @@ class ProviderFishAudioTTSAPI(TTSProvider):
             # 验证reference_id格式
             if not self._validate_reference_id(self.reference_id):
                 raise ValueError(
-                    f"无效的FishAudio参考模型ID: '{self.reference_id}'. "
-                    f"请确保ID是32位十六进制字符串（例如: 626bb6d3f3364c9cbc3aa6a67300a664）。"
-                    f"您可以从 https://fish.audio/zh-CN/discovery 获取有效的模型ID。",
+                    t(
+                        "core-provider-sources-fishaudio_tts_api_source-invalid_reference_model_id",
+                        reference_id=self.reference_id,
+                    )
+                    + t(
+                        "core-provider-sources-fishaudio_tts_api_source-reference_id_format_requirement"
+                    )
+                    + t(
+                        "core-provider-sources-fishaudio_tts_api_source-get_valid_model_ids_from"
+                    ),
                 )
             reference_id = self.reference_id.strip()
         else:
@@ -166,5 +182,9 @@ class ProviderFishAudioTTSAPI(TTSProvider):
             error_bytes = await response.aread()
             error_text = error_bytes.decode("utf-8", errors="replace")[:1024]
             raise Exception(
-                f"Fish Audio API请求失败: 状态码 {response.status_code}, 响应内容: {error_text}"
+                t(
+                    "core-provider-sources-fishaudio_tts_api_source-api_request_failed",
+                    response=response,
+                    error_text=error_text,
+                )
             )

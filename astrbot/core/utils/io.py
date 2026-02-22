@@ -14,6 +14,8 @@ import certifi
 import psutil
 from PIL import Image
 
+from astrbot.core.lang import t
+
 from .astrbot_path import get_astrbot_data_path, get_astrbot_temp_path
 
 logger = logging.getLogger("astrbot")
@@ -136,12 +138,18 @@ async def download_file(url: str, path: str, show_progress: bool = False) -> Non
         ) as session:
             async with session.get(url, timeout=1800) as resp:
                 if resp.status != 200:
-                    raise Exception(f"下载文件失败: {resp.status}")
+                    raise Exception(t("core-utils-io-error_download_failed", resp=resp))
                 total_size = int(resp.headers.get("content-length", 0))
                 downloaded_size = 0
                 start_time = time.time()
                 if show_progress:
-                    print(f"文件大小: {total_size / 1024:.2f} KB | 文件地址: {url}")
+                    print(
+                        t(
+                            "core-utils-io-print_file_size_and_url",
+                            total_size=total_size / 1024,
+                            url=url,
+                        )
+                    )
                 with open(path, "wb") as f:
                     while True:
                         chunk = await resp.content.read(8192)
@@ -157,14 +165,16 @@ async def download_file(url: str, path: str, show_progress: bool = False) -> Non
                             )
                             speed = downloaded_size / 1024 / elapsed_time  # KB/s
                             print(
-                                f"\r下载进度: {downloaded_size / total_size:.2%} 速度: {speed:.2f} KB/s",
+                                t(
+                                    "core-utils-io-download_progress",
+                                    total_size=downloaded_size / total_size,
+                                    speed=speed,
+                                ),
                                 end="",
                             )
     except (aiohttp.ClientConnectorSSLError, aiohttp.ClientConnectorCertificateError):
         # 关闭SSL验证（仅在证书验证失败时作为fallback）
-        logger.warning(
-            "SSL 证书验证失败，已关闭 SSL 验证（不安全，仅用于临时下载）。请检查目标服务器的证书配置。"
-        )
+        logger.warning(t("core-utils-io-ssl_verification_disabled_warning"))
         logger.warning(
             f"SSL certificate verification failed for {url}. "
             "Falling back to unverified connection (CERT_NONE). "
@@ -180,7 +190,13 @@ async def download_file(url: str, path: str, show_progress: bool = False) -> Non
                 downloaded_size = 0
                 start_time = time.time()
                 if show_progress:
-                    print(f"文件大小: {total_size / 1024:.2f} KB | 文件地址: {url}")
+                    print(
+                        t(
+                            "core-utils-io-print_file_size_and_url_2",
+                            total_size=total_size / 1024,
+                            url=url,
+                        )
+                    )
                 with open(path, "wb") as f:
                     while True:
                         chunk = await resp.content.read(8192)
@@ -192,7 +208,11 @@ async def download_file(url: str, path: str, show_progress: bool = False) -> Non
                             elapsed_time = time.time() - start_time
                             speed = downloaded_size / 1024 / elapsed_time  # KB/s
                             print(
-                                f"\r下载进度: {downloaded_size / total_size:.2%} 速度: {speed:.2f} KB/s",
+                                t(
+                                    "core-utils-io-download_progress_2",
+                                    total_size=downloaded_size / total_size,
+                                    speed=speed,
+                                ),
                                 end="",
                             )
     if show_progress:
@@ -246,7 +266,10 @@ async def download_dashboard(
         ver_name = "latest" if latest else version
         dashboard_release_url = f"https://astrbot-registry.soulter.top/download/astrbot-dashboard/{ver_name}/dist.zip"
         logger.info(
-            f"准备下载指定发行版本的 AstrBot WebUI 文件: {dashboard_release_url}",
+            t(
+                "core-utils-io-preparing_dashboard_release_download",
+                dashboard_release_url=dashboard_release_url,
+            ),
         )
         try:
             await download_file(
@@ -268,7 +291,7 @@ async def download_dashboard(
             )
     else:
         url = f"https://github.com/AstrBotDevs/astrbot-release-harbour/releases/download/release-{version}/dist.zip"
-        logger.info(f"准备下载指定版本的 AstrBot WebUI: {url}")
+        logger.info(t("core-utils-io-preparing_webui_version_download", url=url))
         if proxy:
             url = f"{proxy}/{url}"
         await download_file(url, str(zip_path), show_progress=True)

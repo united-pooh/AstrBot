@@ -2,6 +2,7 @@ import traceback
 from pathlib import Path
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.provider.manager import ProviderManager
 from astrbot.core.utils.astrbot_path import get_astrbot_knowledge_base_path
 
@@ -37,7 +38,7 @@ class KnowledgeBaseManager:
     async def initialize(self) -> None:
         """初始化知识库模块"""
         try:
-            logger.info("正在初始化知识库模块...")
+            logger.info(t("core-knowledge_base-kb_mgr-initializing_module"))
 
             # 初始化数据库
             await self._init_kb_database()
@@ -53,10 +54,12 @@ class KnowledgeBaseManager:
             await self.load_kbs()
 
         except ImportError as e:
-            logger.error(f"知识库模块导入失败: {e}")
-            logger.warning("请确保已安装所需依赖: pypdf, aiofiles, Pillow, rank-bm25")
+            logger.error(t("core-knowledge_base-kb_mgr-module_import_failed", e=e))
+            logger.warning(t("core-knowledge_base-kb_mgr-missing_dependencies_warning"))
         except Exception as e:
-            logger.error(f"知识库模块初始化失败: {e}")
+            logger.error(
+                t("core-knowledge_base-kb_mgr-module_initialization_failed", e=e)
+            )
             logger.error(traceback.format_exc())
 
     async def _init_kb_database(self) -> None:
@@ -94,7 +97,9 @@ class KnowledgeBaseManager:
     ) -> KBHelper:
         """创建新的知识库实例"""
         if embedding_provider_id is None:
-            raise ValueError("创建知识库时必须提供embedding_provider_id")
+            raise ValueError(
+                t("core-knowledge_base-kb_mgr-embedding_provider_required")
+            )
         kb = KnowledgeBase(
             kb_name=kb_name,
             description=description,
@@ -125,7 +130,12 @@ class KnowledgeBaseManager:
                 return kb_helper
         except Exception as e:
             if "kb_name" in str(e):
-                raise ValueError(f"知识库名称 '{kb_name}' 已存在")
+                raise ValueError(
+                    t(
+                        "core-knowledge_base-kb_mgr-knowledge_base_name_already_exists",
+                        kb_name=kb_name,
+                    )
+                )
             raise
 
     async def get_kb(self, kb_id: str) -> KBHelper | None:
@@ -265,13 +275,19 @@ class KnowledgeBaseManager:
             str: 格式化的上下文文本
 
         """
-        lines = ["以下是相关的知识库内容,请参考这些信息回答用户的问题:\n"]
+        lines = [t("core-knowledge_base-kb_mgr-retrieved_content_intro")]
 
         for i, result in enumerate(results, 1):
-            lines.append(f"【知识 {i}】")
-            lines.append(f"来源: {result.kb_name} / {result.doc_name}")
-            lines.append(f"内容: {result.content}")
-            lines.append(f"相关度: {result.score:.2f}")
+            lines.append(t("core-knowledge_base-kb_mgr-knowledge_item_header", i=i))
+            lines.append(
+                t("core-knowledge_base-kb_mgr-result_source_line", result=result)
+            )
+            lines.append(
+                t("core-knowledge_base-kb_mgr-result_content_line", result=result)
+            )
+            lines.append(
+                t("core-knowledge_base-kb_mgr-result_relevance_line", result=result)
+            )
             lines.append("")
 
         return "\n".join(lines)
@@ -282,7 +298,9 @@ class KnowledgeBaseManager:
             try:
                 await kb_helper.terminate()
             except Exception as e:
-                logger.error(f"关闭知识库 {kb_id} 失败: {e}")
+                logger.error(
+                    t("core-knowledge_base-kb_mgr-close_kb_failed", kb_id=kb_id, e=e)
+                )
 
         self.kb_insts.clear()
 
@@ -291,7 +309,9 @@ class KnowledgeBaseManager:
             try:
                 await self.kb_db.close()
             except Exception as e:
-                logger.error(f"关闭知识库元数据数据库失败: {e}")
+                logger.error(
+                    t("core-knowledge_base-kb_mgr-close_metadata_db_failed", e=e)
+                )
 
     async def upload_from_url(
         self,

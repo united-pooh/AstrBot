@@ -5,6 +5,7 @@ from quart import jsonify, request
 from astrbot.core import logger
 from astrbot.core.agent.handoff import HandoffTool
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
+from astrbot.core.lang import t
 
 from .route import Response, Route, RouteContext
 
@@ -62,13 +63,21 @@ class SubAgentRoute(Route):
             return jsonify(Response().ok(data=data).__dict__)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return jsonify(Response().error(f"获取 subagent 配置失败: {e!s}").__dict__)
+            return jsonify(
+                Response()
+                .error(t("dashboard-routes-subagent-get_config_failed", e=e))
+                .__dict__
+            )
 
     async def update_config(self):
         try:
             data = await request.json
             if not isinstance(data, dict):
-                return jsonify(Response().error("配置必须为 JSON 对象").__dict__)
+                return jsonify(
+                    Response()
+                    .error(t("dashboard-routes-subagent-config_must_be_json_object"))
+                    .__dict__
+                )
 
             cfg = self.core_lifecycle.astrbot_config
             cfg["subagent_orchestrator"] = data
@@ -82,10 +91,18 @@ class SubAgentRoute(Route):
             if orch is not None:
                 await orch.reload_from_config(data)
 
-            return jsonify(Response().ok(message="保存成功").__dict__)
+            return jsonify(
+                Response()
+                .ok(message=t("dashboard-routes-subagent-save_success"))
+                .__dict__
+            )
         except Exception as e:
             logger.error(traceback.format_exc())
-            return jsonify(Response().error(f"保存 subagent 配置失败: {e!s}").__dict__)
+            return jsonify(
+                Response()
+                .error(t("dashboard-routes-subagent-save_config_failed", e=e))
+                .__dict__
+            )
 
     async def get_available_tools(self):
         """Return all registered tools (name/description/parameters/active/origin).
@@ -114,4 +131,8 @@ class SubAgentRoute(Route):
             return jsonify(Response().ok(data=tools_dict).__dict__)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return jsonify(Response().error(f"获取可用工具失败: {e!s}").__dict__)
+            return jsonify(
+                Response()
+                .error(t("dashboard-routes-subagent-get_tools_failed", e=e))
+                .__dict__
+            )

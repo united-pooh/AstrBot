@@ -6,7 +6,7 @@ from typing import Any
 
 import click
 
-from astrbot.core import t
+from astrbot.core.lang import t
 
 from ..utils import check_astrbot_root, get_astrbot_root
 

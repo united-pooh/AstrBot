@@ -20,6 +20,7 @@ from astrbot.api.platform import (
     Platform,
     PlatformMetadata,
 )
+from astrbot.core.lang import t
 from astrbot.core.message.components import BaseMessageComponent
 from astrbot.core.platform.astr_message_event import MessageSesion
 
@@ -90,7 +91,12 @@ class botClient(Client):
         )
 
 
-@register_platform_adapter("qq_official", "QQ 机器人官方 API 适配器")
+@register_platform_adapter(
+    "qq_official",
+    t(
+        "core-platform-sources-qqofficial-qqofficial_platform_adapter-register_qq_official_adapter"
+    ),
+)
 class QQOfficialPlatformAdapter(Platform):
     def __init__(
         self,
@@ -131,12 +137,18 @@ class QQOfficialPlatformAdapter(Platform):
         session: MessageSesion,
         message_chain: MessageChain,
     ) -> None:
-        raise NotImplementedError("QQ 机器人官方 API 适配器不支持 send_by_session")
+        raise NotImplementedError(
+            t(
+                "core-platform-sources-qqofficial-qqofficial_platform_adapter-send_by_session_not_implemented"
+            )
+        )
 
     def meta(self) -> PlatformMetadata:
         return PlatformMetadata(
             name="qq_official",
-            description="QQ 机器人官方 API 适配器",
+            description=t(
+                "core-platform-sources-qqofficial-qqofficial_platform_adapter-adapter_description"
+            ),
             id=cast(str, self.config.get("id")),
             support_proactive_message=False,
         )
@@ -247,4 +259,8 @@ class QQOfficialPlatformAdapter(Platform):
 
     async def terminate(self) -> None:
         await self.client.close()
-        logger.info("QQ 官方机器人接口 适配器已被优雅地关闭")
+        logger.info(
+            t(
+                "core-platform-sources-qqofficial-qqofficial_platform_adapter-graceful_shutdown"
+            )
+        )

@@ -9,6 +9,7 @@ from typing import Any
 import quart
 
 from astrbot.api import logger
+from astrbot.core.lang import t
 
 from .wecomai_api import WecomAIBotAPIClient
 from .wecomai_utils import WecomAIBotConstants
@@ -78,7 +79,11 @@ class WecomAIBotServer:
         echostr = args.get("echostr")
 
         if not all([msg_signature, timestamp, nonce, echostr]):
-            logger.error("URL 验证参数缺失")
+            logger.error(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_server-missing_url_verification_params"
+                )
+            )
             return "verify fail", 400
 
         # 类型检查确保不为 None
@@ -87,7 +92,11 @@ class WecomAIBotServer:
         assert nonce is not None
         assert echostr is not None
 
-        logger.info("收到企业微信智能机器人 WebHook URL 验证请求。")
+        logger.info(
+            t(
+                "core-platform-sources-wecom_ai_bot-wecomai_server-received_url_verification_request"
+            )
+        )
         result = self.api_client.verify_url(msg_signature, timestamp, nonce, echostr)
         return result, 200, {"Content-Type": "text/plain"}
 
@@ -110,8 +119,14 @@ class WecomAIBotServer:
         nonce = args.get("nonce")
 
         if not all([msg_signature, timestamp, nonce]):
-            logger.error("消息回调参数缺失")
-            return "缺少必要参数", 400
+            logger.error(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_server-missing_message_callback_params"
+                )
+            )
+            return t(
+                "core-platform-sources-wecom_ai_bot-wecomai_server-return_missing_required_params"
+            ), 400
 
         # 类型检查确保不为 None
         assert msg_signature is not None
@@ -119,7 +134,12 @@ class WecomAIBotServer:
         assert nonce is not None
 
         logger.debug(
-            f"收到消息回调，msg_signature={msg_signature}, timestamp={timestamp}, nonce={nonce}",
+            t(
+                "core-platform-sources-wecom_ai_bot-wecomai_server-received_message_callback_log",
+                msg_signature=msg_signature,
+                timestamp=timestamp,
+                nonce=nonce,
+            ),
         )
 
         try:
@@ -139,8 +159,15 @@ class WecomAIBotServer:
             )
 
             if ret_code != WecomAIBotConstants.SUCCESS or not message_data:
-                logger.error("消息解密失败，错误码: %d", ret_code)
-                return "消息解密失败", 400
+                logger.error(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_server-message_decryption_failed"
+                    ),
+                    ret_code,
+                )
+                return t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_server-return_message_decryption_failed"
+                ), 400
 
             # 调用消息处理器
             response = None
@@ -151,20 +178,40 @@ class WecomAIBotServer:
                         {"nonce": nonce, "timestamp": timestamp},
                     )
                 except Exception as e:
-                    logger.error("消息处理器执行异常: %s", e)
-                    return "消息处理异常", 500
+                    logger.error(
+                        t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_server-message_handler_execution_exception"
+                        ),
+                        e,
+                    )
+                    return t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_server-return_message_processing_exception"
+                    ), 500
 
             if response:
                 return response, 200, {"Content-Type": "text/plain"}
             return "success", 200, {"Content-Type": "text/plain"}
 
         except Exception as e:
-            logger.error("处理消息时发生异常: %s", e)
-            return "内部服务器错误", 500
+            logger.error(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_server-exception_processing_message"
+                ),
+                e,
+            )
+            return t(
+                "core-platform-sources-wecom_ai_bot-wecomai_server-return_internal_server_error"
+            ), 500
 
     async def start_server(self) -> None:
         """启动服务器"""
-        logger.info("启动企业微信智能机器人服务器，监听 %s:%d", self.host, self.port)
+        logger.info(
+            t(
+                "core-platform-sources-wecom_ai_bot-wecomai_server-starting_server_listening"
+            ),
+            self.host,
+            self.port,
+        )
 
         try:
             await self.app.run_task(
@@ -173,7 +220,12 @@ class WecomAIBotServer:
                 shutdown_trigger=self.shutdown_trigger,
             )
         except Exception as e:
-            logger.error("服务器运行异常: %s", e)
+            logger.error(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_server-server_runtime_exception"
+                ),
+                e,
+            )
             raise
 
     async def shutdown_trigger(self) -> None:
@@ -182,7 +234,9 @@ class WecomAIBotServer:
 
     async def shutdown(self) -> None:
         """关闭服务器"""
-        logger.info("企业微信智能机器人服务器正在关闭...")
+        logger.info(
+            t("core-platform-sources-wecom_ai_bot-wecomai_server-server_shutting_down")
+        )
         self.shutdown_event.set()
 
     def get_app(self):

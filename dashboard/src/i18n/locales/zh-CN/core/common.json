@@ -77,7 +77,7 @@
   },
   "templateList": {
     "addEntry": "添加条目",
-    "empty": "暂无条目，请选择模板添加",
+    "empty": "暂无条目，请先选择模板并添加。",
     "missingTemplate": "找不到对应模板，请删除后重新添加。",
     "unknownTemplate": "未指定模板"
   },
@@ -128,5 +128,498 @@
       "title": "暂无首次提示内容",
       "subtitle": "未找到 FIRST_NOTICE.md 或文件为空。"
     }
-  }
+  },
+  "index": {
+    "title_dashboard": "AstrBot - 仪表盘"
+  },
+  "src": {
+    "components": {
+      "extension": {
+        "mcpserverssection": {
+          "sync_mcp_servers": "同步外部平台 MCP 服务器",
+          "select_platform_label": "选择平台",
+          "discover_mcp_servers_heading": "发现 MCP 服务器",
+          "browse_modelscope_mcp": "ModelScope 平台",
+          "obtain_access_token_heading": "获取访问令牌",
+          "get_token_from_account_settings": "账户设置",
+          "enter_access_token_heading": "输入您的访问令牌",
+          "enter_access_token_sync_mcp_server": "输入您的访问令牌以同步 MCP 服务器。",
+          "label_access_token": "访问令牌",
+          "error_network_or_token": "网络连接或访问令牌问题",
+          "discover_mcp_title": "发现 MCP 服务器",
+          "obtain_token_title": "获取访问令牌",
+          "get_token_from_settings": "账户设置",
+          "enter_token_title": "输入您的访问令牌",
+          "enter_access_token_to_sync": "输入您的访问令牌以同步 MCP 服务器。",
+          "network_or_token_error": "网络连接或访问令牌问题"
+        }
+      },
+      "folder": {
+        "basecreatefolderdialog": {
+          "title_create_folder": "创建文件夹",
+          "label_name": "名称",
+          "label_description": "描述",
+          "error_name_required": "请输入文件夹名称",
+          "button_cancel": "取消",
+          "button_create": "创建"
+        },
+        "basefolderbreadcrumb": {
+          "default_root_directory": "根目录",
+          "label_root": "根目录"
+        },
+        "basefoldercard": {
+          "action_open": "打开",
+          "action_rename": "重命名",
+          "action_move_to": "移动到...",
+          "action_delete": "删除"
+        },
+        "basefolderitemselector": {
+          "text_not_selected": "未选择",
+          "button_select": "选择...",
+          "dialog_title_select_item": "选择项目",
+          "label_folder": "文件夹",
+          "root_folder_title": "根目录",
+          "section_subfolders": "子文件夹",
+          "optional_items": "可选项目",
+          "empty_folder_message": "此文件夹为空",
+          "create_button": "新建",
+          "cancel_button": "取消",
+          "confirm_button": "确认",
+          "root_folder_title_dup2": "根目录",
+          "text_none_selected": "未选择",
+          "root_folder_label": "根目录"
+        },
+        "basefoldertree": {
+          "search_placeholder": "搜索文件夹...",
+          "root_folder": "根目录",
+          "no_folders": "暂无文件夹",
+          "open": "打开",
+          "rename": "重命名",
+          "move_to": "移动到...",
+          "delete": "删除"
+        },
+        "basemovetofolderdialog": {
+          "dialog_title": "移动到文件夹",
+          "dialog_description": "选择目标文件夹",
+          "root_folder": "根目录",
+          "cancel_button": "取消",
+          "move_button": "移动"
+        },
+        "usefoldermanager": {
+          "root_folder_default": "根目录"
+        }
+      },
+      "platform": {
+        "addnewplatform": {
+          "config_preview_title": "配置文件预览",
+          "unable_to_load_config_preview": "无法加载配置文件预览",
+          "failed_to_fetch_config_preview": "获取配置文件预览数据失败：",
+          "failed_to_fetch_default_template": "获取默认配置模板失败：",
+          "successfully_updated_routing_table": "成功更新路由表：{umop} -> {configId}",
+          "failed_to_update_routing_table": "更新路由表失败：",
+          "successfully_created_new_config": "成功创建新配置文件 {configName}，ID: {newConfigId}",
+          "failed_to_create_new_config": "创建新配置文件失败：",
+          "failed_to_fetch_platform_routing": "获取平台路由配置失败：",
+          "failed_to_save_routing_table": "保存路由表失败："
+        }
+      },
+      "shared": {
+        "astrbotconfig": {
+          "fetch_success_embedding_dimensions": "获取成功：",
+          "fetch_embedding_dimensions_success": "获取成功："
+        },
+        "backupdialog": {
+          "backup_time_display_condition": "checkResult?.backup_time && checkResult?.backup_time !== '未知'"
+        },
+        "consoledisplayer": {
+          "connecting_to_log_stream": "正在连接日志流... (尝试次数：{retryAttempts})",
+          "log_stream_connected_success": "日志流连接成功！",
+          "failed_to_parse_log": "解析日志失败：",
+          "auth_failed_token_expired": "鉴权失败 (401)，可能是 Token 过期了。",
+          "log_stream_connection_error": "日志流连接错误：",
+          "max_retries_reached_stop": "❌ 已达到最大重试次数，停止重连。请刷新页面重试。",
+          "retry_after_delay": "⏳ {delay}ms 后尝试第 {retryAttempts} 次重连..."
+        },
+        "knowledgebaseselector": {
+          "failed_to_load_kb_list_response": "加载知识库列表失败：",
+          "failed_to_load_kb_list_error": "加载知识库列表失败："
+        },
+        "migrationdialog": {
+          "select_platform_adapter_hint": "请选择该平台类型下您主要使用的平台适配器。"
+        },
+        "personaform": {
+          "radio_use_all_tools": "默认使用全部函数工具",
+          "radio_select_specific_tools": "选择指定函数工具"
+        },
+        "personaselector": {
+          "root_folder_fallback": "全部人格",
+          "empty_folder_fallback": "此文件夹为空",
+          "error_load_folder_tree": "加载文件夹树失败：",
+          "error_load_persona_list": "加载人格列表失败：",
+          "log_persona_save_success": "人格保存成功：",
+          "error_create_persona": "创建人格失败："
+        },
+        "pluginsetselector": {
+          "error_load_plugin_list": "加载插件列表失败："
+        },
+        "providerselector": {
+          "error_load_provider_list": "加载提供商列表失败："
+        },
+        "t2itemplateeditor": {
+          "preview_text_fallback": "这是一个示例文本，用于预览模板效果。\\n\\n这里可以包含多行文本，支持换行和各种格式。",
+          "template_render_error_html": "<div style=\"color: red; padding: 20px;\">模板渲染错误：{message}</div>",
+          "error_load_template_list": "加载模板列表失败：",
+          "error_load_active_template": "加载活动模板失败：",
+          "error_load_initial_data": "加载初始数据失败：",
+          "error_load_template_response": "加载模板 '{name}' 失败：",
+          "error_load_template_exception": "加载模板 '{name}' 失败：",
+          "error_save_template": "保存模板失败：",
+          "error_apply_template": "应用模板 '{name}' 失败：",
+          "delete_template_failed": "删除模板 '{value}' 失败：",
+          "reset_template_failed": "重置模板失败：",
+          "template_rendering_error": "模板渲染错误：{message}",
+          "failed_to_load_template": "加载模板 '{name}' 失败：",
+          "load_template_failed_error": "加载模板 '{name}' 失败：",
+          "failed_to_apply_template": "应用模板 '{name}' 失败：",
+          "failed_to_delete_template": "删除模板 '{value}' 失败："
+        }
+      }
+    },
+    "composables": {
+      "useconversations": {
+        "rename_conversation_failed": "重命名对话失败："
+      },
+      "usemessages": {
+        "session_running": "该会话正在运行中。",
+        "json_parse_failed": "JSON解析失败：",
+        "invalid_data_object": "无效的数据对象：",
+        "sse_read_error": "SSE读取错误：",
+        "send_message_failed": "发送消息失败："
+      },
+      "useprovidersources": {
+        "template_config_not_found": "未找到对应的模板配置"
+      },
+      "userecording": {
+        "recording_in_progress": "录音中...",
+        "stop_chat_input": "聊天输入框"
+      },
+      "usesessions": {
+        "rename_session_failed": "重命名会话失败："
+      }
+    },
+    "i18n": {
+      "composables": {
+        "simplified_chinese": "简体中文"
+      },
+      "loader": {
+        "module_not_registered": "模块 {moduleName} 未注册",
+        "load_module_failed": "加载模块 {moduleName} 失败：",
+        "fallback_fetch_failed": "回退fetch加载也失败：",
+        "module_path_conflict": "⚠️ I18n模块路径冲突：\"{fullPath}\" 已被模块 \"{existingModule}\" 占用，模块 \"{moduleName}\" 可能会覆盖部分键值",
+        "failed_to_load_module": "加载模块 {moduleName} 失败：",
+        "i18n_module_path_conflict": "⚠️ I18n模块路径冲突：\"{fullPath}\" 已被模块 \"{existingModule}\" 占用，模块 \"{moduleName}\" 可能会覆盖部分键值"
+      },
+      "validator": {
+        "base_locale_data_missing": "基准语言 {baseLocale} 数据缺失",
+        "locale_data_missing": "语言 {locale} 数据缺失",
+        "missing_key_in_locale": "{locale} 中缺失键：{key}",
+        "extraneous_key_in_locale": "{locale} 中存在多余键：{key}",
+        "empty_translation_value": "空翻译值：{locale}.{fullKey}",
+        "invalid_interpolation_placeholder": "无效的插值占位符：{placeholder} in {locale}.{fullKey}",
+        "translation_not_string": "翻译值应为字符串，实际为：{value_type}",
+        "placeholder_mismatch": "插值占位符不匹配：{locale}.{key}，期望 {join}，实际 {join}",
+        "invalid_key_naming_convention": "键名不符合命名规范：{key}，应使用小驼峰命名",
+        "validation_error": "验证语言包 {locale} 时出错：",
+        "unknown_error_fallback": "未知错误",
+        "suggest_prioritize_core_keys": "建议优先翻译核心模块的缺失键",
+        "check_empty_values": "检查所有空值并提供适当的翻译",
+        "ensure_placeholder_consistency": "确保插值占位符在所有语言中保持一致",
+        "invalid_placeholder": "无效的插值占位符：{placeholder} in {locale}.{fullKey}",
+        "value_not_string": "翻译值应为字符串，实际为：{value}",
+        "invalid_key_naming": "键名不符合命名规范：{key}，应使用小驼峰命名",
+        "suggest_core_missing_keys": "建议优先翻译核心模块的缺失键",
+        "missing_base_language_data": "基准语言 {baseLocale} 数据缺失",
+        "missing_language_data": "语言 {locale} 数据缺失",
+        "extra_key_in_locale": "{locale} 中存在多余键：{key}",
+        "translation_value_not_string": "翻译值应为字符串，实际为：{value}",
+        "interpolation_placeholders_mismatch": "插值占位符不匹配：{locale}.{key}，期望 {join}，实际 {join}",
+        "error_validating_language_package": "验证语言包 {locale} 时出错："
+      }
+    },
+    "main": {
+      "i18n_system_initialized": "🌍 新i18n系统初始化完成",
+      "i18n_system_init_failed": "❌ 新i18n系统初始化失败：",
+      "new_i18n_init_success": "🌍 新i18n系统初始化完成",
+      "new_i18n_init_failed": "❌ 新i18n系统初始化失败："
+    },
+    "stores": {
+      "common": {
+        "plugin_version_unknown": "未知"
+      },
+      "personastore": {
+        "root_directory": "根目录",
+        "get_root_name_fallback": "根目录",
+        "fetch_folder_tree_error": "获取文件夹树失败",
+        "move_persona_error": "移动人格失败",
+        "move_folder_error": "移动文件夹失败",
+        "create_folder_error": "创建文件夹失败",
+        "update_folder_error": "更新文件夹失败",
+        "delete_folder_error": "删除文件夹失败",
+        "delete_persona_error": "删除人格失败",
+        "update_sort_order_error": "更新排序失败",
+        "breadcrumb_root_fallback": "根目录",
+        "update_sorting_error": "更新排序失败"
+      }
+    },
+    "utils": {
+      "platformutils": {
+        "credit_hikarifroya": "由 @HikariFroya 提供。",
+        "credit_wuyan1003": "由 @wuyan1003 提供。",
+        "platform_qq_official_label": "qq_official (QQ 官方机器人平台)",
+        "platform_weixin_official_account_label": "weixin_official_account (微信公众号)",
+        "platform_wecom_label": "wecom (企业微信应用)",
+        "platform_wecom_ai_bot_label": "wecom_ai_bot (企业微信智能机器人)",
+        "platform_lark_label": "lark (飞书)",
+        "platform_dingtalk_label": "dingtalk (钉钉)",
+        "provided_by_hikarifroya": "由 @HikariFroya 提供。",
+        "provided_by_wuyan1003": "由 @wuyan1003 提供。"
+      }
+    },
+    "views": {
+      "configpage": {
+        "test_config_tooltip": "测试当前配置",
+        "test_config_title": "测试配置",
+        "save_no_file_selected_message": "请先选择一个配置文件",
+        "tooltip_test_config": "测试当前配置",
+        "heading_test_config": "测试配置",
+        "message_select_config_first": "请先选择一个配置文件"
+      },
+      "conversationpage": {
+        "log_processing_message": "处理消息：",
+        "error_invalid_api_data_format": "API 返回数据格式不符合预期：",
+        "warn_no_pagination_info": "API 响应中没有分页信息",
+        "error_fetch_conversation_list": "获取对话列表出错：",
+        "error_response_data": "错误响应数据：",
+        "error_status_code": "错误状态码：",
+        "log_requesting_conversation_details": "正在请求对话详情，user_id={user_id}, cid={cid}",
+        "error_parse_conversation_history": "解析对话历史失败：",
+        "error_fetch_conversation_details": "获取对话详情出错：",
+        "error_update_conversation_history": "更新对话历史出错：",
+        "bulk_delete_conversation_error": "批量删除对话出错：",
+        "bulk_delete_conversations_error": "批量删除对话出错："
+      },
+      "extensionpage": {
+        "no_failed_plugins_to_reload": "没有需要重载的失败插件",
+        "reloaded_all_failed_plugins": "已尝试重载所有失败插件",
+        "reload_failed": "重载失败：",
+        "batch_reload_error": "批量重载过程中出现错误",
+        "one_click_reload_fix": "尝试一键重载修复",
+        "my_plugin_source_placeholder": "我的插件源"
+      },
+      "platformpage": {
+        "fetch_platform_stats_failed": "获取平台统计信息失败："
+      },
+      "providerpage": {
+        "cancel_button": "取消",
+        "add_button": "添加",
+        "warning_do_not_modify_id": "不建议修改 ID，可能会导致指向该模型的相关配置（如默认模型、插件相关配置等）失效。旧版本 AstrBot 的 “提供商 ID” 是下方的 “ID”。",
+        "prompt_go_to_config_test_agent": "请前往「配置文件」页测试 Agent 执行器",
+        "note_test_agent_in_config": "Agent 执行器的测试请在「配置文件」页进行。",
+        "step_find_and_open_config": "找到对应的配置文件并打开。",
+        "step_modify_executor_save": "找到 Agent 执行方式部分，修改执行器后点击保存。",
+        "step_click_chat_to_test": "点击右下角的 💬 聊天按钮进行测试。",
+        "note_update_agent_executor_for_bot": "要让机器人应用这个 Agent 执行器，你也需要前往修改 Agent 执行器。",
+        "btn_ok_close_dialog": "好的",
+        "btn_go_to_config": "点击前往",
+        "code_show_update_failed": "更新失败！",
+        "code_show_update_success": "更新成功！",
+        "code_show_add_failed": "添加失败！",
+        "code_show_add_success": "添加成功！",
+        "code_show_copy_create_success": "成功复制并创建了 {id}",
+        "code_error_provider_not_enabled": "该提供商未被用户启用",
+        "prompt_test_agent_executor_on_config_page": "请前往「配置文件」页测试 Agent 执行器",
+        "note_test_agent_executor_on_config_page": "Agent 执行器的测试请在「配置文件」页进行。",
+        "step_open_config_file": "找到对应的配置文件并打开。",
+        "step_modify_and_save_executor": "找到 Agent 执行方式部分，修改执行器后点击保存。",
+        "note_modify_agent_executor_for_bot": "要让机器人应用这个 Agent 执行器，你也需要前往修改 Agent 执行器。",
+        "btn_go_to_config_page": "点击前往"
+      },
+      "sessionmanagementpage": {
+        "display_platform": "平台：{platform}",
+        "display_message_type": "消息类型：{message_type}",
+        "display_session_id": "会话 ID: {session_id}",
+        "title_group_management": "分组管理",
+        "label_group_count": "{groups} 个分组",
+        "add_to_group": "添加到分组",
+        "create_new_group": "新建分组",
+        "group_session_count": "{{ group.umo_count }} 个会话",
+        "no_groups_prompt": "暂无分组，点击「新建分组」创建",
+        "group_dialog_title": "新建分组 编辑分组",
+        "group_name_field": "分组名称",
+        "available_sessions_title": "可选会话 ({{ unselectedUmos.length }})",
+        "available_search_field": "搜索...",
+        "no_matches_found": "无匹配项",
+        "selected_sessions_title": "已选会话 ({{ editingGroup.umos.length }})",
+        "selected_search_field": "搜索...",
+        "no_members_yet": "暂无成员",
+        "cancel_button": "取消",
+        "save_button": "保存",
+        "custom_groups_divider": "── 自定义分组 ──",
+        "group_option_label": "{name} ({umo_count} 个会话)",
+        "error_no_session_selected": "请先选择要操作的会话",
+        "error_no_config_selected": "请至少选择一项要修改的配置",
+        "success_batch_update": "批量更新成功",
+        "error_partial_update_failed": "部分更新失败",
+        "show_error_batch_update_failed": "批量更新失败",
+        "console_error_load_groups_failed": "加载分组失败：",
+        "console_error_load_sessions_failed": "加载会话列表失败：",
+        "show_error_group_name_required": "分组名称不能为空",
+        "show_error_save_group_failed": "保存分组失败",
+        "confirm_delete_group_message": "确定要删除分组 \"{name}\" 吗？",
+        "show_error_delete_group_failed": "删除分组失败",
+        "show_error_no_sessions_selected": "请先选择要添加的会话",
+        "show_success_sessions_added": "已添加 {length} 个会话到分组",
+        "show_error_add_failed": "添加失败",
+        "new_group": "新建分组",
+        "no_matches_available": "无匹配项",
+        "no_members_selected": "暂无成员",
+        "batch_update_failed": "批量更新失败",
+        "load_groups_failed": "加载分组失败：",
+        "load_sessions_failed": "加载会话列表失败：",
+        "group_name_required": "分组名称不能为空",
+        "save_group_failed": "保存分组失败",
+        "confirm_delete_group": "确定要删除分组 \"{name}\" 吗？",
+        "delete_group_failed": "删除分组失败",
+        "select_sessions_required": "请先选择要添加的会话",
+        "sessions_added_success": "已添加 {length} 个会话到分组",
+        "add_failed": "添加失败",
+        "session_count": "{{ group.umo_count }} 个会话",
+        "create_or_edit_group": {
+          "true": "创建新分组",
+          "false": "编辑分组"
+        }
+      },
+      "alkaid": {
+        "knowledgebase": {
+          "recommend_new_knowledge_base": "建议您更换使用新版知识库功能。",
+          "rerank_model_label_prefix": "重排序模型：{rerank_model}",
+          "rerank_model_not_set": "未设置",
+          "usage_tip_kb_use": "💡 使用方式：在聊天页中输入 \"/kb use {collection_name}\"",
+          "tab_import_data": "导入数据",
+          "heading_import_data": "导入数据",
+          "description_select_import": "选择数据源并导入内容到知识库",
+          "label_data_source_select": "数据源选择",
+          "option_from_file": "从文件",
+          "option_from_url": "从URL",
+          "plugin_current_version_fallback": "未知",
+          "plugin_latest_version_fallback": "未知",
+          "plugin_versions_known_check": "未知 未知",
+          "recommend_new_feature": "建议您更换使用新版知识库功能。",
+          "rerank_model_label": "重排序模型：{rerank_model}",
+          "rerank_model_value": "未设置",
+          "usage_tip": "💡 使用方式：在聊天页中输入 \"/kb use {collection_name}\"",
+          "import_tab": "导入数据",
+          "import_data_heading": "导入数据",
+          "import_description": "选择数据源并导入内容到知识库",
+          "data_source_label": "数据源选择",
+          "from_file_option": "从文件",
+          "from_url_option": "从URL",
+          "plugin_version_check_condition": "未知 未知"
+        },
+        "longtermmemory": {
+          "accelerating_development": "加速开发中...",
+          "search_memory_failed": "搜索记忆数据失败：",
+          "add_memory_failed": "添加记忆数据失败：",
+          "get_memory_details_failed": "获取记忆详情失败：",
+          "parse_metadata_error": "解析元数据出错："
+        }
+      },
+      "knowledge_base": {
+        "documentdetail": {
+          "char_count_display": "{char_count} 字符",
+          "selected_chunk_char_count": "{char_count} 字符",
+          "load_document_details_failed": "加载文档详情失败",
+          "load_chunks_failed": "加载分块列表失败",
+          "char_count_label": "{char_count} 字符"
+        },
+        "kbdetail": {
+          "load_failed_snackbar": "加载失败",
+          "load_kb_details_failed": "加载知识库详情失败"
+        },
+        "kblist": {
+          "kb_description_fallback": "暂无描述",
+          "switch_to_legacy_kb": "切换到旧版知识库"
+        },
+        "components": {
+          "documentstab": {
+            "search_documents_placeholder": "搜索文档...",
+            "max_files_hint": "最多可上传 10 个文件",
+            "selected_files_count": "已选择 {file_count} 个文件",
+            "clear_selection": "清空",
+            "tavily_config_message": "检查网页搜索配置失败。使用此功能需要配置 Tavily Key。",
+            "configure_button": "配置",
+            "concurrent_tasks_hint": "并发任务数量限制",
+            "max_retries_hint": "失败时的最大重试次数",
+            "cancel_delete": "取消",
+            "confirm_delete": "删除",
+            "load_documents_failed": "加载文档列表失败",
+            "max_files_limit": "最多只能选择 10 个文件",
+            "uploading_background": "正在后台上传 {file_count} 个文件...",
+            "extracting_url_background": "正在从 URL 后台提取内容...",
+            "upload_success": "成功上传 {successCount} 个文档",
+            "upload_summary": "上传完成：{successCount} 个成功, {failedCount} 个失败",
+            "upload_failed": "上传失败：{error}",
+            "status_waiting": "等待中...",
+            "status_extracting": "提取内容...",
+            "status_cleaning": "清洗内容...",
+            "status_parsing": "解析文档...",
+            "chunking_progress": "文本分块中...",
+            "embedding_progress": "生成向量中...",
+            "tavily_key_success": "Tavily API Key 配置成功",
+            "tavily_config_status_message": "检查网页搜索配置失败。使用此功能需要配置 Tavily Key。",
+            "max_files_selected_warning": "最多只能选择 10 个文件",
+            "upload_completed_summary": "上传完成：{successCount} 个成功, {failedCount} 个失败",
+            "upload_failed_error": "上传失败：{error}",
+            "chunking_status": "文本分块中...",
+            "embedding_status": "生成向量中..."
+          },
+          "settingstab": {
+            "embedding_change_warning": "注意：",
+            "confirm_embedding_change_title": "确认修改嵌入模型",
+            "embedding_change_effects_title": "警告：",
+            "effect_existing_vectors_invalid": "现有的向量数据将失效",
+            "effect_retrieval_may_fail": "检索功能可能无法正常工作",
+            "effect_reupload_recommended": "建议删除现有文档后重新上传",
+            "effect_vectors_incompatible": "不同嵌入模型生成的向量不兼容",
+            "confirm_change_message": "修改为",
+            "cancel_button": "取消",
+            "confirm_change_button": "确认修改",
+            "confirm_model_change_title": "确认修改嵌入模型",
+            "change_effects_warning": "警告：",
+            "effect_recommend_reupload": "建议删除现有文档后重新上传",
+            "effect_models_incompatible": "不同嵌入模型生成的向量不兼容",
+            "confirm_change_prompt": "修改为"
+          },
+          "tavilykeydialog": {
+            "dialog_title": "配置 Tavily API Key",
+            "description": "Tavily 官网",
+            "cancel_button": "取消",
+            "save_button": "保存",
+            "error_key_empty": "API Key 不能为空",
+            "error_fetch_config_failed": "获取当前配置失败",
+            "error_save_failed": "保存失败，请检查 Key 是否正确",
+            "save_failed_unknown_error": "保存失败，发生未知错误"
+          }
+        }
+      }
+    }
+  },
+  "create": {
+    "nameRequired": "后续如修改知识库名称，需重新在配置文件更新。",
+    "embeddingModelLabel": "嵌入模型选择后无法修改，如需更换请创建新的知识库。"
+  },
+  "upload": {
+    "batchSize": "每批处理的文本数量"
+  },
+  "collapse": "expandedEntries[entryIndex] ? (t('core.common.collapse') || '收起') : (t('core.common.expand') || '展开')"
 }

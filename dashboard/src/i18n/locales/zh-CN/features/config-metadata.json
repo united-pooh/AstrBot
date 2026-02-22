@@ -121,7 +121,7 @@
         },
         "websearch_baidu_app_builder_key": {
           "description": "百度千帆智能云 APP Builder API Key",
-          "hint": "参考:[https://console.bce.baidu.com/iam/#/iam/apikey/list](https://console.bce.baidu.com/iam/#/iam/apikey/list)"
+          "hint": "参考：[https://console.bce.baidu.com/iam/#/iam/apikey/list](https://console.bce.baidu.com/iam/#/iam/apikey/list)"
         },
         "web_search_link": {
           "description": "显示来源引用"
@@ -146,7 +146,7 @@
     },
     "agent_computer_use": {
       "description": "使用电脑能力",
-      "hint": "让 AstrBot 访问和使用你的电脑或者隔离的沙盒环境，以执行更复杂的任务。详见: [沙盒模式](https://docs.astrbot.app/use/astrbot-agent-sandbox.html), [Skills](https://docs.astrbot.app/use/skills.html)。",
+      "hint": "让 AstrBot 访问和使用你的电脑或者隔离的沙盒环境，以执行更复杂的任务。详见：[沙盒模式](https://docs.astrbot.app/use/astrbot-agent-sandbox.html), [Skills](https://docs.astrbot.app/use/skills.html)。",
       "provider_settings": {
         "computer_use_runtime": {
           "description": "运行环境",
@@ -181,7 +181,7 @@
     },
     "proactive_capability": {
       "description": "主动型能力",
-      "hint": "让 AstrBot 能够在某一时刻自动唤醒，帮你完成任务。详见: [主动型 Agent](https://docs.astrbot.app/use/proactive-agent.html)。",
+      "hint": "让 AstrBot 能够在某一时刻自动唤醒，帮你完成任务。详见：[主动型 Agent](https://docs.astrbot.app/use/proactive-agent.html)。",
       "provider_settings": {
         "proactive_capability": {
           "add_cron_tools": {
@@ -192,7 +192,7 @@
       }
     },
     "truncate_and_compress": {
-      "hint": "AstrBot 如何管理工作记忆。详见: [上下文管理策略](https://docs.astrbot.app/use/context-compress.html)。",
+      "hint": "AstrBot 如何管理工作记忆。详见：[上下文管理策略](https://docs.astrbot.app/use/context-compress.html)。",
       "description": "上下文管理策略",
       "provider_settings": {
         "max_context_length": {
@@ -702,7 +702,7 @@
             },
             "emojis": {
               "description": "表情列表(飞书表情枚举名)",
-              "hint": "表情枚举名参考:[https://open.feishu.cn/document/server-docs/im-v1/message-reaction/emojis-introduce](https://open.feishu.cn/document/server-docs/im-v1/message-reaction/emojis-introduce)"
+              "hint": "表情枚举名参考：[https://open.feishu.cn/document/server-docs/im-v1/message-reaction/emojis-introduce](https://open.feishu.cn/document/server-docs/im-v1/message-reaction/emojis-introduce)"
             }
           }
         },
@@ -713,7 +713,7 @@
             },
             "emojis": {
               "description": "表情列表(Unicode)",
-              "hint": "Telegram 仅支持固定反应集合,参考:[https://gist.github.com/Soulter/3f22c8e5f9c7e152e967e8bc28c97fc9](https://gist.github.com/Soulter/3f22c8e5f9c7e152e967e8bc28c97fc9)"
+              "hint": "Telegram 仅支持固定反应集合,参考：[https://gist.github.com/Soulter/3f22c8e5f9c7e152e967e8bc28c97fc9](https://gist.github.com/Soulter/3f22c8e5f9c7e152e967e8bc28c97fc9)"
             }
           }
         }
@@ -748,7 +748,7 @@
           },
           "interval": {
             "description": "随机间隔时间",
-            "hint": "格式:最小值,最大值(如:1.5,3.5)"
+            "hint": "格式：最小值,最大值(如：1.5,3.5)"
           },
           "log_base": {
             "description": "对数底数",
@@ -902,7 +902,7 @@
       },
       "timezone": {
         "description": "时区",
-        "hint": "时区设置。请填写 IANA 时区名称, 如 Asia/Shanghai, 为空时使用系统默认时区。所有时区请查看: [https://data.iana.org/time-zones/tzdb-2021a/zone1970.tab](https://data.iana.org/time-zones/tzdb-2021a/zone1970.tab)"
+        "hint": "时区设置。请填写 IANA 时区名称, 如 Asia/Shanghai, 为空时使用系统默认时区。所有时区请查看：[https://data.iana.org/time-zones/tzdb-2021a/zone1970.tab](https://data.iana.org/time-zones/tzdb-2021a/zone1970.tab)"
       },
       "http_proxy": {
         "description": "HTTP 代理",
@@ -1172,26 +1172,26 @@
         "description": "思考配置",
         "budget": {
           "description": "思考预算",
-          "hint": "用于指定模型推理时使用的思考 token 数量上限。参见: https://ai.google.dev/gemini-api/docs/thinking#set-budget"
+          "hint": "用于指定模型推理时使用的思考 token 数量上限。参见：https://ai.google.dev/gemini-api/docs/thinking#set-budget"
         },
         "level": {
           "description": "思考级别",
-          "hint": "推荐用于 Gemini 3 及以上模型，可控制推理行为。参见: https://ai.google.dev/gemini-api/docs/thinking#thinking-levels"
+          "hint": "推荐用于 Gemini 3 及以上模型，可控制推理行为。参见：https://ai.google.dev/gemini-api/docs/thinking#thinking-levels"
         }
       },
       "anth_thinking_config": {
         "description": "思考配置",
         "type": {
           "description": "思考类型",
-          "hint": "设为 'adaptive' 以使用自适应思考（推荐 Opus 4.6+ / Sonnet 4.6+）。留空则使用手动预算模式。参见: https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking"
+          "hint": "设为 'adaptive' 以使用自适应思考（推荐 Opus 4.6+ / Sonnet 4.6+）。留空则使用手动预算模式。参见：https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking"
         },
         "budget": {
           "description": "思考预算",
-          "hint": "Anthropic thinking.budget_tokens 参数。必须 >= 1024。仅在思考类型为空时生效。Opus 4.6 / Sonnet 4.6 已弃用。参见: https://platform.claude.com/docs/en/build-with-claude/extended-thinking"
+          "hint": "Anthropic thinking.budget_tokens 参数。必须 >= 1024。仅在思考类型为空时生效。Opus 4.6 / Sonnet 4.6 已弃用。参见：https://platform.claude.com/docs/en/build-with-claude/extended-thinking"
         },
         "effort": {
           "description": "思考深度",
-          "hint": "当思考类型为 'adaptive' 时控制思考深度。'high' 为默认值。'max' 仅限 Opus 4.6。参见: https://platform.claude.com/docs/en/build-with-claude/effort"
+          "hint": "当思考类型为 'adaptive' 时控制思考深度。'high' 为默认值。'max' 仅限 Opus 4.6。参见：https://platform.claude.com/docs/en/build-with-claude/effort"
         }
       },
       "minimax-group-id": {

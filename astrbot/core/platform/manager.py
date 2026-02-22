@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from astrbot.core import logger
 from astrbot.core.config.astrbot_config import AstrBotConfig
+from astrbot.core.lang import t
 from astrbot.core.star.star_handler import EventType, star_handlers_registry, star_map
 from astrbot.core.utils.webhook_utils import ensure_platform_webhook_config
 
@@ -76,7 +77,7 @@ class PlatformManager:
                     raise
                 except Exception as e:
                     logger.error(
-                        "终止平台适配器失败: client_id=%s, error=%s",
+                        t("core-platform-manager-terminate_adapter_failed"),
                         client_id,
                         e,
                     )
@@ -92,7 +93,13 @@ class PlatformManager:
                     self.astrbot_config.save_config()
                 await self.load_platform(platform)
             except Exception as e:
-                logger.error(f"初始化 {platform} 平台适配器失败: {e}")
+                logger.error(
+                    t(
+                        "core-platform-manager-platform_init_failed",
+                        platform=platform,
+                        e=e,
+                    )
+                )
 
         # 网页聊天
         webchat_inst = WebChatAdapter({}, self.settings, self.event_queue)
@@ -110,7 +117,7 @@ class PlatformManager:
                 sanitized_id, changed = self._sanitize_platform_id(platform_id)
                 if sanitized_id and changed:
                     logger.warning(
-                        "平台 ID %r 包含非法字符 ':' 或 '!'，已替换为 %r。",
+                        t("core-platform-manager-invalid_platform_id_replaced"),
                         platform_id,
                         sanitized_id,
                     )
@@ -118,12 +125,19 @@ class PlatformManager:
                     self.astrbot_config.save_config()
                 else:
                     logger.error(
-                        f"平台 ID {platform_id!r} 不能为空，跳过加载该平台适配器。",
+                        t(
+                            "core-platform-manager-platform_id_empty_skip",
+                            platform_id=platform_id,
+                        ),
                     )
                     return
 
             logger.info(
-                f"载入 {platform_config['type']}({platform_config['id']}) 平台适配器 ...",
+                t(
+                    "core-platform-manager-loading_platform_adapter",
+                    platform_config=platform_config["type"],
+                    id=platform_config["id"],
+                ),
             )
             match platform_config["type"]:
                 case "aiocqhttp":
@@ -182,14 +196,28 @@ class PlatformManager:
                     )
         except (ImportError, ModuleNotFoundError) as e:
             logger.error(
-                f"加载平台适配器 {platform_config['type']} 失败，原因：{e}。请检查依赖库是否安装。提示：可以在 管理面板->平台日志->安装Pip库 中安装依赖库。",
+                t(
+                    "core-platform-manager-load_platform_adapter_failed_with_hint",
+                    platform_config=platform_config["type"],
+                    e=e,
+                ),
             )
         except Exception as e:
-            logger.error(f"加载平台适配器 {platform_config['type']} 失败，原因：{e}。")
+            logger.error(
+                t(
+                    "core-platform-manager-load_platform_adapter_failed",
+                    platform_config=platform_config["type"],
+                    e=e,
+                )
+            )
 
         if platform_config["type"] not in platform_cls_map:
             logger.error(
-                f"未找到适用于 {platform_config['type']}({platform_config['id']}) 平台适配器，请检查是否已经安装或者名称填写错误",
+                t(
+                    "core-platform-manager-platform_adapter_not_found",
+                    platform_config=platform_config["type"],
+                    id=platform_config["id"],
+                ),
             )
             return
         cls_type = platform_cls_map[platform_config["type"]]
@@ -230,7 +258,9 @@ class PlatformManager:
         except Exception as e:
             error_msg = str(e)
             tb_str = traceback.format_exc()
-            logger.error(f"------- 任务 {task.get_name()} 发生错误: {e}")
+            logger.error(
+                t("core-platform-manager-task_error", get_name=task.get_name(), e=e)
+            )
             for line in tb_str.split("\n"):
                 logger.error(f"|    {line}")
             logger.error("-------")
@@ -252,7 +282,12 @@ class PlatformManager:
 
     async def terminate_platform(self, platform_id: str) -> None:
         if platform_id in self._inst_map:
-            logger.info(f"正在尝试终止 {platform_id} 平台适配器 ...")
+            logger.info(
+                t(
+                    "core-platform-manager-terminating_platform_adapter",
+                    platform_id=platform_id,
+                )
+            )
 
             # client_id = self._inst_map.pop(platform_id, None)
             info = self._inst_map.pop(platform_id)
@@ -267,7 +302,12 @@ class PlatformManager:
                     ),
                 )
             except Exception:
-                logger.warning(f"可能未完全移除 {platform_id} 平台适配器")
+                logger.warning(
+                    t(
+                        "core-platform-manager-platform_adapter_not_fully_removed",
+                        platform_id=platform_id,
+                    )
+                )
 
             await self._terminate_inst_and_tasks(inst)
 
@@ -314,7 +354,9 @@ class PlatformManager:
                     error_count += 1
             except Exception as e:
                 # 如果获取统计信息失败，记录基本信息
-                logger.warning(f"获取平台统计信息失败: {e}")
+                logger.warning(
+                    t("core-platform-manager-get_platform_stats_failed", e=e)
+                )
                 stats_list.append(
                     {
                         "id": getattr(inst, "config", {}).get("id", "unknown"),

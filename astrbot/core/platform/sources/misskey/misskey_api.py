@@ -5,6 +5,8 @@ import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any, NoReturn
 
+from astrbot.core.lang import t
+
 try:
     import aiohttp
     import websockets
@@ -70,7 +72,9 @@ class StreamingClient:
             self.is_connected = True
             self._running = True
 
-            logger.info("[Misskey WebSocket] 已连接")
+            logger.info(
+                t("core-platform-sources-misskey-misskey_api-websocket_connected")
+            )
             if self.desired_channels:
                 try:
                     desired = list(self.desired_channels.items())
@@ -79,14 +83,20 @@ class StreamingClient:
                             await self.subscribe_channel(channel_type, params)
                         except Exception as e:
                             logger.warning(
-                                f"[Misskey WebSocket] 重新订阅 {channel_type} 失败: {e}",
+                                t(
+                                    "core-platform-sources-misskey-misskey_api-resubscribe_failed",
+                                    channel_type=channel_type,
+                                    e=e,
+                                ),
                             )
                 except Exception:
                     pass
             return True
 
         except Exception as e:
-            logger.error(f"[Misskey WebSocket] 连接失败: {e}")
+            logger.error(
+                t("core-platform-sources-misskey-misskey_api-connection_failed", e=e)
+            )
             self.is_connected = False
             return False
 
@@ -96,7 +106,7 @@ class StreamingClient:
             await self.websocket.close()
             self.websocket = None
         self.is_connected = False
-        logger.info("[Misskey WebSocket] 连接已断开")
+        logger.info(t("core-platform-sources-misskey-misskey_api-connection_closed"))
 
     async def subscribe_channel(
         self,
@@ -104,7 +114,9 @@ class StreamingClient:
         params: dict | None = None,
     ) -> str:
         if not self.is_connected or not self.websocket:
-            raise WebSocketError("WebSocket 未连接")
+            raise WebSocketError(
+                t("core-platform-sources-misskey-misskey_api-websocket_not_connected")
+            )
 
         channel_id = str(uuid.uuid4())
         message = {
@@ -141,7 +153,9 @@ class StreamingClient:
 
     async def listen(self) -> None:
         if not self.is_connected or not self.websocket:
-            raise WebSocketError("WebSocket 未连接")
+            raise WebSocketError(
+                t("core-platform-sources-misskey-misskey_api-websocket_not_connected_2")
+            )
 
         try:
             async for message in self.websocket:
@@ -152,12 +166,27 @@ class StreamingClient:
                     data = json.loads(message)
                     await self._handle_message(data)
                 except json.JSONDecodeError as e:
-                    logger.warning(f"[Misskey WebSocket] 无法解析消息: {e}")
+                    logger.warning(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-parse_message_failed",
+                            e=e,
+                        )
+                    )
                 except Exception as e:
-                    logger.error(f"[Misskey WebSocket] 处理消息失败: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-process_message_failed",
+                            e=e,
+                        )
+                    )
 
         except websockets.exceptions.ConnectionClosedError as e:
-            logger.warning(f"[Misskey WebSocket] 连接意外关闭: {e}")
+            logger.warning(
+                t(
+                    "core-platform-sources-misskey-misskey_api-connection_unexpected_close",
+                    e=e,
+                )
+            )
             self.is_connected = False
             try:
                 await self.disconnect()
@@ -165,7 +194,10 @@ class StreamingClient:
                 pass
         except websockets.exceptions.ConnectionClosed as e:
             logger.warning(
-                f"[Misskey WebSocket] 连接已关闭 (代码: {e.code}, 原因: {e.reason})",
+                t(
+                    "core-platform-sources-misskey-misskey_api-log_websocket_closed",
+                    e=e,
+                ),
             )
             self.is_connected = False
             try:
@@ -173,14 +205,21 @@ class StreamingClient:
             except Exception:
                 pass
         except websockets.exceptions.InvalidHandshake as e:
-            logger.error(f"[Misskey WebSocket] 握手失败: {e}")
+            logger.error(
+                t("core-platform-sources-misskey-misskey_api-handshake_failed", e=e)
+            )
             self.is_connected = False
             try:
                 await self.disconnect()
             except Exception:
                 pass
         except Exception as e:
-            logger.error(f"[Misskey WebSocket] 监听消息失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-listen_messages_failed",
+                    e=e,
+                )
+            )
             self.is_connected = False
             try:
                 await self.disconnect()
@@ -194,7 +233,10 @@ class StreamingClient:
         def _build_channel_summary(message_type: str | None, body: Any) -> str:
             try:
                 if not isinstance(body, dict):
-                    return f"[Misskey WebSocket] 收到消息类型: {message_type}"
+                    return t(
+                        "core-platform-sources-misskey-misskey_api-received_message_type",
+                        message_type=message_type,
+                    )
 
                 inner = body.get("body") if isinstance(body.get("body"), dict) else body
                 note = (
@@ -211,12 +253,18 @@ class StreamingClient:
                 user = note.get("user", {}) if note else None
 
                 return (
-                    f"[Misskey WebSocket] 收到消息类型: {message_type} | "
-                    f"note_id={note_id} | user={user.get('username') if user else None} | "
+                    t(
+                        "core-platform-sources-misskey-misskey_api-received_message_type_prefix",
+                        message_type=message_type,
+                    )
+                    + f"note_id={note_id} | user={user.get('username') if user else None} | "
                     f"text={text[:80] if text else '[no-text]'} | files={has_files} | hidden={is_hidden}"
                 )
             except Exception:
-                return f"[Misskey WebSocket] 收到消息类型: {message_type}"
+                return t(
+                    "core-platform-sources-misskey-misskey_api-received_message_type_return",
+                    message_type=message_type,
+                )
 
         channel_summary = _build_channel_summary(message_type, body)
         logger.info(channel_summary)
@@ -227,7 +275,11 @@ class StreamingClient:
             event_body = body.get("body", {})
 
             logger.debug(
-                f"[Misskey WebSocket] 频道消息: {channel_id}, 事件类型: {event_type}",
+                t(
+                    "core-platform-sources-misskey-misskey_api-channel_message_info",
+                    channel_id=channel_id,
+                    event_type=event_type,
+                ),
             )
 
             if channel_id in self.channels:
@@ -235,14 +287,28 @@ class StreamingClient:
                 handler_key = f"{channel_type}:{event_type}"
 
                 if handler_key in self.message_handlers:
-                    logger.debug(f"[Misskey WebSocket] 使用处理器: {handler_key}")
+                    logger.debug(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-using_handler",
+                            handler_key=handler_key,
+                        )
+                    )
                     await self.message_handlers[handler_key](event_body)
                 elif event_type in self.message_handlers:
-                    logger.debug(f"[Misskey WebSocket] 使用事件处理器: {event_type}")
+                    logger.debug(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-using_event_handler",
+                            event_type=event_type,
+                        )
+                    )
                     await self.message_handlers[event_type](event_body)
                 else:
                     logger.debug(
-                        f"[Misskey WebSocket] 未找到处理器: {handler_key} 或 {event_type}",
+                        t(
+                            "core-platform-sources-misskey-misskey_api-websocket_handler_not_found",
+                            handler_key=handler_key,
+                            event_type=event_type,
+                        ),
                     )
                     if "_debug" in self.message_handlers:
                         await self.message_handlers["_debug"](
@@ -254,10 +320,20 @@ class StreamingClient:
                         )
 
         elif message_type in self.message_handlers:
-            logger.debug(f"[Misskey WebSocket] 直接消息处理器: {message_type}")
+            logger.debug(
+                t(
+                    "core-platform-sources-misskey-misskey_api-websocket_direct_message_handler",
+                    message_type=message_type,
+                )
+            )
             await self.message_handlers[message_type](body)
         else:
-            logger.debug(f"[Misskey WebSocket] 未处理的消息类型: {message_type}")
+            logger.debug(
+                t(
+                    "core-platform-sources-misskey-misskey_api-websocket_unhandled_message_type",
+                    message_type=message_type,
+                )
+            )
             if "_debug" in self.message_handlers:
                 await self.message_handlers["_debug"](data)
 
@@ -290,7 +366,12 @@ def retry_async(
                     last_exc = e
                     if attempt == max_retries:
                         logger.error(
-                            f"[Misskey API] {func_name} 重试 {max_retries} 次后仍失败: {e}",
+                            t(
+                                "core-platform-sources-misskey-misskey_api-api_retry_failed_max",
+                                func_name=func_name,
+                                max_retries=max_retries,
+                                e=e,
+                            ),
                         )
                         break
 
@@ -306,14 +387,28 @@ def retry_async(
                     sleep_time = backoff + jitter
 
                     logger.warning(
-                        f"[Misskey API] {func_name} 第 {attempt} 次重试失败: {e}，"
-                        f"{sleep_time:.1f}s后重试",
+                        t(
+                            "core-platform-sources-misskey-misskey_api-api_retry_attempt_failed",
+                            func_name=func_name,
+                            attempt=attempt,
+                            e=e,
+                        )
+                        + t(
+                            "core-platform-sources-misskey-misskey_api-log_retry_scheduled",
+                            sleep_time=sleep_time,
+                        ),
                     )
                     await asyncio.sleep(sleep_time)
                     continue
                 except Exception as e:
                     # 非可重试异常直接抛出
-                    logger.error(f"[Misskey API] {func_name} 遇到不可重试异常: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-api_non_retryable_exception",
+                            func_name=func_name,
+                            e=e,
+                        )
+                    )
                     raise
 
             if last_exc:
@@ -361,7 +456,7 @@ class MisskeyAPI:
         if self._session:
             await self._session.close()
             self._session = None
-        logger.debug("[Misskey API] 客户端已关闭")
+        logger.debug(t("core-platform-sources-misskey-misskey_api-client_closed"))
 
     def get_streaming_client(self) -> StreamingClient:
         if not self.streaming:
@@ -378,36 +473,102 @@ class MisskeyAPI:
     def _handle_response_status(self, status: int, endpoint: str) -> NoReturn:
         """处理 HTTP 响应状态码"""
         if status == 400:
-            logger.error(f"[Misskey API] 请求参数错误: {endpoint} (HTTP {status})")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-bad_request_parameters",
+                    endpoint=endpoint,
+                    status=status,
+                )
+            )
             raise APIError(f"Bad request for {endpoint}")
         if status == 401:
-            logger.error(f"[Misskey API] 未授权访问: {endpoint} (HTTP {status})")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-unauthorized_access",
+                    endpoint=endpoint,
+                    status=status,
+                )
+            )
             raise AuthenticationError(f"Unauthorized access for {endpoint}")
         if status == 403:
-            logger.error(f"[Misskey API] 访问被禁止: {endpoint} (HTTP {status})")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-access_forbidden",
+                    endpoint=endpoint,
+                    status=status,
+                )
+            )
             raise AuthenticationError(f"Forbidden access for {endpoint}")
         if status == 404:
-            logger.error(f"[Misskey API] 资源不存在: {endpoint} (HTTP {status})")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-resource_not_found",
+                    endpoint=endpoint,
+                    status=status,
+                )
+            )
             raise APIError(f"Resource not found for {endpoint}")
         if status == 413:
-            logger.error(f"[Misskey API] 请求体过大: {endpoint} (HTTP {status})")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-request_entity_too_large",
+                    endpoint=endpoint,
+                    status=status,
+                )
+            )
             raise APIError(f"Request entity too large for {endpoint}")
         if status == 429:
-            logger.warning(f"[Misskey API] 请求频率限制: {endpoint} (HTTP {status})")
+            logger.warning(
+                t(
+                    "core-platform-sources-misskey-misskey_api-rate_limit_exceeded",
+                    endpoint=endpoint,
+                    status=status,
+                )
+            )
             raise APIRateLimitError(f"Rate limit exceeded for {endpoint}")
         if status == 500:
-            logger.error(f"[Misskey API] 服务器内部错误: {endpoint} (HTTP {status})")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-internal_server_error",
+                    endpoint=endpoint,
+                    status=status,
+                )
+            )
             raise APIConnectionError(f"Internal server error for {endpoint}")
         if status == 502:
-            logger.error(f"[Misskey API] 网关错误: {endpoint} (HTTP {status})")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-bad_gateway",
+                    endpoint=endpoint,
+                    status=status,
+                )
+            )
             raise APIConnectionError(f"Bad gateway for {endpoint}")
         if status == 503:
-            logger.error(f"[Misskey API] 服务不可用: {endpoint} (HTTP {status})")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-service_unavailable",
+                    endpoint=endpoint,
+                    status=status,
+                )
+            )
             raise APIConnectionError(f"Service unavailable for {endpoint}")
         if status == 504:
-            logger.error(f"[Misskey API] 网关超时: {endpoint} (HTTP {status})")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-gateway_timeout",
+                    endpoint=endpoint,
+                    status=status,
+                )
+            )
             raise APIConnectionError(f"Gateway timeout for {endpoint}")
-        logger.error(f"[Misskey API] 未知错误: {endpoint} (HTTP {status})")
+        logger.error(
+            t(
+                "core-platform-sources-misskey-misskey_api-unknown_error",
+                endpoint=endpoint,
+                status=status,
+            )
+        )
         raise APIConnectionError(f"HTTP {status} for {endpoint}")
 
     async def _process_response(
@@ -429,23 +590,45 @@ class MisskeyAPI:
                     )
                     if notifications_data:
                         logger.debug(
-                            f"[Misskey API] 获取到 {len(notifications_data)} 条新通知",
+                            t(
+                                "core-platform-sources-misskey-misskey_api-log_fetched_notifications",
+                                notifications_data=notifications_data,
+                            ),
                         )
                 else:
-                    logger.debug(f"[Misskey API] 请求成功: {endpoint}")
+                    logger.debug(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-request_success",
+                            endpoint=endpoint,
+                        )
+                    )
                 return result
             except json.JSONDecodeError as e:
-                logger.error(f"[Misskey API] 响应格式错误: {e}")
+                logger.error(
+                    t(
+                        "core-platform-sources-misskey-misskey_api-response_format_error",
+                        e=e,
+                    )
+                )
                 raise APIConnectionError("Invalid JSON response") from e
         else:
             try:
                 error_text = await response.text()
                 logger.error(
-                    f"[Misskey API] 请求失败: {endpoint} - HTTP {response.status}, 响应: {error_text}",
+                    t(
+                        "core-platform-sources-misskey-misskey_api-request_failed_with_response",
+                        endpoint=endpoint,
+                        response=response,
+                        error_text=error_text,
+                    ),
                 )
             except Exception:
                 logger.error(
-                    f"[Misskey API] 请求失败: {endpoint} - HTTP {response.status}",
+                    t(
+                        "core-platform-sources-misskey-misskey_api-request_failed",
+                        endpoint=endpoint,
+                        response=response,
+                    ),
                 )
 
             self._handle_response_status(response.status, endpoint)
@@ -468,7 +651,9 @@ class MisskeyAPI:
             async with self.session.post(url, json=payload) as response:
                 return await self._process_response(response, endpoint)
         except aiohttp.ClientError as e:
-            logger.error(f"[Misskey API] HTTP 请求错误: {e}")
+            logger.error(
+                t("core-platform-sources-misskey-misskey_api-http_request_error", e=e)
+            )
             raise APIConnectionError(f"HTTP request failed: {e}") from e
 
     async def create_note(
@@ -532,7 +717,9 @@ class MisskeyAPI:
             if isinstance(result, dict)
             else "unknown"
         )
-        logger.debug(f"[Misskey API] 发帖成功: {note_id}")
+        logger.debug(
+            t("core-platform-sources-misskey-misskey_api-post_success", note_id=note_id)
+        )
         return result
 
     async def upload_file(
@@ -557,7 +744,12 @@ class MisskeyAPI:
             try:
                 f = open(file_path, "rb")
             except FileNotFoundError as e:
-                logger.error(f"[Misskey API] 本地文件不存在: {file_path}")
+                logger.error(
+                    t(
+                        "core-platform-sources-misskey-misskey_api-local_file_not_found",
+                        file_path=file_path,
+                    )
+                )
                 raise APIError(f"File not found: {file_path}") from e
 
             try:
@@ -566,13 +758,22 @@ class MisskeyAPI:
                     result = await self._process_response(resp, "drive/files/create")
                     file_id = FileIDExtractor.extract_file_id(result)
                     logger.debug(
-                        f"[Misskey API] 本地文件上传成功: {filename} -> {file_id}",
+                        t(
+                            "core-platform-sources-misskey-misskey_api-file_upload_success",
+                            filename=filename,
+                            file_id=file_id,
+                        ),
                     )
                     return {"id": file_id, "raw": result}
             finally:
                 f.close()
         except aiohttp.ClientError as e:
-            logger.error(f"[Misskey API] 文件上传网络错误: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-misskey-misskey_api-file_upload_network_error",
+                    e=e,
+                )
+            )
             raise APIConnectionError(f"Upload failed: {e}") from e
 
     async def find_files_by_hash(self, md5_hash: str) -> list[dict[str, Any]]:
@@ -583,14 +784,24 @@ class MisskeyAPI:
         data = {"md5": md5_hash}
 
         try:
-            logger.debug(f"[Misskey API] find-by-hash 请求: md5={md5_hash}")
+            logger.debug(
+                t(
+                    "core-platform-sources-misskey-misskey_api-find_by_hash_request",
+                    md5_hash=md5_hash,
+                )
+            )
             result = await self._make_request("drive/files/find-by-hash", data)
             logger.debug(
-                f"[Misskey API] find-by-hash 响应: 找到 {len(result) if isinstance(result, list) else 0} 个文件",
+                t(
+                    "core-platform-sources-misskey-misskey_api-find_by_hash_response",
+                    result=len(result) if isinstance(result, list) else 0,
+                ),
             )
             return result if isinstance(result, list) else []
         except Exception as e:
-            logger.error(f"[Misskey API] 根据哈希查找文件失败: {e}")
+            logger.error(
+                t("core-platform-sources-misskey-misskey_api-find_by_hash_failed", e=e)
+            )
             raise
 
     async def find_files_by_name(
@@ -607,14 +818,25 @@ class MisskeyAPI:
             data["folderId"] = folder_id
 
         try:
-            logger.debug(f"[Misskey API] find 请求: name={name}, folder_id={folder_id}")
+            logger.debug(
+                t(
+                    "core-platform-sources-misskey-misskey_api-find_request",
+                    name=name,
+                    folder_id=folder_id,
+                )
+            )
             result = await self._make_request("drive/files/find", data)
             logger.debug(
-                f"[Misskey API] find 响应: 找到 {len(result) if isinstance(result, list) else 0} 个文件",
+                t(
+                    "core-platform-sources-misskey-misskey_api-find_response_files",
+                    result=len(result) if isinstance(result, list) else 0,
+                ),
             )
             return result if isinstance(result, list) else []
         except Exception as e:
-            logger.error(f"[Misskey API] 根据名称查找文件失败: {e}")
+            logger.error(
+                t("core-platform-sources-misskey-misskey_api-find_by_name_failed", e=e)
+            )
             raise
 
     async def find_files(
@@ -632,15 +854,25 @@ class MisskeyAPI:
 
         try:
             logger.debug(
-                f"[Misskey API] 列表文件请求: limit={limit}, folder_id={folder_id}, type={type}",
+                t(
+                    "core-platform-sources-misskey-misskey_api-list_files_request",
+                    limit=limit,
+                    folder_id=folder_id,
+                    type=type,
+                ),
             )
             result = await self._make_request("drive/files", data)
             logger.debug(
-                f"[Misskey API] 列表文件响应: 找到 {len(result) if isinstance(result, list) else 0} 个文件",
+                t(
+                    "core-platform-sources-misskey-misskey_api-list_files_response",
+                    result=len(result) if isinstance(result, list) else 0,
+                ),
             )
             return result if isinstance(result, list) else []
         except Exception as e:
-            logger.error(f"[Misskey API] 列表文件失败: {e}")
+            logger.error(
+                t("core-platform-sources-misskey-misskey_api-list_files_failed", e=e)
+            )
             raise
 
     async def _download_with_existing_session(
@@ -699,7 +931,9 @@ class MisskeyAPI:
 
         """
         if not url:
-            raise APIError("URL不能为空")
+            raise APIError(
+                t("core-platform-sources-misskey-misskey_api-url_cannot_be_empty")
+            )
 
         # 通过本地上传获取即时文件 ID（下载文件 → 上传 → 返回 ID）
         try:
@@ -715,7 +949,10 @@ class MisskeyAPI:
                 ) or await self._download_with_temp_session(url, ssl_verify=True)
             except Exception as ssl_error:
                 logger.debug(
-                    f"[Misskey API] SSL 验证下载失败: {ssl_error}，重试不验证 SSL",
+                    t(
+                        "core-platform-sources-misskey-misskey_api-ssl_verification_failed_retry",
+                        ssl_error=ssl_error,
+                    ),
                 )
                 try:
                     tmp_bytes = await self._download_with_existing_session(
@@ -732,7 +969,12 @@ class MisskeyAPI:
 
                 try:
                     result = await self.upload_file(tmp_path, name, folder_id)
-                    logger.debug(f"[Misskey API] 本地上传成功: {result.get('id')}")
+                    logger.debug(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-local_upload_success",
+                            id=result.get("id"),
+                        )
+                    )
                     return result
                 finally:
                     try:
@@ -740,7 +982,9 @@ class MisskeyAPI:
                     except Exception:
                         pass
         except Exception as e:
-            logger.error(f"[Misskey API] 本地上传失败: {e}")
+            logger.error(
+                t("core-platform-sources-misskey-misskey_api-local_upload_failure", e=e)
+            )
 
         return None
 
@@ -764,7 +1008,12 @@ class MisskeyAPI:
 
         result = await self._make_request("chat/messages/create-to-user", data)
         message_id = result.get("id", "unknown")
-        logger.debug(f"[Misskey API] 聊天消息发送成功: {message_id}")
+        logger.debug(
+            t(
+                "core-platform-sources-misskey-misskey_api-chat_message_sent_success",
+                message_id=message_id,
+            )
+        )
         return result
 
     async def send_room_message(
@@ -783,7 +1032,12 @@ class MisskeyAPI:
 
         result = await self._make_request("chat/messages/create-to-room", data)
         message_id = result.get("id", "unknown")
-        logger.debug(f"[Misskey API] 房间消息发送成功: {message_id}")
+        logger.debug(
+            t(
+                "core-platform-sources-misskey-misskey_api-room_message_sent_success",
+                message_id=message_id,
+            )
+        )
         return result
 
     async def get_messages(
@@ -800,7 +1054,12 @@ class MisskeyAPI:
         result = await self._make_request("chat/messages/user-timeline", data)
         if isinstance(result, list):
             return result
-        logger.warning(f"[Misskey API] 聊天消息响应格式异常: {type(result)}")
+        logger.warning(
+            t(
+                "core-platform-sources-misskey-misskey_api-chat_response_format_invalid",
+                result=type(result),
+            )
+        )
         return []
 
     async def get_mentions(
@@ -819,7 +1078,12 @@ class MisskeyAPI:
             return result
         if isinstance(result, dict) and "notifications" in result:
             return result["notifications"]
-        logger.warning(f"[Misskey API] 提及通知响应格式异常: {type(result)}")
+        logger.warning(
+            t(
+                "core-platform-sources-misskey-misskey_api-mention_notification_format_invalid",
+                result=type(result),
+            )
+        )
         return []
 
     async def send_message_with_media(
@@ -849,7 +1113,9 @@ class MisskeyAPI:
 
         """
         if not text and not media_urls and not local_files:
-            raise APIError("消息内容不能为空：需要文本或媒体文件")
+            raise APIError(
+                t("core-platform-sources-misskey-misskey_api-message_content_empty")
+            )
 
         file_ids = []
 
@@ -878,11 +1144,27 @@ class MisskeyAPI:
                 result = await self.upload_and_find_file(url)
                 if result and result.get("id"):
                     file_ids.append(result["id"])
-                    logger.debug(f"[Misskey API] URL媒体上传成功: {result['id']}")
+                    logger.debug(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-url_media_upload_success",
+                            id=result["id"],
+                        )
+                    )
                 else:
-                    logger.error(f"[Misskey API] URL媒体上传失败: {url}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-url_media_upload_failure",
+                            url=url,
+                        )
+                    )
             except Exception as e:
-                logger.error(f"[Misskey API] URL媒体处理失败 {url}: {e}")
+                logger.error(
+                    t(
+                        "core-platform-sources-misskey-misskey_api-url_media_processing_failure",
+                        url=url,
+                        e=e,
+                    )
+                )
                 # 继续处理其他文件，不中断整个流程
                 continue
         return file_ids
@@ -895,11 +1177,27 @@ class MisskeyAPI:
                 result = await self.upload_file(file_path)
                 if result and result.get("id"):
                     file_ids.append(result["id"])
-                    logger.debug(f"[Misskey API] 本地文件上传成功: {result['id']}")
+                    logger.debug(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-local_file_upload_success",
+                            id=result["id"],
+                        )
+                    )
                 else:
-                    logger.error(f"[Misskey API] 本地文件上传失败: {file_path}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-misskey-misskey_api-local_file_upload_failure",
+                            file_path=file_path,
+                        )
+                    )
             except Exception as e:
-                logger.error(f"[Misskey API] 本地文件处理失败 {file_path}: {e}")
+                logger.error(
+                    t(
+                        "core-platform-sources-misskey-misskey_api-local_file_processing_failure",
+                        file_path=file_path,
+                        e=e,
+                    )
+                )
                 continue
         return file_ids
 
@@ -960,4 +1258,9 @@ class MisskeyAPI:
             note_kwargs.update(kwargs)
             return await self.create_note(**note_kwargs)
 
-        raise APIError(f"不支持的消息类型: {message_type}")
+        raise APIError(
+            t(
+                "core-platform-sources-misskey-misskey_api-unsupported_message_type",
+                message_type=message_type,
+            )
+        )

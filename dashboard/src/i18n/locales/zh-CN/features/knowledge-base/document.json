@@ -23,7 +23,7 @@
     "search": "搜索分块",
     "searchPlaceholder": "输入关键词搜索分块内容...",
     "showing": "显示",
-    "deleteConfirm": "确定要删除该文本块吗?",
+    "deleteConfirm": "确定要删除该文本块吗？",
     "deleteSuccess": "文本块删除成功",
     "deleteFailed": "文本块删除失败"
   },
@@ -37,7 +37,7 @@
   },
   "delete": {
     "title": "删除分块",
-    "confirmText": "确定要删除此分块吗?",
+    "confirmText": "确定要删除此分块吗？",
     "warning": "删除后将无法恢复,可能影响知识库检索效果。",
     "cancel": "取消",
     "confirm": "删除",

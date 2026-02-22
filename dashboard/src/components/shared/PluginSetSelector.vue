@@ -104,7 +104,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import axios from 'axios'
-import { useModuleI18n } from '@/i18n/composables'
+import { useModuleI18n, t } from '@/i18n/composables';
 
 const props = defineProps({
   modelValue: {
@@ -177,7 +177,7 @@ async function loadPlugins() {
         })
     }
   } catch (error) {
-    console.error('加载插件列表失败:', error)
+    console.error(t('src.components.shared.pluginsetselector.error_load_plugin_list'), error)
     pluginList.value = []
   } finally {
     loading.value = false

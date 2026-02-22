@@ -1,6 +1,7 @@
 import { ref, reactive, type Ref } from 'vue';
 import axios from 'axios';
 import { useToast } from '@/utils/toast';
+import { t } from '@/i18n/composables';
 
 // 工具调用信息
 export interface ToolCall {
@@ -188,7 +189,7 @@ export function useMessages(
 
             if (isConvRunning.value) {
                 if (!isToastedRunningInfo.value) {
-                    useToast().info("该会话正在运行中。", { timeout: 5000 });
+                    useToast().info(t('src.composables.usemessages.session_running'), { timeout: 5000 });
                     isToastedRunningInfo.value = true;
                 }
 
@@ -379,12 +380,12 @@ export function useMessages(
                         try {
                             chunk_json = JSON.parse(line.replace('data: ', ''));
                         } catch (parseError) {
-                            console.warn('JSON解析失败:', line, parseError);
+                            console.warn(t('src.composables.usemessages.json_parse_failed'), line, parseError);
                             continue;
                         }
 
                         if (!chunk_json || typeof chunk_json !== 'object' || !chunk_json.hasOwnProperty('type')) {
-                            console.warn('无效的数据对象:', chunk_json);
+                            console.warn(t('src.composables.usemessages.invalid_data_object'), chunk_json);
                             continue;
                         }
 
@@ -560,7 +561,7 @@ export function useMessages(
                         }
                     }
                 } catch (readError) {
-                    console.error('SSE读取错误:', readError);
+                    console.error(t('src.composables.usemessages.sse_read_error'), readError);
                     break;
                 }
             }
@@ -569,7 +570,7 @@ export function useMessages(
             onSessionsUpdate();
 
         } catch (err) {
-            console.error('发送消息失败:', err);
+            console.error(t('src.composables.usemessages.send_message_failed'), err);
             // 移除加载占位符
             const lastMsg = messages.value[messages.value.length - 1];
             if (lastMsg?.content?.isLoading) {
@@ -596,3 +597,4 @@ export function useMessages(
         getAttachment
     };
 }
+

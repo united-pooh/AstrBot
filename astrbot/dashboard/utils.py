@@ -3,10 +3,10 @@ import traceback
 from io import BytesIO
 
 from astrbot.api import logger
-from astrbot.core import t
 from astrbot.core.db.vec_db.faiss_impl import FaissVecDB
 from astrbot.core.knowledge_base.kb_helper import KBHelper
 from astrbot.core.knowledge_base.kb_mgr import KnowledgeBaseManager
+from astrbot.core.lang import t
 
 
 async def generate_tsne_visualization(

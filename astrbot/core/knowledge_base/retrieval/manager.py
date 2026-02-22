@@ -12,6 +12,7 @@ from astrbot.core.db.vec_db.faiss_impl import FaissVecDB
 from astrbot.core.knowledge_base.kb_db_sqlite import KBSQLiteDatabase
 from astrbot.core.knowledge_base.retrieval.rank_fusion import RankFusion
 from astrbot.core.knowledge_base.retrieval.sparse_retriever import SparseRetriever
+from astrbot.core.lang import t
 from astrbot.core.provider.provider import RerankProvider
 
 from ..kb_helper import KBHelper
@@ -102,7 +103,12 @@ class RetrievalManager:
                 }
                 new_kb_ids.append(kb_id)
             else:
-                logger.warning(f"知识库 ID {kb_id} 实例未找到, 已跳过该知识库的检索")
+                logger.warning(
+                    t(
+                        "core-knowledge_base-retrieval-manager-kb_instance_not_found",
+                        kb_id=kb_id,
+                    )
+                )
 
         kb_ids = new_kb_ids
 
@@ -228,7 +234,13 @@ class RetrievalManager:
             except Exception as e:
                 from astrbot.core import logger
 
-                logger.warning(f"知识库 {kb_id} 稠密检索失败: {e}")
+                logger.warning(
+                    t(
+                        "core-knowledge_base-retrieval-manager-dense_retrieval_failed",
+                        kb_id=kb_id,
+                        e=e,
+                    )
+                )
                 continue
 
         # 按相似度排序并返回 top_k

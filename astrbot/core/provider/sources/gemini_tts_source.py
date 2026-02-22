@@ -6,6 +6,7 @@ from google import genai
 from google.genai import types
 
 from astrbot import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 from ..entities import ProviderType
@@ -36,7 +37,9 @@ class ProviderGeminiTTSAPI(TTSProvider):
         proxy = provider_config.get("proxy", "")
         if proxy:
             http_options.async_client_args = {"proxy": proxy}
-            logger.info(f"[Gemini TTS] 使用代理: {proxy}")
+            logger.info(
+                t("core-provider-sources-gemini_tts_source-using_proxy", proxy=proxy)
+            )
 
         self.client = genai.Client(api_key=api_key, http_options=http_options).aio
         self.model: str = provider_config.get(

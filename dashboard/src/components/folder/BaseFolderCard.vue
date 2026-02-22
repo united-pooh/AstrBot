@@ -48,6 +48,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import type { Folder } from './types';
+import { t } from '@/i18n/composables';
 
 interface DefaultLabels {
     open: string;
@@ -57,10 +58,10 @@ interface DefaultLabels {
 }
 
 const defaultLabels: DefaultLabels = {
-    open: '打开',
-    rename: '重命名',
-    moveTo: '移动到...',
-    delete: '删除'
+    open: t('src.components.folder.basefoldercard.action_open'),
+    rename: t('src.components.folder.basefoldercard.action_rename'),
+    moveTo: t('src.components.folder.basefoldercard.action_move_to'),
+    delete: t('src.components.folder.basefoldercard.action_delete')
 };
 
 export default defineComponent({
@@ -141,3 +142,4 @@ export default defineComponent({
     min-width: 0;
 }
 </style>
+

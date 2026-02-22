@@ -7,6 +7,7 @@ from typing import Protocol, runtime_checkable
 from astrbot.core import astrbot_config, logger, sp
 from astrbot.core.astrbot_config_mgr import AstrBotConfigManager
 from astrbot.core.db import BaseDatabase
+from astrbot.core.lang import t
 
 from ..persona_mgr import PersonaManager
 from .entities import ProviderType
@@ -104,7 +105,12 @@ class ProviderManager:
 
         """
         if provider_id not in self.inst_map:
-            raise ValueError(f"提供商 {provider_id} 不存在，无法设置。")
+            raise ValueError(
+                t(
+                    "core-provider-manager-provider_not_found_cannot_set",
+                    provider_id=provider_id,
+                )
+            )
         if umo:
             await sp.session_put(
                 umo,
@@ -208,7 +214,10 @@ class ProviderManager:
 
         if not provider and provider_id:
             logger.warning(
-                f"没有找到 ID 为 {provider_id} 的提供商，这可能是由于您修改了提供商（模型）ID 导致的。"
+                t(
+                    "core-provider-manager-provider_id_not_found_maybe_modified",
+                    provider_id=provider_id,
+                )
             )
 
         return provider
@@ -432,7 +441,12 @@ class ProviderManager:
                     if env_val is None:
                         provider_id = provider_config.get("id")
                         logger.warning(
-                            f"Provider {provider_id} 配置项 key[{idx}] 使用环境变量 {env_key} 但未设置。",
+                            t(
+                                "core-provider-manager-missing_env_var_in_provider_config",
+                                provider_id=provider_id,
+                                idx=idx,
+                                env_key=env_key,
+                            ),
                         )
                         resolved_keys.append("")
                     else:
@@ -458,7 +472,11 @@ class ProviderManager:
             return
 
         logger.info(
-            f"载入 {provider_config['type']}({provider_config['id']}) 服务提供商 ...",
+            t(
+                "core-provider-manager-loading_provider",
+                provider_config=provider_config["type"],
+                id=provider_config["id"],
+            ),
         )
 
         # 动态导入
@@ -466,20 +484,34 @@ class ProviderManager:
             self.dynamic_import_provider(provider_config["type"])
         except (ImportError, ModuleNotFoundError) as e:
             logger.critical(
-                f"加载 {provider_config['type']}({provider_config['id']}) 提供商适配器失败：{e}。可能是因为有未安装的依赖。",
+                t(
+                    "core-provider-manager-load_provider_adapter_failed_dependency",
+                    provider_config=provider_config["type"],
+                    id=provider_config["id"],
+                    e=e,
+                ),
                 exc_info=True,
             )
             return
         except Exception as e:
             logger.critical(
-                f"加载 {provider_config['type']}({provider_config['id']}) 提供商适配器失败：{e}。未知原因",
+                t(
+                    "core-provider-manager-load_provider_adapter_failed_unknown",
+                    provider_config=provider_config["type"],
+                    id=provider_config["id"],
+                    e=e,
+                ),
                 exc_info=True,
             )
             return
 
         if provider_config["type"] not in provider_cls_map:
             logger.error(
-                f"未找到适用于 {provider_config['type']}({provider_config['id']}) 的提供商适配器，请检查是否已经安装或者名称填写错误。已跳过。",
+                t(
+                    "core-provider-manager-provider_adapter_not_found",
+                    provider_config=provider_config["type"],
+                    id=provider_config["id"],
+                ),
                 exc_info=True,
             )
             return
@@ -489,7 +521,12 @@ class ProviderManager:
             # 按任务实例化提供商
             cls_type = provider_metadata.cls_type
             if not cls_type:
-                logger.error(f"无法找到 {provider_metadata.type} 的类")
+                logger.error(
+                    t(
+                        "core-provider-manager-class_not_found",
+                        provider_metadata=provider_metadata,
+                    )
+                )
                 return
 
             provider_metadata.id = provider_config["id"]
@@ -513,7 +550,11 @@ class ProviderManager:
                     ):
                         self.curr_stt_provider_inst = inst
                         logger.info(
-                            f"已选择 {provider_config['type']}({provider_config['id']}) 作为当前语音转文本提供商适配器。",
+                            t(
+                                "core-provider-manager-selected_speech_to_text_adapter",
+                                provider_config=provider_config["type"],
+                                id=provider_config["id"],
+                            ),
                         )
                     if not self.curr_stt_provider_inst:
                         self.curr_stt_provider_inst = inst
@@ -536,7 +577,11 @@ class ProviderManager:
                     ):
                         self.curr_tts_provider_inst = inst
                         logger.info(
-                            f"已选择 {provider_config['type']}({provider_config['id']}) 作为当前文本转语音提供商适配器。",
+                            t(
+                                "core-provider-manager-selected_text_to_speech_adapter",
+                                provider_config=provider_config["type"],
+                                id=provider_config["id"],
+                            ),
                         )
                     if not self.curr_tts_provider_inst:
                         self.curr_tts_provider_inst = inst
@@ -562,7 +607,11 @@ class ProviderManager:
                     ):
                         self.curr_provider_inst = inst
                         logger.info(
-                            f"已选择 {provider_config['type']}({provider_config['id']}) 作为当前提供商适配器。",
+                            t(
+                                "core-provider-manager-selected_provider_adapter",
+                                provider_config=provider_config["type"],
+                                id=provider_config["id"],
+                            ),
                         )
                     if not self.curr_provider_inst:
                         self.curr_provider_inst = inst
@@ -589,16 +638,29 @@ class ProviderManager:
                     # 未知供应商抛出异常，确保inst初始化
                     # Should be unreachable
                     raise Exception(
-                        f"未知的提供商类型：{provider_metadata.provider_type}"
+                        t(
+                            "core-provider-manager-unknown_provider_type",
+                            provider_metadata=provider_metadata,
+                        )
                     )
 
             self.inst_map[provider_config["id"]] = inst
         except Exception as e:
             logger.error(
-                f"实例化 {provider_config['type']}({provider_config['id']}) 提供商适配器失败：{e}",
+                t(
+                    "core-provider-manager-instantiate_provider_failed",
+                    provider_config=provider_config["type"],
+                    id=provider_config["id"],
+                    e=e,
+                ),
             )
             raise Exception(
-                f"实例化 {provider_config['type']}({provider_config['id']}) 提供商适配器失败：{e}",
+                t(
+                    "core-provider-manager-instantiate_provider_adapter_failed",
+                    provider_config=provider_config["type"],
+                    id=provider_config["id"],
+                    e=e,
+                ),
             )
 
     async def reload(self, provider_config: dict) -> None:
@@ -621,7 +683,10 @@ class ProviderManager:
             elif self.curr_provider_inst is None and len(self.provider_insts) > 0:
                 self.curr_provider_inst = self.provider_insts[0]
                 logger.info(
-                    f"自动选择 {self.curr_provider_inst.meta().id} 作为当前提供商适配器。",
+                    t(
+                        "core-provider-manager-automatically_select_current_provider_adapter",
+                        id=self.curr_provider_inst.meta().id,
+                    ),
                 )
 
             if len(self.stt_provider_insts) == 0:
@@ -631,7 +696,10 @@ class ProviderManager:
             ):
                 self.curr_stt_provider_inst = self.stt_provider_insts[0]
                 logger.info(
-                    f"自动选择 {self.curr_stt_provider_inst.meta().id} 作为当前语音转文本提供商适配器。",
+                    t(
+                        "core-provider-manager-automatically_select_current_stt_adapter",
+                        id=self.curr_stt_provider_inst.meta().id,
+                    ),
                 )
 
             if len(self.tts_provider_insts) == 0:
@@ -641,7 +709,10 @@ class ProviderManager:
             ):
                 self.curr_tts_provider_inst = self.tts_provider_insts[0]
                 logger.info(
-                    f"自动选择 {self.curr_tts_provider_inst.meta().id} 作为当前文本转语音提供商适配器。",
+                    t(
+                        "core-provider-manager-automatically_select_current_tts_adapter",
+                        id=self.curr_tts_provider_inst.meta().id,
+                    ),
                 )
 
     def get_insts(self):
@@ -650,7 +721,13 @@ class ProviderManager:
     async def terminate_provider(self, provider_id: str) -> None:
         if provider_id in self.inst_map:
             logger.info(
-                f"终止 {provider_id} 提供商适配器({len(self.provider_insts)}, {len(self.stt_provider_insts)}, {len(self.tts_provider_insts)}) ...",
+                t(
+                    "core-provider-manager-terminating_provider_adapter",
+                    provider_id=provider_id,
+                    provider_insts=len(self.provider_insts),
+                    stt_provider_insts=len(self.stt_provider_insts),
+                    tts_provider_insts=len(self.tts_provider_insts),
+                ),
             )
 
             if self.inst_map[provider_id] in self.provider_insts:
@@ -677,7 +754,13 @@ class ProviderManager:
                 await self.inst_map[provider_id].terminate()  # type: ignore
 
             logger.info(
-                f"{provider_id} 提供商适配器已终止({len(self.provider_insts)}, {len(self.stt_provider_insts)}, {len(self.tts_provider_insts)})",
+                t(
+                    "core-provider-manager-provider_adapter_terminated",
+                    provider_id=provider_id,
+                    provider_insts=len(self.provider_insts),
+                    stt_provider_insts=len(self.stt_provider_insts),
+                    tts_provider_insts=len(self.tts_provider_insts),
+                ),
             )
             del self.inst_map[provider_id]
 
@@ -701,7 +784,12 @@ class ProviderManager:
                     prov for prov in config["provider"] if prov.get("id") != tpid
                 ]
             config.save_config()
-            logger.info(f"Provider {target_prov_ids} 已从配置中删除。")
+            logger.info(
+                t(
+                    "core-provider-manager-provider_removed_from_config",
+                    target_prov_ids=target_prov_ids,
+                )
+            )
 
     async def update_provider(self, origin_provider_id: str, new_config: dict) -> None:
         """Update provider config and reload the instance. Config will be saved after update."""

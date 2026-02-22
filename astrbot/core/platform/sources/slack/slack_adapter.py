@@ -19,6 +19,7 @@ from astrbot.api.platform import (
     Platform,
     PlatformMetadata,
 )
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import MessageSesion
 from astrbot.core.utils.webhook_utils import log_webhook_info
 
@@ -29,7 +30,7 @@ from .slack_event import SlackMessageEvent
 
 @register_platform_adapter(
     "slack",
-    "适用于 Slack 的消息平台适配器，支持 Socket Mode 和 Webhook Mode。",
+    t("core-platform-sources-slack-slack_adapter-adapter_description"),
     support_streaming_message=False,
 )
 class SlackAdapter(Platform):
@@ -55,17 +56,29 @@ class SlackAdapter(Platform):
         )
 
         if not self.bot_token:
-            raise ValueError("Slack bot_token 是必需的")
+            raise ValueError(
+                t("core-platform-sources-slack-slack_adapter-bot_token_required")
+            )
 
         if self.connection_mode == "socket" and not self.app_token:
-            raise ValueError("Socket Mode 需要 app_token")
+            raise ValueError(
+                t(
+                    "core-platform-sources-slack-slack_adapter-socket_mode_app_token_required"
+                )
+            )
 
         if self.connection_mode == "webhook" and not self.signing_secret:
-            raise ValueError("Webhook Mode 需要 signing_secret")
+            raise ValueError(
+                t(
+                    "core-platform-sources-slack-slack_adapter-webhook_mode_signing_secret_required"
+                )
+            )
 
         self.metadata = PlatformMetadata(
             name="slack",
-            description="适用于 Slack 的消息平台适配器，支持 Socket Mode 和 Webhook Mode。",
+            description=t(
+                "core-platform-sources-slack-slack_adapter-class_description"
+            ),
             id=cast(str, self.config.get("id")),
             support_streaming_message=False,
         )
@@ -108,7 +121,12 @@ class SlackAdapter(Platform):
                     blocks=blocks if blocks else None,
                 )
         except Exception as e:
-            logger.error(f"Slack 发送消息失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-slack-slack_adapter-slack_message_send_failure",
+                    e=e,
+                )
+            )
 
         await super().send_by_session(session, message_chain)
 
@@ -323,7 +341,12 @@ class SlackAdapter(Platform):
                 logger.error(
                     f"Failed to download slack file: {resp.status} {await resp.text()}",
                 )
-                raise Exception(f"下载文件失败: {resp.status}")
+                raise Exception(
+                    t(
+                        "core-platform-sources-slack-slack_adapter-file_download_failed",
+                        resp=resp,
+                    )
+                )
 
     async def run(self) -> None:
         self.bot_self_id = await self.get_bot_user_id()
@@ -331,7 +354,11 @@ class SlackAdapter(Platform):
 
         if self.connection_mode == "socket":
             if not self.app_token:
-                raise ValueError("Socket Mode 需要 app_token")
+                raise ValueError(
+                    t(
+                        "core-platform-sources-slack-slack_adapter-socket_app_token_required"
+                    )
+                )
 
             # 创建 Socket 客户端
             self.socket_client = SlackSocketClient(
@@ -340,12 +367,20 @@ class SlackAdapter(Platform):
                 self._handle_socket_event,
             )
 
-            logger.info("Slack 适配器 (Socket Mode) 启动中...")
+            logger.info(
+                t(
+                    "core-platform-sources-slack-slack_adapter-socket_mode_adapter_starting"
+                )
+            )
             await self.socket_client.start()
 
         elif self.connection_mode == "webhook":
             if not self.signing_secret:
-                raise ValueError("Webhook Mode 需要 signing_secret")
+                raise ValueError(
+                    t(
+                        "core-platform-sources-slack-slack_adapter-webhook_signing_secret_required"
+                    )
+                )
 
             # 创建 Webhook 客户端
             self.webhook_client = SlackWebhookClient(
@@ -365,13 +400,19 @@ class SlackAdapter(Platform):
                 await self.webhook_client.shutdown_event.wait()
             else:
                 logger.info(
-                    f"Slack 适配器 (Webhook Mode) 启动中，监听 {self.webhook_host}:{self.webhook_port}{self.webhook_path}...",
+                    t(
+                        "core-platform-sources-slack-slack_adapter-webhook_mode_starting",
+                        self=self,
+                    ),
                 )
                 await self.webhook_client.start()
 
         else:
             raise ValueError(
-                f"不支持的连接模式: {self.connection_mode}，请使用 'socket' 或 'webhook'",
+                t(
+                    "core-platform-sources-slack-slack_adapter-unsupported_connection_mode",
+                    connection_mode=self.connection_mode,
+                ),
             )
 
     async def _handle_webhook_event(self, event_data: dict) -> None:
@@ -406,7 +447,7 @@ class SlackAdapter(Platform):
             await self.socket_client.stop()
         if self.webhook_client:
             await self.webhook_client.stop()
-        logger.info("Slack 适配器已被关闭")
+        logger.info(t("core-platform-sources-slack-slack_adapter-slack_adapter_closed"))
 
     def meta(self) -> PlatformMetadata:
         return self.metadata

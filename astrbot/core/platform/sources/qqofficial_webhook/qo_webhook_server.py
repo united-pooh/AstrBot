@@ -7,6 +7,7 @@ from botpy import BotAPI, BotHttp, BotWebSocket, Client, ConnectionSession, Toke
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
 from astrbot.api import logger
+from astrbot.core.lang import t
 
 # remove logger handler
 for handler in logging.root.handlers[:]:
@@ -41,9 +42,16 @@ class QQOfficialWebhook:
         self.shutdown_event = asyncio.Event()
 
     async def initialize(self) -> None:
-        logger.info("正在登录到 QQ 官方机器人...")
+        logger.info(
+            t("core-platform-sources-qqofficial_webhook-qo_webhook_server-logging_in")
+        )
         self.user = await self.http.login(self.token)
-        logger.info(f"已登录 QQ 官方机器人账号: {self.user}")
+        logger.info(
+            t(
+                "core-platform-sources-qqofficial_webhook-qo_webhook_server-login_success",
+                self=self,
+            )
+        )
         # 直接注入到 botpy 的 Client，移花接木！
         self.client.api = self.api
         self.client.http = self.http
@@ -94,7 +102,12 @@ class QQOfficialWebhook:
             响应数据
         """
         msg: dict = await request.json
-        logger.debug(f"收到 qq_official_webhook 回调: {msg}")
+        logger.debug(
+            t(
+                "core-platform-sources-qqofficial_webhook-qo_webhook_server-received_callback",
+                msg=msg,
+            )
+        )
 
         event = msg.get("t")
         opcode = msg.get("op")
@@ -119,7 +132,10 @@ class QQOfficialWebhook:
 
     async def start_polling(self) -> None:
         logger.info(
-            f"将在 {self.callback_server_host}:{self.port} 端口启动 QQ 官方机器人 webhook 适配器。",
+            t(
+                "core-platform-sources-qqofficial_webhook-qo_webhook_server-starting_webhook_server",
+                self=self,
+            ),
         )
         await self.server.run_task(
             host=self.callback_server_host,

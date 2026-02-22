@@ -398,7 +398,7 @@ function handleReplyMessage(msg: any, index: number) {
 
     replyTo.value = {
         messageId,
-        selectedText: messageContent || '[媒体内容]'
+        selectedText: messageContent || t('src.components.chat.chat.selected_text_fallback')
     };
 }
 

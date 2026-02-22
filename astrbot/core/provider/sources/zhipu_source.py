@@ -2,11 +2,16 @@
 # It is no longer specifically adapted to Zhipu's models. To ensure compatibility, this
 
 
+from astrbot.core.lang import t
+
 from ..register import register_provider_adapter
 from .openai_source import ProviderOpenAIOfficial
 
 
-@register_provider_adapter("zhipu_chat_completion", "智谱 Chat Completion 提供商适配器")
+@register_provider_adapter(
+    "zhipu_chat_completion",
+    t("core-provider-sources-zhipu_source-adapter_registration"),
+)
 class ProviderZhipu(ProviderOpenAIOfficial):
     def __init__(
         self,

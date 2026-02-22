@@ -3,6 +3,8 @@ import { translations as staticTranslations } from './translations';
 import type { Locale } from './types';
 import axios from 'axios';
 
+export type I18nParamValue = string | number | boolean | null | undefined;
+
 // 全局状态
 const currentLocale = ref<Locale>('zh-CN');
 const translations = ref<Record<string, any>>({});
@@ -44,44 +46,46 @@ function loadTranslations(locale: Locale) {
 }
 
 /**
+ * 全局翻译函数
+ */
+export function t(key: string, params?: Record<string, I18nParamValue>): string {
+  const keys = key.split('.');
+  let value: any = translations.value;
+
+  // 遍历键路径
+  for (const k of keys) {
+    if (value && typeof value === 'object' && k in value) {
+      value = value[k];
+    } else {
+      console.warn(`Translation key not found: ${key}`);
+      // 返回带括号的键名，便于在开发时识别缺失的翻译
+      return `[MISSING: ${key}]`;
+    }
+  }
+
+  if (typeof value !== 'string') {
+    console.warn(`Translation value is not string: ${key}`, value);
+    // 返回带括号的键名，便于在开发时识别类型错误的翻译
+    return `[INVALID: ${key}]`;
+  }
+
+  // 此时value确定是string类型
+  let result: string = value;
+
+  // 处理参数插值
+  if (params) {
+    result = result.replace(/\{(\w+)\}/g, (match: string, paramKey: string) => {
+      return params[paramKey]?.toString() || match;
+    });
+  }
+
+  return result;
+}
+
+/**
  * 主要的翻译函数组合
  */
 export function useI18n() {
-  // 翻译函数
-  const t = (key: string, params?: Record<string, string | number>): string => {
-    const keys = key.split('.');
-    let value: any = translations.value;
-    
-    // 遍历键路径
-    for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k];
-      } else {
-        console.warn(`Translation key not found: ${key}`);
-        // 返回带括号的键名，便于在开发时识别缺失的翻译
-        return `[MISSING: ${key}]`;
-      }
-    }
-    
-    if (typeof value !== 'string') {
-      console.warn(`Translation value is not string: ${key}`, value);
-      // 返回带括号的键名，便于在开发时识别类型错误的翻译
-      return `[INVALID: ${key}]`;
-    }
-    
-    // 此时value确定是string类型
-    let result: string = value;
-    
-    // 处理参数插值
-    if (params) {
-      result = result.replace(/\{(\w+)\}/g, (match: string, paramKey: string) => {
-        return params[paramKey]?.toString() || match;
-      });
-    }
-    
-    return result;
-  };
-  
   // 切换语言
   const setLocale = async (newLocale: Locale) => {
     if (newLocale !== currentLocale.value) {
@@ -134,7 +138,7 @@ export function useI18n() {
 export function useModuleI18n(moduleName: string) {
   const { t } = useI18n();
   
-  const tm = (key: string, params?: Record<string, string | number>): string => {
+  const tm = (key: string, params?: Record<string, I18nParamValue>): string => {
     // 将斜杠转换为点号以匹配嵌套对象结构
     const normalizedModuleName = moduleName.replace(/\//g, '.');
     return t(`${normalizedModuleName}.${key}`, params);
@@ -168,7 +172,7 @@ export function useLanguageSwitcher() {
   const { locale, setLocale, availableLocales } = useI18n();
   
   const languageOptions = computed(() => [
-    { value: 'zh-CN', label: '简体中文', flag: '🇨🇳' },
+    { value: 'zh-CN', label: t('src.i18n.composables.simplified_chinese'), flag: '🇨🇳' },
     { value: 'en-US', label: 'English', flag: '🇺🇸' }
   ]);
   

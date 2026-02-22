@@ -14,6 +14,7 @@ import astrbot.core.message.components as Comp
 from astrbot import logger
 from astrbot.api.provider import Provider
 from astrbot.core.agent.message import ContentPart, ImageURLPart, TextPart
+from astrbot.core.lang import t
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.provider.entities import LLMResponse, TokenUsage
 from astrbot.core.provider.func_tool_manager import ToolSet
@@ -35,7 +36,7 @@ logging.getLogger("google_genai.types").addFilter(SuppressNonTextPartsWarning())
 
 @register_provider_adapter(
     "googlegenai_chat_completion",
-    "Google Gemini Chat Completion 提供商适配器",
+    t("core-provider-sources-gemini_source-gemini_chat_completion_provider_adapter"),
 )
 class ProviderGoogleGenAI(Provider):
     CATEGORY_MAPPING = {
@@ -82,7 +83,9 @@ class ProviderGoogleGenAI(Provider):
         )
         if proxy:
             http_options.async_client_args = {"proxy": proxy}
-            logger.info(f"[Gemini] 使用代理: {proxy}")
+            logger.info(
+                t("core-provider-sources-gemini_source-using_proxy", proxy=proxy)
+            )
         self.client = genai.Client(
             api_key=self.chosen_api_key,
             http_options=http_options,
@@ -111,14 +114,22 @@ class ProviderGoogleGenAI(Provider):
             if len(keys) > 0:
                 self.set_key(random.choice(keys))
                 logger.info(
-                    f"检测到 Key 异常({e.message})，正在尝试更换 API Key 重试... 当前 Key: {self.chosen_api_key[:12]}...",
+                    t(
+                        "core-provider-sources-gemini_source-key_exception_retry",
+                        message=e.message,
+                        chosen_api_key=self.chosen_api_key[:12],
+                    ),
                 )
                 await asyncio.sleep(1)
                 return True
             logger.error(
-                f"检测到 Key 异常({e.message})，且已没有可用的 Key。 当前 Key: {self.chosen_api_key[:12]}...",
+                t(
+                    "core-provider-sources-gemini_source-key_exception_no_keys_left",
+                    message=e.message,
+                    chosen_api_key=self.chosen_api_key[:12],
+                ),
             )
-            raise Exception("达到了 Gemini 速率限制, 请稍后再试...")
+            raise Exception(t("core-provider-sources-gemini_source-rate_limit_reached"))
 
         # 连接错误处理
         if is_connection_error(e):
@@ -144,7 +155,9 @@ class ProviderGoogleGenAI(Provider):
             self.provider_settings.get("streaming_response", False)
             and "IMAGE" in modalities
         ):
-            logger.warning("流式输出不支持图片模态，已自动降级为文本模态")
+            logger.warning(
+                t("core-provider-sources-gemini_source-stream_no_image_support")
+            )
             modalities = ["TEXT"]
 
         tool_list: list[types.Tool] | None = []
@@ -157,10 +170,16 @@ class ProviderGoogleGenAI(Provider):
             if native_coderunner:
                 tool_list.append(types.Tool(code_execution=types.ToolCodeExecution()))
                 if native_search:
-                    logger.warning("代码执行工具与搜索工具互斥，已忽略搜索工具")
+                    logger.warning(
+                        t(
+                            "core-provider-sources-gemini_source-code_and_search_mutually_exclusive"
+                        )
+                    )
                 if url_context:
                     logger.warning(
-                        "代码执行工具与URL上下文工具互斥，已忽略URL上下文工具",
+                        t(
+                            "core-provider-sources-gemini_source-code_and_url_context_mutually_exclusive"
+                        ),
                     )
             else:
                 if native_search:
@@ -171,13 +190,17 @@ class ProviderGoogleGenAI(Provider):
                         tool_list.append(types.Tool(url_context=types.UrlContext()))
                     else:
                         logger.warning(
-                            "当前 SDK 版本不支持 URL 上下文工具，已忽略该设置，请升级 google-genai 包",
+                            t(
+                                "core-provider-sources-gemini_source-sdk_no_url_context_support"
+                            ),
                         )
 
         elif "gemini-2.0-lite" in model_name:
             if native_coderunner or native_search or url_context:
                 logger.warning(
-                    "gemini-2.0-lite 不支持代码执行、搜索工具和URL上下文，将忽略这些设置",
+                    t(
+                        "core-provider-sources-gemini_source-gemini_lite_no_tool_support"
+                    ),
                 )
             tool_list = None
 
@@ -185,7 +208,11 @@ class ProviderGoogleGenAI(Provider):
             if native_coderunner:
                 tool_list.append(types.Tool(code_execution=types.ToolCodeExecution()))
                 if native_search:
-                    logger.warning("代码执行工具与搜索工具互斥，已忽略搜索工具")
+                    logger.warning(
+                        t(
+                            "core-provider-sources-gemini_source-code_and_search_mutually_exclusive"
+                        )
+                    )
             elif native_search:
                 tool_list.append(types.Tool(google_search=types.GoogleSearch()))
 
@@ -194,14 +221,18 @@ class ProviderGoogleGenAI(Provider):
                     tool_list.append(types.Tool(url_context=types.UrlContext()))
                 else:
                     logger.warning(
-                        "当前 SDK 版本不支持 URL 上下文工具，已忽略该设置，请升级 google-genai 包",
+                        t(
+                            "core-provider-sources-gemini_source-sdk_no_url_context_support"
+                        ),
                     )
 
         if not tool_list:
             tool_list = None
 
         if tools and tool_list:
-            logger.warning("已启用原生工具，函数工具将被忽略")
+            logger.warning(
+                t("core-provider-sources-gemini_source-native_tools_enabled")
+            )
         elif tools and (func_desc := tools.get_func_desc_google_genai_style()):
             tool_list = [
                 types.Tool(function_declarations=func_desc["function_declarations"]),
@@ -285,7 +316,9 @@ class ProviderGoogleGenAI(Provider):
         def create_text_part(text: str) -> types.Part:
             content_a = text if text else " "
             if not text:
-                logger.warning("文本内容为空，已添加空格占位")
+                logger.warning(
+                    t("core-provider-sources-gemini_source-empty_text_placeholder")
+                )
             return types.Part.from_text(text=content_a)
 
         def process_image_url(image_url_dict: dict) -> types.Part:
@@ -382,10 +415,16 @@ class ProviderGoogleGenAI(Provider):
                         parts.append(part)
                     append_or_extend(gemini_contents, parts, types.ModelContent)
                 else:
-                    logger.warning("assistant 角色的消息内容为空，已添加空格占位")
+                    logger.warning(
+                        t(
+                            "core-provider-sources-gemini_source-empty_assistant_message_placeholder"
+                        )
+                    )
                     if native_tool_enabled and "tool_calls" in message:
                         logger.warning(
-                            "检测到启用Gemini原生工具，且上下文中存在函数调用，建议使用 /reset 重置上下文",
+                            t(
+                                "core-provider-sources-gemini_source-native_tools_with_function_calls_detected"
+                            ),
                         )
                     parts = [types.Part.from_text(text=" ")]
                     append_or_extend(gemini_contents, parts, types.ModelContent)
@@ -437,30 +476,46 @@ class ProviderGoogleGenAI(Provider):
     ) -> MessageChain:
         """处理内容部分并构建消息链"""
         if not candidate.content:
-            logger.warning(f"收到的 candidate.content 为空: {candidate}")
-            raise Exception("API 返回的 candidate.content 为空。")
+            logger.warning(
+                t(
+                    "core-provider-sources-gemini_source-empty_candidate_content",
+                    candidate=candidate,
+                )
+            )
+            raise Exception(
+                t("core-provider-sources-gemini_source-api_empty_candidate_content")
+            )
 
         finish_reason = candidate.finish_reason
         result_parts: list[types.Part] | None = candidate.content.parts
 
         if finish_reason == types.FinishReason.SAFETY:
-            raise Exception("模型生成内容未通过 Gemini 平台的安全检查")
+            raise Exception(
+                t("core-provider-sources-gemini_source-safety_check_failed")
+            )
 
         if finish_reason in {
             types.FinishReason.PROHIBITED_CONTENT,
             types.FinishReason.SPII,
             types.FinishReason.BLOCKLIST,
         }:
-            raise Exception("模型生成内容违反 Gemini 平台政策")
+            raise Exception(t("core-provider-sources-gemini_source-policy_violation"))
 
         # 防止旧版本SDK不存在IMAGE_SAFETY
         if hasattr(types.FinishReason, "IMAGE_SAFETY"):
             if finish_reason == types.FinishReason.IMAGE_SAFETY:
-                raise Exception("模型生成内容违反 Gemini 平台政策")
+                raise Exception(
+                    t("core-provider-sources-gemini_source-raise_violates_policy")
+                )
 
         if not result_parts:
-            logger.warning(f"收到的 candidate.content.parts 为空: {candidate}")
-            raise Exception("API 返回的 candidate.content.parts 为空。")
+            logger.warning(
+                t(
+                    "core-provider-sources-gemini_source-warn_parts_empty",
+                    candidate=candidate,
+                )
+            )
+            raise Exception(t("core-provider-sources-gemini_source-raise_parts_empty"))
 
         # 提取 reasoning content
         reasoning = self._extract_reasoning_content(candidate)
@@ -477,7 +532,11 @@ class ProviderGoogleGenAI(Provider):
             and part.inline_data.mime_type.startswith("image/")
             for part in result_parts
         ):
-            chain.append(Comp.Plain("这是图片"))
+            chain.append(
+                Comp.Plain(
+                    t("core-provider-sources-gemini_source-append_this_is_image")
+                )
+            )
         for part in result_parts:
             if part.text:
                 chain.append(Comp.Plain(part.text))
@@ -547,15 +606,29 @@ class ProviderGoogleGenAI(Provider):
                 logger.debug(f"genai result: {result}")
 
                 if not result.candidates:
-                    logger.error(f"请求失败, 返回的 candidates 为空: {result}")
-                    raise Exception("请求失败, 返回的 candidates 为空。")
+                    logger.error(
+                        t(
+                            "core-provider-sources-gemini_source-error_candidates_empty",
+                            result=result,
+                        )
+                    )
+                    raise Exception(
+                        t("core-provider-sources-gemini_source-raise_candidates_empty")
+                    )
 
                 if result.candidates[0].finish_reason == types.FinishReason.RECITATION:
                     if temperature > 2:
-                        raise Exception("温度参数已超过最大值2，仍然发生recitation")
+                        raise Exception(
+                            t(
+                                "core-provider-sources-gemini_source-raise_recitation_persist"
+                            )
+                        )
                     temperature += 0.2
                     logger.warning(
-                        f"发生了recitation，正在提高温度至{temperature:.1f}重试...",
+                        t(
+                            "core-provider-sources-gemini_source-recitation_detected_retry",
+                            temperature=temperature,
+                        ),
                     )
                     continue
 
@@ -566,11 +639,19 @@ class ProviderGoogleGenAI(Provider):
                     e.message = ""
                 if "Developer instruction is not enabled" in e.message:
                     logger.warning(
-                        f"{model} 不支持 system prompt，已自动去除(影响人格设置)",
+                        t(
+                            "core-provider-sources-gemini_source-warn_no_system_prompt",
+                            model=model,
+                        ),
                     )
                     system_instruction = None
                 elif "Function calling is not enabled" in e.message:
-                    logger.warning(f"{model} 不支持函数调用，已自动去除")
+                    logger.warning(
+                        t(
+                            "core-provider-sources-gemini_source-warn_no_function_calling",
+                            model=model,
+                        )
+                    )
                     tools = None
                 elif (
                     "Multi-modal output is not supported" in e.message
@@ -579,7 +660,10 @@ class ProviderGoogleGenAI(Provider):
                     or "only supports text output" in e.message
                 ):
                     logger.warning(
-                        f"{model} 不支持多模态输出，降级为文本模态",
+                        t(
+                            "core-provider-sources-gemini_source-downgrade_no_multimodal",
+                            model=model,
+                        ),
                     )
                     modalities = ["TEXT"]
                 else:
@@ -629,11 +713,19 @@ class ProviderGoogleGenAI(Provider):
                     e.message = ""
                 if "Developer instruction is not enabled" in e.message:
                     logger.warning(
-                        f"{model} 不支持 system prompt，已自动去除(影响人格设置)",
+                        t(
+                            "core-provider-sources-gemini_source-warn_no_system_prompt_2",
+                            model=model,
+                        ),
                     )
                     system_instruction = None
                 elif "Function calling is not enabled" in e.message:
-                    logger.warning(f"{model} 不支持函数调用，已自动去除")
+                    logger.warning(
+                        t(
+                            "core-provider-sources-gemini_source-warn_no_function_calling_2",
+                            model=model,
+                        )
+                    )
                     tools = None
                 else:
                     raise
@@ -648,10 +740,20 @@ class ProviderGoogleGenAI(Provider):
             llm_response = LLMResponse("assistant", is_chunk=True)
 
             if not chunk.candidates:
-                logger.warning(f"收到的 chunk 中 candidates 为空: {chunk}")
+                logger.warning(
+                    t(
+                        "core-provider-sources-gemini_source-warn_chunk_candidates_empty",
+                        chunk=chunk,
+                    )
+                )
                 continue
             if not chunk.candidates[0].content:
-                logger.warning(f"收到的 chunk 中 content 为空: {chunk}")
+                logger.warning(
+                    t(
+                        "core-provider-sources-gemini_source-warn_chunk_content_empty",
+                        chunk=chunk,
+                    )
+                )
                 continue
 
             if chunk.candidates[0].content.parts and any(
@@ -770,7 +872,7 @@ class ProviderGoogleGenAI(Provider):
                     continue
                 break
 
-        raise Exception("请求失败。")
+        raise Exception(t("core-provider-sources-gemini_source-raise_request_failed"))
 
     async def text_chat_stream(
         self,
@@ -838,7 +940,9 @@ class ProviderGoogleGenAI(Provider):
                 and m.name
             ]
         except APIError as e:
-            raise Exception(f"获取模型列表失败: {e.message}")
+            raise Exception(
+                t("core-provider-sources-gemini_source-fetch_model_list_failed", e=e)
+            )
 
     def get_current_key(self) -> str:
         return self.chosen_api_key
@@ -868,7 +972,12 @@ class ProviderGoogleGenAI(Provider):
             else:
                 image_data = await self.encode_image_bs64(image_url)
             if not image_data:
-                logger.warning(f"图片 {image_url} 得到的结果为空，将忽略。")
+                logger.warning(
+                    t(
+                        "core-provider-sources-gemini_source-warn_image_empty_result",
+                        image_url=image_url,
+                    )
+                )
                 return None
             return {
                 "type": "image_url",
@@ -883,7 +992,14 @@ class ProviderGoogleGenAI(Provider):
             content_blocks.append({"type": "text", "text": text})
         elif image_urls:
             # 如果没有文本但有图片，添加占位文本
-            content_blocks.append({"type": "text", "text": "[图片]"})
+            content_blocks.append(
+                {
+                    "type": "text",
+                    "text": t(
+                        "core-provider-sources-gemini_source-append_image_placeholder"
+                    ),
+                }
+            )
         elif extra_user_content_parts:
             # 如果只有额外内容块，也需要添加占位文本
             content_blocks.append({"type": "text", "text": " "})
@@ -898,7 +1014,12 @@ class ProviderGoogleGenAI(Provider):
                     if image_part:
                         content_blocks.append(image_part)
                 else:
-                    raise ValueError(f"不支持的额外内容块类型: {type(part)}")
+                    raise ValueError(
+                        t(
+                            "core-provider-sources-gemini_source-unsupported_content_part_type",
+                            part=type(part),
+                        )
+                    )
 
         # 3. 图片内容
         if image_urls:

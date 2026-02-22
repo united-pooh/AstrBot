@@ -13,6 +13,7 @@ from quart import g, make_response, request, send_file
 from astrbot.core import logger, sp
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
 from astrbot.core.db import BaseDatabase
+from astrbot.core.lang import t
 from astrbot.core.platform.sources.webchat.webchat_queue_mgr import webchat_queue_mgr
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
@@ -401,7 +402,12 @@ class ChatRoute(Route):
                         except asyncio.TimeoutError:
                             continue
                         except asyncio.CancelledError:
-                            logger.debug(f"[WebChat] 用户 {username} 断开聊天长连接。")
+                            logger.debug(
+                                t(
+                                    "dashboard-routes-chat-user_disconnected",
+                                    username=username,
+                                )
+                            )
                             client_disconnected = True
                         except Exception as e:
                             logger.error(f"WebChat stream error: {e}")
@@ -437,7 +443,11 @@ class ChatRoute(Route):
                         except Exception as e:
                             if not client_disconnected:
                                 logger.debug(
-                                    f"[WebChat] 用户 {username} 断开聊天长连接。 {e}"
+                                    t(
+                                        "dashboard-routes-chat-user_disconnected_with_error",
+                                        username=username,
+                                        e=e,
+                                    )
                                 )
                             client_disconnected = True
 
@@ -445,7 +455,12 @@ class ChatRoute(Route):
                             if not client_disconnected:
                                 await asyncio.sleep(0.05)
                         except asyncio.CancelledError:
-                            logger.debug(f"[WebChat] 用户 {username} 断开聊天长连接。")
+                            logger.debug(
+                                t(
+                                    "dashboard-routes-chat-user_disconnected_debug",
+                                    username=username,
+                                )
+                            )
                             client_disconnected = True
 
                         # 累积消息部分

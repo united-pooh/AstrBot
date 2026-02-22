@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 from astrbot.core.star.session_llm_manager import SessionServiceManager
 
@@ -22,7 +23,12 @@ class SessionStatusCheckStage(Stage):
     ) -> None | AsyncGenerator[None, None]:
         # 检查会话是否整体启用
         if not await SessionServiceManager.is_session_enabled(event.unified_msg_origin):
-            logger.debug(f"会话 {event.unified_msg_origin} 已被关闭，已终止事件传播。")
+            logger.debug(
+                t(
+                    "core-pipeline-session_status_check-stage-session_closed_terminated",
+                    event=event,
+                )
+            )
 
             # workaround for #2309
             conv_id = await self.conv_mgr.get_curr_conversation_id(

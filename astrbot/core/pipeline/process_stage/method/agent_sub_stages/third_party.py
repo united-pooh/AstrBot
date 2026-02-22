@@ -8,6 +8,7 @@ from astrbot.core.agent.runners.dashscope.dashscope_agent_runner import (
     DashscopeAgentRunner,
 )
 from astrbot.core.agent.runners.dify.dify_agent_runner import DifyAgentRunner
+from astrbot.core.lang import t
 from astrbot.core.message.components import Image
 from astrbot.core.message.message_event_result import (
     MessageChain,
@@ -55,9 +56,12 @@ async def run_third_party_agent(
                     yield resp.data["chain"]
     except Exception as e:
         logger.error(f"Third party agent runner error: {e}")
-        err_msg = (
-            f"\nAstrBot 请求失败。\n错误类型: {type(e).__name__}\n"
-            f"错误信息: {e!s}\n\n请在平台日志查看和分享错误详情。\n"
+        err_msg = t(
+            "core-pipeline-process_stage-method-agent_sub_stages-third_party-request_failed",
+            error_type=type(e).__name__,
+        ) + t(
+            "core-pipeline-process_stage-method-agent_sub_stages-third_party-error_details",
+            e=e,
         )
         yield MessageChain().message(err_msg)
 
@@ -92,11 +96,18 @@ class ThirdPartyAgentSubStage(Stage):
             {},
         )
         if not self.prov_id:
-            logger.error("没有填写 Agent Runner 提供商 ID，请前往配置页面配置。")
+            logger.error(
+                t(
+                    "core-pipeline-process_stage-method-agent_sub_stages-third_party-missing_agent_runner_provider_id"
+                )
+            )
             return
         if not self.prov_cfg:
             logger.error(
-                f"Agent Runner 提供商 {self.prov_id} 配置不存在，请前往配置页面修改配置。"
+                t(
+                    "core-pipeline-process_stage-method-agent_sub_stages-third_party-provider_config_missing",
+                    self=self,
+                )
             )
             return
 
@@ -185,7 +196,11 @@ class ThirdPartyAgentSubStage(Stage):
             final_resp = runner.get_final_llm_resp()
 
             if not final_resp or not final_resp.result_chain:
-                logger.warning("Agent Runner 未返回最终结果。")
+                logger.warning(
+                    t(
+                        "core-pipeline-process_stage-method-agent_sub_stages-third_party-no_final_result_from_agent_runner"
+                    )
+                )
                 return
 
             event.set_result(

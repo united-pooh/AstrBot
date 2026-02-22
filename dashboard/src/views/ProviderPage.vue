@@ -175,8 +175,8 @@
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
-          <v-btn variant="text" @click="showManualModelDialog = false">取消</v-btn>
-          <v-btn color="primary" @click="confirmManualModel">添加</v-btn>
+          <v-btn variant="text" @click="showManualModelDialog = false">{{ t('src.views.providerpage.cancel_button') }}</v-btn>
+          <v-btn color="primary" @click="confirmManualModel">{{ t('src.views.providerpage.add_button') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -208,7 +208,7 @@
     <v-dialog v-model="showProviderEditDialog" width="800">
       <v-card :title="providerEditData?.id || tm('dialogs.config.editTitle')">
         <v-card-text class="py-4">
-          <small style="color: gray;">不建议修改 ID，可能会导致指向该模型的相关配置（如默认模型、插件相关配置等）失效。旧版本 AstrBot 的 “提供商 ID” 是下方的 “ID”。</small>
+          <small style="color: gray;">{{ t('src.views.providerpage.warning_do_not_modify_id') }}</small>
           <AstrBotConfig v-if="providerEditData" :iterable="providerEditData" :metadata="configSchema"
             metadataKey="provider" :is-editing="true" />
         </v-card-text>
@@ -235,21 +235,21 @@
       <v-card>
         <v-card-title class="text-h3 d-flex align-center">
           <v-icon start class="me-2">mdi-information</v-icon>
-          请前往「配置文件」页测试 Agent 执行器
+          {{ t('src.views.providerpage.prompt_test_agent_executor_on_config_page') }}
         </v-card-title>
         <v-card-text class="py-4 text-body-1 text-medium-emphasis">
-          Agent 执行器的测试请在「配置文件」页进行。
+          {{ t('src.views.providerpage.note_test_agent_executor_on_config_page') }}
           <ol class="ml-4 mt-4 mb-4">
-            <li>找到对应的配置文件并打开。</li>
-            <li>找到 Agent 执行方式部分，修改执行器后点击保存。</li>
-            <li>点击右下角的 💬 聊天按钮进行测试。</li>
+            <li>{{ t('src.views.providerpage.step_open_config_file') }}</li>
+            <li>{{ t('src.views.providerpage.step_modify_and_save_executor') }}</li>
+            <li>{{ t('src.views.providerpage.step_click_chat_to_test') }}</li>
           </ol>
-          要让机器人应用这个 Agent 执行器，你也需要前往修改 Agent 执行器。
+          {{ t('src.views.providerpage.note_modify_agent_executor_for_bot') }}
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="showAgentRunnerDialog = false">好的</v-btn>
-          <v-btn color="primary" variant="flat" @click="goToConfigPage">点击前往</v-btn>
+          <v-btn color="grey" variant="text" @click="showAgentRunnerDialog = false">{{ t('src.views.providerpage.btn_ok_close_dialog') }}</v-btn>
+          <v-btn color="primary" variant="flat" @click="goToConfigPage">{{ t('src.views.providerpage.btn_go_to_config_page') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -260,7 +260,7 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { useModuleI18n } from '@/i18n/composables'
+import { useI18n, useModuleI18n } from '@/i18n/composables'
 import AstrBotConfig from '@/components/shared/AstrBotConfig.vue'
 import ItemCard from '@/components/shared/ItemCard.vue'
 import AddNewProvider from '@/components/provider/AddNewProvider.vue'
@@ -276,6 +276,7 @@ const props = defineProps({
   }
 })
 
+const { t } = useI18n()
 const { tm } = useModuleI18n('features/provider')
 const router = useRouter()
 
@@ -470,20 +471,20 @@ async function newProvider() {
         config: newSelectedProviderConfig.value
       })
       if (res.data.status === 'error') {
-        showMessage(res.data.message || "更新失败!", 'error')
+        showMessage(res.data.message || t('src.views.providerpage.code_show_update_failed'), 'error')
         return
       }
-      showMessage(res.data.message || "更新成功!")
+      showMessage(res.data.message || t('src.views.providerpage.code_show_update_success'))
       if (wasUpdating) {
         updatingMode.value = false
       }
     } else {
       const res = await axios.post('/api/config/provider/new', newSelectedProviderConfig.value)
       if (res.data.status === 'error') {
-        showMessage(res.data.message || "添加失败!", 'error')
+        showMessage(res.data.message || t('src.views.providerpage.code_show_add_failed'), 'error')
         return
       }
-      showMessage(res.data.message || "添加成功!")
+      showMessage(res.data.message || t('src.views.providerpage.code_show_add_success'))
     }
     showProviderCfg.value = false
   } catch (err) {
@@ -537,7 +538,7 @@ async function copyProvider(providerToCopy) {
   loading.value = true
   try {
     const res = await axios.post('/api/config/provider/new', newProviderConfig)
-    showMessage(res.data.message || `成功复制并创建了 ${newProviderConfig.id}`)
+    showMessage(t('src.views.providerpage.code_show_copy_create_success', { id: newProviderConfig.id }))
     await loadConfig()
   } catch (err) {
     showMessage(err.response?.data?.message || err.message, 'error')
@@ -594,7 +595,7 @@ async function testSingleProvider(provider) {
 
   try {
     if (!provider.enable) {
-      throw new Error('该提供商未被用户启用')
+      throw new Error(t('src.views.providerpage.code_error_provider_not_enabled'))
     }
     if (provider.provider_type === 'agent_runner') {
       showAgentRunnerDialog.value = true

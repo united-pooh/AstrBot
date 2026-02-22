@@ -4,6 +4,7 @@ from collections.abc import Awaitable, Callable
 import discord
 
 from astrbot import logger
+from astrbot.core.lang import t
 
 if sys.version_info >= (3, 12):
     from typing import override
@@ -35,11 +36,11 @@ class DiscordBotClient(discord.Bot):
     async def on_ready(self) -> None:
         """当机器人成功连接并准备就绪时触发"""
         if self.user is None:
-            logger.error("[Discord] 客户端未正确加载用户信息 (self.user is None)")
+            logger.error(t("core-platform-sources-discord-client-user_not_loaded"))
             return
 
-        logger.info(f"[Discord] 已作为 {self.user} (ID: {self.user.id}) 登录")
-        logger.info("[Discord] 客户端已准备就绪。")
+        logger.info(t("core-platform-sources-discord-client-logged_in_as", self=self))
+        logger.info(t("core-platform-sources-discord-client-client_ready"))
 
         if self.on_ready_once_callback and not self._ready_once_fired:
             self._ready_once_fired = True
@@ -47,7 +48,7 @@ class DiscordBotClient(discord.Bot):
                 await self.on_ready_once_callback()
             except Exception as e:
                 logger.error(
-                    f"[Discord] on_ready_once_callback 执行失败: {e}",
+                    t("core-platform-sources-discord-client-on_ready_once_failed", e=e),
                     exc_info=True,
                 )
 
@@ -99,7 +100,10 @@ class DiscordBotClient(discord.Bot):
             return
 
         logger.debug(
-            f"[Discord] 收到原始消息 from {message.author.name}: {message.content}",
+            t(
+                "core-platform-sources-discord-client-received_raw_message",
+                message=message,
+            ),
         )
 
         if self.on_message_received:

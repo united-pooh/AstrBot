@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import axios from 'axios';
+import { t } from '@/i18n/composables';
 
 export function useRecording() {
     const isRecording = ref(false);
@@ -19,7 +20,7 @@ export function useRecording() {
             isRecording.value = true;
             
             if (onStart) {
-                onStart('录音中...');
+                onStart(t('src.composables.userecording.recording_in_progress'));
             }
         } catch (error) {
             console.error('Failed to start recording:', error);
@@ -35,7 +36,7 @@ export function useRecording() {
 
             isRecording.value = false;
             if (onStop) {
-                onStop('聊天输入框');
+                onStop(t('src.composables.userecording.stop_chat_input'));
             }
 
             mediaRecorder.value.stop();
@@ -72,3 +73,4 @@ export function useRecording() {
         stopRecording
     };
 }
+

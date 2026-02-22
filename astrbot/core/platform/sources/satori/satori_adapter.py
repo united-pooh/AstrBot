@@ -25,11 +25,14 @@ from astrbot.api.platform import (
     PlatformMetadata,
     register_platform_adapter,
 )
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import MessageSession
 
 
 @register_platform_adapter(
-    "satori", "Satori 协议适配器", support_streaming_message=False
+    "satori",
+    t("core-platform-sources-satori-satori_adapter-register_satori_adapter"),
+    support_streaming_message=False,
 )
 class SatoriPlatformAdapter(Platform):
     def __init__(
@@ -56,7 +59,9 @@ class SatoriPlatformAdapter(Platform):
 
         self.metadata = PlatformMetadata(
             name="satori",
-            description="Satori 通用协议适配器",
+            description=t(
+                "core-platform-sources-satori-satori_adapter-adapter_description"
+            ),
             id=self.config["id"],
             support_streaming_message=False,
         )
@@ -111,17 +116,32 @@ class SatoriPlatformAdapter(Platform):
                 await self.connect_websocket()
                 retry_count = 0
             except websockets.exceptions.ConnectionClosed as e:
-                logger.warning(f"Satori WebSocket 连接关闭: {e}")
+                logger.warning(
+                    t(
+                        "core-platform-sources-satori-satori_adapter-websocket_closed",
+                        e=e,
+                    )
+                )
                 retry_count += 1
             except Exception as e:
-                logger.error(f"Satori WebSocket 连接失败: {e}")
+                logger.error(
+                    t(
+                        "core-platform-sources-satori-satori_adapter-websocket_connection_failed",
+                        e=e,
+                    )
+                )
                 retry_count += 1
 
             if not self.running:
                 break
 
             if retry_count >= max_retries:
-                logger.error(f"达到最大重试次数 ({max_retries})，停止重试")
+                logger.error(
+                    t(
+                        "core-platform-sources-satori-satori_adapter-max_retries_reached",
+                        max_retries=max_retries,
+                    )
+                )
                 break
 
             if not self.auto_reconnect:
@@ -134,12 +154,29 @@ class SatoriPlatformAdapter(Platform):
             await self.session.close()
 
     async def connect_websocket(self) -> None:
-        logger.info(f"Satori 适配器正在连接到 WebSocket: {self.endpoint}")
-        logger.info(f"Satori 适配器 HTTP API 地址: {self.api_base_url}")
+        logger.info(
+            t(
+                "core-platform-sources-satori-satori_adapter-connecting_to_websocket",
+                self=self,
+            )
+        )
+        logger.info(
+            t("core-platform-sources-satori-satori_adapter-http_api_address", self=self)
+        )
 
         if not self.endpoint.startswith(("ws://", "wss://")):
-            logger.error(f"无效的WebSocket URL: {self.endpoint}")
-            raise ValueError(f"WebSocket URL必须以ws://或wss://开头: {self.endpoint}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-invalid_websocket_url",
+                    self=self,
+                )
+            )
+            raise ValueError(
+                t(
+                    "core-platform-sources-satori-satori_adapter-websocket_url_prefix_invalid",
+                    self=self,
+                )
+            )
 
         try:
             websocket = await connect(
@@ -160,13 +197,28 @@ class SatoriPlatformAdapter(Platform):
                 try:
                     await self.handle_message(message)  # type: ignore
                 except Exception as e:
-                    logger.error(f"Satori 处理消息异常: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-satori-satori_adapter-satori_message_processing_exception",
+                            e=e,
+                        )
+                    )
 
         except websockets.exceptions.ConnectionClosed as e:
-            logger.warning(f"Satori WebSocket 连接关闭: {e}")
+            logger.warning(
+                t(
+                    "core-platform-sources-satori-satori_adapter-satori_websocket_connection_closed",
+                    e=e,
+                )
+            )
             raise
         except Exception as e:
-            logger.error(f"Satori WebSocket 连接异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-satori_websocket_connection_error",
+                    e=e,
+                )
+            )
             raise
         finally:
             if self.heartbeat_task:
@@ -179,14 +231,27 @@ class SatoriPlatformAdapter(Platform):
                 try:
                     await self.ws.close()
                 except Exception as e:
-                    logger.error(f"Satori WebSocket 关闭异常: {e}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-satori-satori_adapter-satori_websocket_close_exception",
+                            e=e,
+                        )
+                    )
 
     async def send_identify(self) -> None:
         if not self.ws:
-            raise Exception("WebSocket连接未建立")
+            raise Exception(
+                t(
+                    "core-platform-sources-satori-satori_adapter-websocket_connection_not_established"
+                )
+            )
 
         if self._is_websocket_closed(self.ws):
-            raise Exception("WebSocket连接已关闭")
+            raise Exception(
+                t(
+                    "core-platform-sources-satori-satori_adapter-websocket_connection_already_closed"
+                )
+            )
 
         identify_payload = {
             "op": 3,  # IDENTIFY
@@ -203,10 +268,20 @@ class SatoriPlatformAdapter(Platform):
             message_str = json.dumps(identify_payload, ensure_ascii=False)
             await self.ws.send(message_str)
         except websockets.exceptions.ConnectionClosed as e:
-            logger.error(f"发送 IDENTIFY 信令时连接关闭: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-connection_closed_sending_identify",
+                    e=e,
+                )
+            )
             raise
         except Exception as e:
-            logger.error(f"发送 IDENTIFY 信令失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-failed_to_send_identify",
+                    e=e,
+                )
+            )
             raise
 
     async def heartbeat_loop(self) -> None:
@@ -222,17 +297,32 @@ class SatoriPlatformAdapter(Platform):
                         }
                         await self.ws.send(json.dumps(ping_payload, ensure_ascii=False))
                     except websockets.exceptions.ConnectionClosed as e:
-                        logger.error(f"Satori WebSocket 连接关闭: {e}")
+                        logger.error(
+                            t(
+                                "core-platform-sources-satori-satori_adapter-satori_websocket_connection_closed_2",
+                                e=e,
+                            )
+                        )
                         break
                     except Exception as e:
-                        logger.error(f"Satori WebSocket 发送心跳失败: {e}")
+                        logger.error(
+                            t(
+                                "core-platform-sources-satori-satori_adapter-satori_websocket_heartbeat_send_failed",
+                                e=e,
+                            )
+                        )
                         break
                 else:
                     break
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            logger.error(f"心跳任务异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-heartbeat_task_exception",
+                    e=e,
+                )
+            )
 
     async def handle_message(self, message: str) -> None:
         try:
@@ -252,7 +342,13 @@ class SatoriPlatformAdapter(Platform):
                         user_id = user.get("id", "")
                         user_name = user.get("name", "")
                         logger.info(
-                            f"Satori 连接成功 - Bot {i + 1}: platform={platform}, user_id={user_id}, user_name={user_name}",
+                            t(
+                                "core-platform-sources-satori-satori_adapter-connection_success_bot_info",
+                                i=i + 1,
+                                platform=platform,
+                                user_id=user_id,
+                                user_name=user_name,
+                            ),
                         )
 
                 if "sn" in body:
@@ -271,9 +367,20 @@ class SatoriPlatformAdapter(Platform):
                     self.sequence = body["sn"]
 
         except json.JSONDecodeError as e:
-            logger.error(f"解析 WebSocket 消息失败: {e}, 消息内容: {message}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-failed_to_parse_websocket_message",
+                    e=e,
+                    message=message,
+                )
+            )
         except Exception as e:
-            logger.error(f"处理 WebSocket 消息异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-websocket_message_processing_exception",
+                    e=e,
+                )
+            )
 
     async def handle_event(self, event_data: dict) -> None:
         try:
@@ -305,7 +412,12 @@ class SatoriPlatformAdapter(Platform):
                     await self.handle_msg(abm)
 
         except Exception as e:
-            logger.error(f"处理事件失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-event_processing_failed",
+                    e=e,
+                )
+            )
 
     async def convert_satori_message(
         self,
@@ -358,7 +470,13 @@ class SatoriPlatformAdapter(Platform):
                         quote = quote_info["quote"]
                         content_for_parsing = quote_info["content_without_quote"]
                 except Exception as e:
-                    logger.error(f"解析<quote>标签时发生错误: {e}, 错误内容: {content}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-satori-satori_adapter-error_parsing_quote_tag",
+                            e=e,
+                            content=content,
+                        )
+                    )
 
             if quote:
                 # 引用消息
@@ -400,7 +518,12 @@ class SatoriPlatformAdapter(Platform):
             return abm
 
         except Exception as e:
-            logger.error(f"转换 Satori 消息失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-failed_to_convert_satori_message",
+                    e=e,
+                )
+            )
             return None
 
     def _extract_namespace_prefixes(self, content: str) -> set:
@@ -520,10 +643,20 @@ class SatoriPlatformAdapter(Platform):
 
             return None
         except ET.ParseError as e:
-            logger.warning(f"XML解析失败，使用正则提取: {e}")
+            logger.warning(
+                t(
+                    "core-platform-sources-satori-satori_adapter-xml_parsing_failed_fallback_regex",
+                    e=e,
+                )
+            )
             return await self._extract_quote_with_regex(content)
         except Exception as e:
-            logger.error(f"提取<quote>标签时发生错误: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-error_extracting_quote_tag",
+                    e=e,
+                )
+            )
             return None
 
     async def _extract_quote_with_regex(self, content: str) -> dict | None:
@@ -566,7 +699,9 @@ class SatoriPlatformAdapter(Platform):
                 # 如果没有作者信息，使用默认值
                 quote_abm.sender = MessageMember(
                     user_id=quote.get("user_id", ""),
-                    nickname="内容",
+                    nickname=t(
+                        "core-platform-sources-satori-satori_adapter-nickname_content"
+                    ),
                 )
 
             # 解析引用消息内容
@@ -582,11 +717,18 @@ class SatoriPlatformAdapter(Platform):
 
             # 如果没有任何内容，使用默认文本
             if not quote_abm.message_str.strip():
-                quote_abm.message_str = "[引用消息]"
+                quote_abm.message_str = t(
+                    "core-platform-sources-satori-satori_adapter-quote_abm_quoted_message"
+                )
 
             return quote_abm
         except Exception as e:
-            logger.error(f"转换引用消息失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-convert_quote_failed",
+                    e=e,
+                )
+            )
             return None
 
     async def parse_satori_elements(self, content: str) -> list:
@@ -620,12 +762,23 @@ class SatoriPlatformAdapter(Platform):
             root = ET.fromstring(processed_content)
             await self._parse_xml_node(root, elements)
         except ET.ParseError as e:
-            logger.warning(f"解析 Satori 元素时发生解析错误: {e}, 错误内容: {content}")
+            logger.warning(
+                t(
+                    "core-platform-sources-satori-satori_adapter-parse_element_error",
+                    e=e,
+                    content=content,
+                )
+            )
             # 如果解析失败，将整个内容当作纯文本
             if content.strip():
                 elements.append(Plain(text=content))
         except Exception as e:
-            logger.error(f"解析 Satori 元素时发生未知错误: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-parse_element_unknown_error",
+                    e=e,
+                )
+            )
             raise e
 
         # 如果没有解析到任何元素，将整个内容当作纯文本
@@ -660,7 +813,10 @@ class SatoriPlatformAdapter(Platform):
 
             elif tag_name == "file":
                 src = attrs.get("src", "")
-                name = attrs.get("name", "文件")
+                name = attrs.get(
+                    "name",
+                    t("core-platform-sources-satori-satori_adapter-file_fallback_name"),
+                )
                 if src:
                     elements.append(File(name=name, file=src))
 
@@ -680,13 +836,41 @@ class SatoriPlatformAdapter(Platform):
                 face_type = attrs.get("type", "")
 
                 if face_name:
-                    elements.append(Plain(text=f"[表情:{face_name}]"))
+                    elements.append(
+                        Plain(
+                            text=t(
+                                "core-platform-sources-satori-satori_adapter-emoji_with_name",
+                                face_name=face_name,
+                            )
+                        )
+                    )
                 elif face_id and face_type:
-                    elements.append(Plain(text=f"[表情ID:{face_id},类型:{face_type}]"))
+                    elements.append(
+                        Plain(
+                            text=t(
+                                "core-platform-sources-satori-satori_adapter-emoji_with_id_and_type",
+                                face_id=face_id,
+                                face_type=face_type,
+                            )
+                        )
+                    )
                 elif face_id:
-                    elements.append(Plain(text=f"[表情ID:{face_id}]"))
+                    elements.append(
+                        Plain(
+                            text=t(
+                                "core-platform-sources-satori-satori_adapter-emoji_with_id",
+                                face_id=face_id,
+                            )
+                        )
+                    )
                 else:
-                    elements.append(Plain(text="[表情]"))
+                    elements.append(
+                        Plain(
+                            text=t(
+                                "core-platform-sources-satori-satori_adapter-emoji_fallback"
+                            )
+                        )
+                    )
 
             elif tag_name == "ark":
                 # 作为纯文本添加到消息链中
@@ -695,9 +879,22 @@ class SatoriPlatformAdapter(Platform):
                     import html
 
                     decoded_data = html.unescape(data)
-                    elements.append(Plain(text=f"[ARK卡片数据: {decoded_data}]"))
+                    elements.append(
+                        Plain(
+                            text=t(
+                                "core-platform-sources-satori-satori_adapter-ark_card_data",
+                                decoded_data=decoded_data,
+                            )
+                        )
+                    )
                 else:
-                    elements.append(Plain(text="[ARK卡片]"))
+                    elements.append(
+                        Plain(
+                            text=t(
+                                "core-platform-sources-satori-satori_adapter-ark_card_fallback"
+                            )
+                        )
+                    )
 
             elif tag_name == "json":
                 # JSON标签 视为ARK卡片消息
@@ -706,9 +903,22 @@ class SatoriPlatformAdapter(Platform):
                     import html
 
                     decoded_data = html.unescape(data)
-                    elements.append(Plain(text=f"[ARK卡片数据: {decoded_data}]"))
+                    elements.append(
+                        Plain(
+                            text=t(
+                                "core-platform-sources-satori-satori_adapter-ark_card_data_fallback",
+                                decoded_data=decoded_data,
+                            )
+                        )
+                    )
                 else:
-                    elements.append(Plain(text="[JSON卡片]"))
+                    elements.append(
+                        Plain(
+                            text=t(
+                                "core-platform-sources-satori-satori_adapter-json_card_fallback"
+                            )
+                        )
+                    )
 
             else:
                 # 未知标签，递归处理其内容
@@ -741,7 +951,11 @@ class SatoriPlatformAdapter(Platform):
         user_id: str | None = None,
     ) -> dict:
         if not self.session:
-            raise Exception("HTTP session 未初始化")
+            raise Exception(
+                t(
+                    "core-platform-sources-satori-satori_adapter-http_session_not_initialized"
+                )
+            )
 
         headers = {
             "Content-Type": "application/json",
@@ -777,7 +991,12 @@ class SatoriPlatformAdapter(Platform):
                     return result
                 return {}
         except Exception as e:
-            logger.error(f"Satori HTTP 请求异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-satori-satori_adapter-http_request_exception",
+                    e=e,
+                )
+            )
             return {}
 
     async def terminate(self) -> None:
@@ -790,7 +1009,12 @@ class SatoriPlatformAdapter(Platform):
             try:
                 await self.ws.close()
             except Exception as e:
-                logger.error(f"Satori WebSocket 关闭异常: {e}")
+                logger.error(
+                    t(
+                        "core-platform-sources-satori-satori_adapter-websocket_close_exception",
+                        e=e,
+                    )
+                )
 
         if self.session:
             await self.session.close()

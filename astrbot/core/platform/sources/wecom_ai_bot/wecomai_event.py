@@ -3,6 +3,7 @@
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.api.message_components import At, Image, Plain
+from astrbot.core.lang import t
 
 from .wecomai_api import WecomAIBotAPIClient
 from .wecomai_queue_mgr import WecomAIQueueMgr
@@ -106,13 +107,25 @@ class WecomAIBotMessageEvent(AstrMessageEvent):
                             },
                         )
                     else:
-                        logger.warning("图片数据为空，跳过")
+                        logger.warning(
+                            t(
+                                "core-platform-sources-wecom_ai_bot-wecomai_event-image_data_empty_skip"
+                            )
+                        )
                 except Exception as e:
-                    logger.error("处理图片消息失败: %s", e)
+                    logger.error(
+                        t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_event-process_image_message_failed"
+                        ),
+                        e,
+                    )
             else:
                 if not suppress_unsupported_log:
                     logger.warning(
-                        f"[WecomAI] 不支持的消息组件类型: {type(comp)}, 跳过"
+                        t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_event-unsupported_component_type",
+                            comp=type(comp),
+                        )
                     )
 
         return data

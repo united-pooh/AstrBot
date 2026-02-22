@@ -10,6 +10,7 @@ from readability import Document
 from astrbot.api import AstrBotConfig, llm_tool, logger, sp, star
 from astrbot.api.event import AstrMessageEvent, MessageEventResult, filter
 from astrbot.api.provider import ProviderRequest
+from astrbot.core.lang import t
 from astrbot.core.provider.func_tool_manager import FunctionToolManager
 
 from .engines import HEADERS, USER_AGENTS, SearchResult
@@ -41,7 +42,7 @@ class Main(star.Star):
             tavily_key = provider_settings.get("websearch_tavily_key")
             if isinstance(tavily_key, str):
                 logger.info(
-                    "检测到旧版 websearch_tavily_key (字符串格式)，自动迁移为列表格式并保存。",
+                    t("builtin_stars-web_searcher-main-tavily_key_migration"),
                 )
                 if tavily_key:
                     provider_settings["websearch_tavily_key"] = [tavily_key]
@@ -127,7 +128,7 @@ class Main(star.Star):
         """并发安全的从列表中获取并轮换Tavily API密钥。"""
         tavily_keys = cfg.get("provider_settings", {}).get("websearch_tavily_key", [])
         if not tavily_keys:
-            raise ValueError("错误：Tavily API密钥未在AstrBot中配置。")
+            raise ValueError(t("builtin_stars-web_searcher-main-tavily_key_missing"))
 
         async with self.tavily_key_lock:
             key = tavily_keys[self.tavily_key_index]
@@ -203,7 +204,7 @@ class Main(star.Star):
         """网页搜索指令（已废弃）"""
         event.set_result(
             MessageEventResult().message(
-                "此指令已经被废弃，请在 WebUI 中开启或关闭网页搜索功能。",
+                t("builtin_stars-web_searcher-main-command_deprecated"),
             ),
         )
 
@@ -242,7 +243,7 @@ class Main(star.Star):
             ret += processed_result
 
         if websearch_link:
-            ret += "\n\n针对问题，请根据上面的结果分点总结，并且在结尾处附上对应内容的参考链接（如有）。"
+            ret += t("builtin_stars-web_searcher-main-summary_instruction")
 
         return ret
 
@@ -398,7 +399,7 @@ class Main(star.Star):
         """并发安全的从列表中获取并轮换BoCha API密钥。"""
         bocha_keys = cfg.get("provider_settings", {}).get("websearch_bocha_key", [])
         if not bocha_keys:
-            raise ValueError("错误：BoCha API密钥未在AstrBot中配置。")
+            raise ValueError(t("builtin_stars-web_searcher-main-bocha_key_missing"))
 
         async with self.bocha_key_lock:
             key = bocha_keys[self.bocha_key_index]

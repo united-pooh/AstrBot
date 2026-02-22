@@ -11,6 +11,7 @@ import aiohttp
 from Crypto.Cipher import AES
 
 from astrbot import logger
+from astrbot.core.lang import t
 
 from .wecomai_utils import WecomAIBotConstants
 from .WXBizJsonMsgCrypt import WXBizJsonMsgCrypt
@@ -59,24 +60,49 @@ class WecomAIBotAPIClient:
             )
 
             if ret != WecomAIBotConstants.SUCCESS:
-                logger.error(f"消息解密失败，错误码: {ret}")
+                logger.error(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_api-message_decryption_failed",
+                        ret=ret,
+                    )
+                )
                 return ret, None
 
             # 解析 JSON
             if decrypted_msg:
                 try:
                     message_data = json.loads(decrypted_msg)
-                    logger.debug(f"解密成功，消息内容: {message_data}")
+                    logger.debug(
+                        t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_api-decryption_successful",
+                            message_data=message_data,
+                        )
+                    )
                     return WecomAIBotConstants.SUCCESS, message_data
                 except json.JSONDecodeError as e:
-                    logger.error(f"JSON 解析失败: {e}, 原始消息: {decrypted_msg}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_api-json_parsing_failed",
+                            e=e,
+                            decrypted_msg=decrypted_msg,
+                        )
+                    )
                     return WecomAIBotConstants.PARSE_XML_ERROR, None
             else:
-                logger.error("解密消息为空")
+                logger.error(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_api-decrypted_message_empty"
+                    )
+                )
                 return WecomAIBotConstants.DECRYPT_ERROR, None
 
         except Exception as e:
-            logger.error(f"解密过程发生异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-decryption_process_exception",
+                    e=e,
+                )
+            )
             return WecomAIBotConstants.DECRYPT_ERROR, None
 
     async def encrypt_message(
@@ -100,14 +126,28 @@ class WecomAIBotAPIClient:
             ret, encrypted_msg = self.wxcpt.EncryptMsg(plain_message, nonce, timestamp)
 
             if ret != WecomAIBotConstants.SUCCESS:
-                logger.error(f"消息加密失败，错误码: {ret}")
+                logger.error(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_api-message_encryption_failed",
+                        ret=ret,
+                    )
+                )
                 return None
 
-            logger.debug("消息加密成功")
+            logger.debug(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-encryption_successful"
+                )
+            )
             return encrypted_msg
 
         except Exception as e:
-            logger.error(f"加密过程发生异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-encryption_process_exception",
+                    e=e,
+                )
+            )
             return None
 
     def verify_url(
@@ -138,14 +178,28 @@ class WecomAIBotAPIClient:
             )
 
             if ret != WecomAIBotConstants.SUCCESS:
-                logger.error(f"URL 验证失败，错误码: {ret}")
+                logger.error(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_api-url_validation_failed",
+                        ret=ret,
+                    )
+                )
                 return "verify fail"
 
-            logger.info("URL 验证成功")
+            logger.info(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-url_validation_successful"
+                )
+            )
             return echo_result if echo_result else "verify fail"
 
         except Exception as e:
-            logger.error(f"URL 验证发生异常: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-url_validation_exception",
+                    e=e,
+                )
+            )
             return "verify fail"
 
     async def process_encrypted_image(
@@ -165,31 +219,52 @@ class WecomAIBotAPIClient:
         """
         try:
             # 下载图片
-            logger.info(f"开始下载加密图片: {image_url}")
+            logger.info(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-downloading_encrypted_image",
+                    image_url=image_url,
+                )
+            )
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(image_url, timeout=15) as response:
                     if response.status != 200:
-                        error_msg = f"图片下载失败，状态码: {response.status}"
+                        error_msg = t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_api-image_download_failed_status",
+                            response=response,
+                        )
                         logger.error(error_msg)
                         return False, error_msg
 
                     encrypted_data = await response.read()
-                    logger.info(f"图片下载成功，大小: {len(encrypted_data)} 字节")
+                    logger.info(
+                        t(
+                            "core-platform-sources-wecom_ai_bot-wecomai_api-image_download_success",
+                            encrypted_data=encrypted_data,
+                        )
+                    )
 
             # 准备解密密钥
             if aes_key_base64 is None:
                 aes_key_base64 = self.encoding_aes_key
 
             if not aes_key_base64:
-                raise ValueError("AES 密钥不能为空")
+                raise ValueError(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_api-aes_key_cannot_be_empty"
+                    )
+                )
 
             # Base64 解码密钥
             aes_key = base64.b64decode(
                 aes_key_base64 + "=" * (-len(aes_key_base64) % 4),
             )
             if len(aes_key) != 32:
-                raise ValueError("无效的 AES 密钥长度: 应为 32 字节")
+                raise ValueError(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_api-invalid_aes_key_length"
+                    )
+                )
 
             iv = aes_key[:16]  # 初始向量为密钥前 16 字节
 
@@ -200,25 +275,42 @@ class WecomAIBotAPIClient:
             # 去除 PKCS#7 填充
             pad_len = decrypted_data[-1]
             if pad_len > 32:  # AES-256 块大小为 32 字节
-                raise ValueError("无效的填充长度 (大于32字节)")
+                raise ValueError(
+                    t(
+                        "core-platform-sources-wecom_ai_bot-wecomai_api-invalid_padding_length"
+                    )
+                )
 
             decrypted_data = decrypted_data[:-pad_len]
-            logger.info(f"图片解密成功，解密后大小: {len(decrypted_data)} 字节")
+            logger.info(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-image_decrypt_success",
+                    decrypted_data=decrypted_data,
+                )
+            )
 
             return True, decrypted_data
 
         except aiohttp.ClientError as e:
-            error_msg = f"图片下载失败: {e!s}"
+            error_msg = t(
+                "core-platform-sources-wecom_ai_bot-wecomai_api-image_download_failed_exception",
+                e=e,
+            )
             logger.error(error_msg)
             return False, error_msg
 
         except ValueError as e:
-            error_msg = f"参数错误: {e!s}"
+            error_msg = t(
+                "core-platform-sources-wecom_ai_bot-wecomai_api-parameter_error", e=e
+            )
             logger.error(error_msg)
             return False, error_msg
 
         except Exception as e:
-            error_msg = f"图片处理异常: {e!s}"
+            error_msg = t(
+                "core-platform-sources-wecom_ai_bot-wecomai_api-image_processing_exception",
+                e=e,
+            )
             logger.error(error_msg)
             return False, error_msg
 
@@ -339,7 +431,11 @@ class WecomAIBotMessageParser:
         try:
             return data.get("text", {}).get("content")
         except (KeyError, TypeError):
-            logger.warning("文本消息解析失败")
+            logger.warning(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-text_message_parse_failed"
+                )
+            )
             return None
 
     @staticmethod
@@ -356,7 +452,11 @@ class WecomAIBotMessageParser:
         try:
             return data.get("image", {}).get("url")
         except (KeyError, TypeError):
-            logger.warning("图片消息解析失败")
+            logger.warning(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-image_message_parse_failed"
+                )
+            )
             return None
 
     @staticmethod
@@ -379,7 +479,11 @@ class WecomAIBotMessageParser:
                 "msg_item": stream_data.get("msg_item", []),
             }
         except (KeyError, TypeError):
-            logger.warning("流消息解析失败")
+            logger.warning(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-stream_message_parse_failed"
+                )
+            )
             return None
 
     @staticmethod
@@ -396,7 +500,11 @@ class WecomAIBotMessageParser:
         try:
             return data.get("mixed", {}).get("msg_item", [])
         except (KeyError, TypeError):
-            logger.warning("混合消息解析失败")
+            logger.warning(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-mixed_message_parse_failed"
+                )
+            )
             return None
 
     @staticmethod
@@ -413,5 +521,9 @@ class WecomAIBotMessageParser:
         try:
             return data.get("event", {})
         except (KeyError, TypeError):
-            logger.warning("事件消息解析失败")
+            logger.warning(
+                t(
+                    "core-platform-sources-wecom_ai_bot-wecomai_api-event_message_parse_failed"
+                )
+            )
             return None

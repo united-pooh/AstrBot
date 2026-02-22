@@ -6,6 +6,7 @@ import uuid
 import edge_tts
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 from ..entities import ProviderType
@@ -69,7 +70,12 @@ class ProviderEdgeTTS(TTSProvider):
                 ff = FFmpeg()
                 ff.convert(input_file=mp3_path, output_file=wav_path)
             except Exception as e:
-                logger.debug(f"pyffmpeg 转换失败: {e}, 尝试使用 ffmpeg 命令行进行转换")
+                logger.debug(
+                    t(
+                        "core-provider-sources-edge_tts_source-pyffmpeg_conversion_failed_fallback",
+                        e=e,
+                    )
+                )
                 # use ffmpeg command line
 
                 # 使用ffmpeg将MP3转换为标准WAV格式
@@ -95,32 +101,67 @@ class ProviderEdgeTTS(TTSProvider):
                 )
                 # 等待进程完成并获取输出
                 stdout, stderr = await p.communicate()
-                logger.info(f"[EdgeTTS] FFmpeg 标准输出: {stdout.decode().strip()}")
-                logger.debug(f"FFmpeg错误输出: {stderr.decode().strip()}")
-                logger.info(f"[EdgeTTS] 返回值(0代表成功): {p.returncode}")
+                logger.info(
+                    t(
+                        "core-provider-sources-edge_tts_source-ffmpeg_stdout",
+                        strip=stdout.decode().strip(),
+                    )
+                )
+                logger.debug(
+                    t(
+                        "core-provider-sources-edge_tts_source-ffmpeg_stderr",
+                        strip=stderr.decode().strip(),
+                    )
+                )
+                logger.info(
+                    t("core-provider-sources-edge_tts_source-ffmpeg_return_code", p=p)
+                )
 
             os.remove(mp3_path)
             if os.path.exists(wav_path) and os.path.getsize(wav_path) > 0:
                 return wav_path
-            logger.error("生成的WAV文件不存在或为空")
-            raise RuntimeError("生成的WAV文件不存在或为空")
+            logger.error(
+                t(
+                    "core-provider-sources-edge_tts_source-generated_wav_missing_or_empty"
+                )
+            )
+            raise RuntimeError(
+                t(
+                    "core-provider-sources-edge_tts_source-error_generated_wav_missing_or_empty"
+                )
+            )
 
         except subprocess.CalledProcessError as e:
             logger.error(
-                f"FFmpeg 转换失败: {e.stderr.decode() if e.stderr else str(e)}",
+                t(
+                    "core-provider-sources-edge_tts_source-ffmpeg_conversion_failed",
+                    e=e.stderr.decode() if e.stderr else str(e),
+                ),
             )
             try:
                 if os.path.exists(mp3_path):
                     os.remove(mp3_path)
             except Exception:
                 pass
-            raise RuntimeError(f"FFmpeg 转换失败: {e!s}")
+            raise RuntimeError(
+                t(
+                    "core-provider-sources-edge_tts_source-ffmpeg_conversion_failed_raise",
+                    e=e,
+                )
+            )
 
         except Exception as e:
-            logger.error(f"音频生成失败: {e!s}")
+            logger.error(
+                t("core-provider-sources-edge_tts_source-audio_generation_failed", e=e)
+            )
             try:
                 if os.path.exists(mp3_path):
                     os.remove(mp3_path)
             except Exception:
                 pass
-            raise RuntimeError(f"音频生成失败: {e!s}")
+            raise RuntimeError(
+                t(
+                    "core-provider-sources-edge_tts_source-audio_generation_failed_raise",
+                    e=e,
+                )
+            )

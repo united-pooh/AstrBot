@@ -8,6 +8,7 @@ import uuid
 import aiohttp
 
 from astrbot import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 from ..entities import ProviderType
@@ -17,7 +18,7 @@ from ..register import register_provider_adapter
 
 @register_provider_adapter(
     "volcengine_tts",
-    "火山引擎 TTS",
+    t("core-provider-sources-volcengine_tts-service_title"),
     provider_type=ProviderType.TEXT_TO_SPEECH,
 )
 class ProviderVolcengineTTS(TTSProvider):
@@ -68,9 +69,21 @@ class ProviderVolcengineTTS(TTSProvider):
 
         payload = self._build_request_payload(text)
 
-        logger.debug(f"请求头: {headers}")
-        logger.debug(f"请求 URL: {self.api_base}")
-        logger.debug(f"请求体: {json.dumps(payload, ensure_ascii=False)[:100]}...")
+        logger.debug(
+            t(
+                "core-provider-sources-volcengine_tts-debug_request_headers",
+                headers=headers,
+            )
+        )
+        logger.debug(
+            t("core-provider-sources-volcengine_tts-debug_request_url", self=self)
+        )
+        logger.debug(
+            t(
+                "core-provider-sources-volcengine_tts-debug_request_body",
+                ensure_ascii=json.dumps(payload, ensure_ascii=False)[:100],
+            )
+        )
 
         try:
             async with (
@@ -82,10 +95,20 @@ class ProviderVolcengineTTS(TTSProvider):
                     timeout=self.timeout,
                 ) as response,
             ):
-                logger.debug(f"响应状态码: {response.status}")
+                logger.debug(
+                    t(
+                        "core-provider-sources-volcengine_tts-debug_response_status",
+                        response=response,
+                    )
+                )
 
                 response_text = await response.text()
-                logger.debug(f"响应内容: {response_text[:200]}...")
+                logger.debug(
+                    t(
+                        "core-provider-sources-volcengine_tts-debug_response_content",
+                        response_text=response_text[:200],
+                    )
+                )
 
                 if response.status == 200:
                     resp_data = json.loads(response_text)
@@ -107,13 +130,34 @@ class ProviderVolcengineTTS(TTSProvider):
                         )
 
                         return file_path
-                    error_msg = resp_data.get("message", "未知错误")
-                    raise Exception(f"火山引擎 TTS API 返回错误: {error_msg}")
+                    error_msg = resp_data.get(
+                        "message",
+                        t(
+                            "core-provider-sources-volcengine_tts-unknown_error_fallback"
+                        ),
+                    )
+                    raise Exception(
+                        t(
+                            "core-provider-sources-volcengine_tts-exception_api_error",
+                            error_msg=error_msg,
+                        )
+                    )
                 raise Exception(
-                    f"火山引擎 TTS API 请求失败: {response.status}, {response_text}",
+                    t(
+                        "core-provider-sources-volcengine_tts-api_request_failed",
+                        response=response,
+                        response_text=response_text,
+                    ),
                 )
 
         except Exception as e:
             error_details = traceback.format_exc()
-            logger.debug(f"火山引擎 TTS 异常详情: {error_details}")
-            raise Exception(f"火山引擎 TTS 异常: {e!s}")
+            logger.debug(
+                t(
+                    "core-provider-sources-volcengine_tts-exception_details",
+                    error_details=error_details,
+                )
+            )
+            raise Exception(
+                t("core-provider-sources-volcengine_tts-tts_exception", e=e)
+            )

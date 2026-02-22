@@ -1,10 +1,21 @@
 from enum import Enum
 
+from astrbot.core.lang import t
+
 
 class RstScene(Enum):
-    GROUP_UNIQUE_ON = ("group_unique_on", "群聊+会话隔离开启")
-    GROUP_UNIQUE_OFF = ("group_unique_off", "群聊+会话隔离关闭")
-    PRIVATE = ("private", "私聊")
+    GROUP_UNIQUE_ON = (
+        "group_unique_on",
+        t("builtin_stars-builtin_commands-commands-utils-rst_scene-group_unique_on"),
+    )
+    GROUP_UNIQUE_OFF = (
+        "group_unique_off",
+        t("builtin_stars-builtin_commands-commands-utils-rst_scene-group_unique_off"),
+    )
+    PRIVATE = (
+        "private",
+        t("builtin_stars-builtin_commands-commands-utils-rst_scene-private"),
+    )
 
     @property
     def key(self) -> str:

@@ -4,6 +4,7 @@ import json
 import re
 from typing import Any, TypedDict
 
+from astrbot.core.lang import t
 from astrbot.core.message.components import (
     At,
     AtAll,
@@ -254,7 +255,13 @@ def _extract_text_from_multimsg_json(raw_json: str) -> str | None:
         text_content = item.get("text")
         if not isinstance(text_content, str):
             continue
-        cleaned = text_content.strip().replace("[图片]", "").strip()
+        cleaned = (
+            text_content.strip()
+            .replace(
+                t("core-utils-quoted_message-chain_parser-clean_image_placeholder"), ""
+            )
+            .strip()
+        )
         if cleaned:
             texts.append(cleaned)
 

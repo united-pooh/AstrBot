@@ -6,6 +6,7 @@ from typing import cast
 import whisper
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.io import download_file
 from astrbot.core.utils.tencent_record_helper import tencent_silk_to_wav
@@ -17,7 +18,7 @@ from ..register import register_provider_adapter
 
 @register_provider_adapter(
     "openai_whisper_selfhost",
-    "OpenAI Whisper 模型部署",
+    t("core-provider-sources-whisper_selfhosted_source-model_deployment_title"),
     provider_type=ProviderType.SPEECH_TO_TEXT,
 )
 class ProviderOpenAIWhisperSelfHost(STTProvider):
@@ -32,13 +33,13 @@ class ProviderOpenAIWhisperSelfHost(STTProvider):
 
     async def initialize(self) -> None:
         loop = asyncio.get_event_loop()
-        logger.info("下载或者加载 Whisper 模型中，这可能需要一些时间 ...")
+        logger.info(t("core-provider-sources-whisper_selfhosted_source-loading_model"))
         self.model = await loop.run_in_executor(
             None,
             whisper.load_model,
             self.model_name,
         )
-        logger.info("Whisper 模型加载完成。")
+        logger.info(t("core-provider-sources-whisper_selfhosted_source-model_loaded"))
 
     async def _is_silk_file(self, file_path) -> bool:
         silk_header = b"SILK"
@@ -67,7 +68,12 @@ class ProviderOpenAIWhisperSelfHost(STTProvider):
             audio_url = path
 
         if not os.path.exists(audio_url):
-            raise FileNotFoundError(f"文件不存在: {audio_url}")
+            raise FileNotFoundError(
+                t(
+                    "core-provider-sources-whisper_selfhosted_source-file_not_found",
+                    audio_url=audio_url,
+                )
+            )
 
         if audio_url.endswith(".amr") or audio_url.endswith(".silk") or is_tencent:
             is_silk = await self._is_silk_file(audio_url)
@@ -82,7 +88,11 @@ class ProviderOpenAIWhisperSelfHost(STTProvider):
                 audio_url = output_path
 
         if not self.model:
-            raise RuntimeError("Whisper 模型未初始化")
+            raise RuntimeError(
+                t(
+                    "core-provider-sources-whisper_selfhosted_source-model_not_initialized"
+                )
+            )
 
         result = await loop.run_in_executor(None, self.model.transcribe, audio_url)
         return cast(str, result["text"])

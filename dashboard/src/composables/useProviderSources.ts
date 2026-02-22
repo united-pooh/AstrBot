@@ -2,6 +2,7 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import axios from 'axios'
 import { getProviderIcon } from '@/utils/providerUtils'
 import { askForConfirmation as askForConfirmationDialog, useConfirmDialog } from '@/utils/confirmDialog'
+import { t } from '@/i18n/composables'
 
 export interface UseProviderSourcesOptions {
   defaultTab?: string
@@ -383,7 +384,7 @@ export function useProviderSources(options: UseProviderSourcesOptions) {
   function addProviderSource(templateKey: string) {
     const template = providerTemplates.value[templateKey]
     if (!template) {
-      showMessage('未找到对应的模板配置', 'error')
+      showMessage(t('src.composables.useprovidersources.template_config_not_found'), 'error')
       return
     }
 

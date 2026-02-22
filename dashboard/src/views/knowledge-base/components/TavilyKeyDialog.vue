@@ -2,11 +2,11 @@
   <v-dialog v-model="dialog" max-width="500px" persistent>
     <v-card>
       <v-card-title class="text-h5">
-        配置 Tavily API Key
+        {{ t('src.views.knowledge_base.components.tavilykeydialog.dialog_title') }}
       </v-card-title>
       <v-card-text>
         <p class="mb-4 text-body-2 text-medium-emphasis">
-          为了使用基于网页的知识库功能，需要提供 Tavily API Key。您可以从 <a href="https://tavily.com/" target="_blank">Tavily 官网</a> 获取。
+          <span v-html="t('src.views.knowledge_base.components.tavilykeydialog.description')"></span>
         </p>
         <v-text-field
           v-model="apiKey"
@@ -22,10 +22,10 @@
       <v-card-actions>
         <v-spacer />
         <v-btn variant="text" @click="closeDialog" :disabled="saving">
-          取消
+          {{ t('src.views.knowledge_base.components.tavilykeydialog.cancel_button') }}
         </v-btn>
         <v-btn color="primary" variant="elevated" @click="saveKey" :loading="saving">
-          保存
+          {{ t('src.views.knowledge_base.components.tavilykeydialog.save_button') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import axios from 'axios'
+import { t } from '@/i18n/composables'
 
 const props = defineProps<{
   modelValue: boolean
@@ -63,7 +64,7 @@ const closeDialog = () => {
 
 const saveKey = async () => {
   if (!apiKey.value.trim()) {
-    errorMessage.value = 'API Key 不能为空'
+    errorMessage.value = t('src.views.knowledge_base.components.tavilykeydialog.error_key_empty')
     return
   }
   errorMessage.value = ''
@@ -75,7 +76,7 @@ const saveKey = async () => {
     })
 
     if (configResponse.data.status !== 'ok') {
-      throw new Error('获取当前配置失败')
+      throw new Error(t('src.views.knowledge_base.components.tavilykeydialog.error_fetch_config_failed'))
     }
 
     const currentConfig = configResponse.data.data.config
@@ -98,10 +99,10 @@ const saveKey = async () => {
       emit('success')
       closeDialog()
     } else {
-      errorMessage.value = saveResponse.data.message || '保存失败，请检查 Key 是否正确'
+      errorMessage.value = saveResponse.data.message || t('src.views.knowledge_base.components.tavilykeydialog.error_save_failed')
     }
   } catch (error: any) {
-    errorMessage.value = error.response?.data?.message || '保存失败，发生未知错误'
+    errorMessage.value = error.response?.data?.message || t('src.views.knowledge_base.components.tavilykeydialog.save_failed_unknown_error')
   } finally {
     saving.value = false
   }

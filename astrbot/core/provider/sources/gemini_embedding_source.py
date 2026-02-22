@@ -5,6 +5,7 @@ from google.genai import types
 from google.genai.errors import APIError
 
 from astrbot import logger
+from astrbot.core.lang import t
 
 from ..entities import ProviderType
 from ..provider import EmbeddingProvider
@@ -13,7 +14,7 @@ from ..register import register_provider_adapter
 
 @register_provider_adapter(
     "gemini_embedding",
-    "Google Gemini Embedding 提供商适配器",
+    t("core-provider-sources-gemini_embedding_source-provider_name"),
     provider_type=ProviderType.EMBEDDING,
 )
 class GeminiEmbeddingProvider(EmbeddingProvider):
@@ -33,7 +34,12 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         proxy = provider_config.get("proxy", "")
         if proxy:
             http_options.async_client_args = {"proxy": proxy}
-            logger.info(f"[Gemini Embedding] 使用代理: {proxy}")
+            logger.info(
+                t(
+                    "core-provider-sources-gemini_embedding_source-using_proxy",
+                    proxy=proxy,
+                )
+            )
 
         self.client = genai.Client(api_key=api_key, http_options=http_options).aio
 
@@ -53,7 +59,12 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
             assert result.embeddings[0].values is not None
             return result.embeddings[0].values
         except APIError as e:
-            raise Exception(f"Gemini Embedding API请求失败: {e.message}")
+            raise Exception(
+                t(
+                    "core-provider-sources-gemini_embedding_source-embedding_request_failed",
+                    e=e,
+                )
+            )
 
     async def get_embeddings(self, text: list[str]) -> list[list[float]]:
         """批量获取文本的嵌入"""
@@ -70,7 +81,12 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
                 embeddings.append(embedding.values)
             return embeddings
         except APIError as e:
-            raise Exception(f"Gemini Embedding API批量请求失败: {e.message}")
+            raise Exception(
+                t(
+                    "core-provider-sources-gemini_embedding_source-embedding_batch_request_failed",
+                    e=e,
+                )
+            )
 
     def get_dim(self) -> int:
         """获取向量的维度"""

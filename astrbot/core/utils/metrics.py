@@ -7,6 +7,7 @@ import aiohttp
 
 from astrbot.core import db_helper, logger
 from astrbot.core.config import VERSION
+from astrbot.core.lang import t
 
 
 class Metric:
@@ -66,7 +67,7 @@ class Metric:
                     platform_type=kwargs.get("adapter_type", "unknown"),
                 )
         except Exception as e:
-            logger.error(f"保存指标到数据库失败: {e}")
+            logger.error(t("core-utils-metrics-save_to_db_failed", e=e))
 
         try:
             async with aiohttp.ClientSession(trust_env=True) as session:

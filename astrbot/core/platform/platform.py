@@ -7,6 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from astrbot.core.lang import t
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.utils.metrics import Metric
 
@@ -162,4 +163,6 @@ class Platform(abc.ABC):
         Raises:
             NotImplementedError: 平台未实现统一 Webhook 模式
         """
-        raise NotImplementedError(f"平台 {self.meta().name} 未实现统一 Webhook 模式")
+        raise NotImplementedError(
+            t("core-platform-platform-webhook_not_implemented", name=self.meta().name)
+        )

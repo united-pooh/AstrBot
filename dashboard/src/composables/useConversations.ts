@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+import { t } from '@/i18n/composables';
 
 export interface Conversation {
     cid: string;
@@ -102,7 +103,7 @@ export function useConversations(chatboxMode: boolean = false) {
             }
             editTitleDialog.value = false;
         } catch (err) {
-            console.error('重命名对话失败:', err);
+            console.error(t('src.composables.useconversations.rename_conversation_failed'), err);
         }
     }
 
@@ -143,3 +144,4 @@ export function useConversations(chatboxMode: boolean = false) {
         newChat
     };
 }
+

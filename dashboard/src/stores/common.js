@@ -169,7 +169,7 @@ export const useCommonStore = defineStore({
                 "author": pluginData.author,
                 "repo": pluginData.repo,
                 "installed": false,
-                "version": pluginData?.version ? pluginData.version : "未知",
+                "version": pluginData?.version ? pluginData.version : t('src.stores.common.plugin_version_unknown'),
                 "social_link": pluginData?.social_link,
                 "tags": pluginData?.tags ? pluginData.tags : [],
                 "logo": pluginData?.logo ? pluginData.logo : "",

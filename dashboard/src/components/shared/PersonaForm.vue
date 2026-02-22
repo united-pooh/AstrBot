@@ -44,8 +44,8 @@
                                 </div>
 
                                 <v-radio-group class="mt-2" v-model="toolSelectValue" hide-details="true">
-                                    <v-radio label="默认使用全部函数工具" value="0"></v-radio>
-                                    <v-radio label="选择指定函数工具" value="1">
+                                    <v-radio :label="t('src.components.shared.personaform.radio_use_all_tools')" value="0"></v-radio>
+                                    <v-radio :label="t('src.components.shared.personaform.radio_select_specific_tools')" value="1">
                                     </v-radio>
                                 </v-radio-group>
 
@@ -313,7 +313,7 @@
 
 <script>
 import axios from 'axios';
-import { useModuleI18n } from '@/i18n/composables';
+import { useModuleI18n, t } from '@/i18n/composables';
 import {
     askForConfirmation as askForConfirmationDialog,
     useConfirmDialog

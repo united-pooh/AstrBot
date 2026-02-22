@@ -14,6 +14,7 @@ from quart import request
 from astrbot.api import sp
 from astrbot.core import DEMO_MODE, file_token_service, logger
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
+from astrbot.core.lang import t
 from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
 from astrbot.core.star.filter.permission import PermissionTypeFilter
@@ -74,13 +75,27 @@ class PluginRoute(Route):
         self.register_routes()
 
         self.translated_event_type = {
-            EventType.AdapterMessageEvent: "平台消息下发时",
-            EventType.OnLLMRequestEvent: "LLM 请求时",
-            EventType.OnLLMResponseEvent: "LLM 响应后",
-            EventType.OnDecoratingResultEvent: "回复消息前",
-            EventType.OnCallingFuncToolEvent: "函数工具",
-            EventType.OnAfterMessageSentEvent: "发送消息后",
-            EventType.OnPluginErrorEvent: "插件报错时",
+            EventType.AdapterMessageEvent: t(
+                "dashboard-routes-plugin-event_adapter_message"
+            ),
+            EventType.OnLLMRequestEvent: t(
+                "dashboard-routes-plugin-event_on_llm_request"
+            ),
+            EventType.OnLLMResponseEvent: t(
+                "dashboard-routes-plugin-event_on_llm_response"
+            ),
+            EventType.OnDecoratingResultEvent: t(
+                "dashboard-routes-plugin-event_on_decorating_result"
+            ),
+            EventType.OnCallingFuncToolEvent: t(
+                "dashboard-routes-plugin-line_81_func_tool"
+            ),
+            EventType.OnAfterMessageSentEvent: t(
+                "dashboard-routes-plugin-line_82_after_send_message"
+            ),
+            EventType.OnPluginErrorEvent: t(
+                "dashboard-routes-plugin-line_83_plugin_error"
+            ),
         }
 
         self._logo_cache = {}
@@ -118,16 +133,36 @@ class PluginRoute(Route):
             dir_name = data.get("dir_name")  # 这里拿的是目录名，不是插件名
 
             if not dir_name:
-                return Response().error("缺少插件目录名").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-plugin-line_121_missing_dir_name"))
+                    .__dict__
+                )
 
             # 调用 star_manager.py 中的函数
             # 注意：传入的是目录名
             success, err = await self.plugin_manager.reload_failed_plugin(dir_name)
 
             if success:
-                return Response().ok(None, f"插件 {dir_name} 重载成功。").__dict__
+                return (
+                    Response()
+                    .ok(
+                        None,
+                        t(
+                            "dashboard-routes-plugin-line_128_reload_success",
+                            dir_name=dir_name,
+                        ),
+                    )
+                    .__dict__
+                )
             else:
-                return Response().error(f"重载失败: {err}").__dict__
+                return (
+                    Response()
+                    .error(
+                        t("dashboard-routes-plugin-line_130_reload_failed_err", err=err)
+                    )
+                    .__dict__
+                )
 
         except Exception as e:
             logger.error(f"/api/plugin/reload-failed: {traceback.format_exc()}")
@@ -146,8 +181,18 @@ class PluginRoute(Route):
         try:
             success, message = await self.plugin_manager.reload(plugin_name)
             if not success:
-                return Response().error(message or "插件重载失败").__dict__
-            return Response().ok(None, "重载成功。").__dict__
+                return (
+                    Response()
+                    .error(
+                        message or t("dashboard-routes-plugin-line_149_reload_failed")
+                    )
+                    .__dict__
+                )
+            return (
+                Response()
+                .ok(None, t("dashboard-routes-plugin-line_150_reload_success"))
+                .__dict__
+            )
         except Exception as e:
             logger.error(f"/api/plugin/reload: {traceback.format_exc()}")
             return Response().error(str(e)).__dict__
@@ -166,7 +211,9 @@ class PluginRoute(Route):
             if await self._is_cache_valid(source):
                 cached_data = self._load_plugin_cache(source.cache_file)
                 if cached_data:
-                    logger.debug("缓存MD5匹配，使用缓存的插件市场数据")
+                    logger.debug(
+                        t("dashboard-routes-plugin-line_169_using_cached_data")
+                    )
                     return Response().ok(cached_data).__dict__
 
         # 尝试获取远程数据
@@ -194,11 +241,19 @@ class PluginRoute(Route):
                         if not remote_data or (
                             isinstance(remote_data, dict) and len(remote_data) == 0
                         ):
-                            logger.warning(f"远程插件市场数据为空: {url}")
+                            logger.warning(
+                                t(
+                                    "dashboard-routes-plugin-line_197_remote_data_empty",
+                                    url=url,
+                                )
+                            )
                             continue  # 继续尝试其他URL或使用缓存
 
                         logger.info(
-                            f"成功获取远程插件市场数据，包含 {len(remote_data)} 个插件"
+                            t(
+                                "dashboard-routes-plugin-fetched_remote_plugin_market_data",
+                                remote_data=remote_data,
+                            )
                         )
                         # 获取最新的MD5并保存到缓存
                         current_md5 = await self._fetch_remote_md5(source.md5_url)
@@ -208,19 +263,42 @@ class PluginRoute(Route):
                             current_md5,
                         )
                         return Response().ok(remote_data).__dict__
-                    logger.error(f"请求 {url} 失败，状态码：{response.status}")
+                    logger.error(
+                        t(
+                            "dashboard-routes-plugin-request_failed_status_code",
+                            url=url,
+                            response=response,
+                        )
+                    )
             except Exception as e:
-                logger.error(f"请求 {url} 失败，错误：{e}")
+                logger.error(
+                    t(
+                        "dashboard-routes-plugin-line_213_request_failed_error",
+                        url=url,
+                        e=e,
+                    )
+                )
 
         # 如果远程获取失败，尝试使用缓存数据
         if not cached_data:
             cached_data = self._load_plugin_cache(source.cache_file)
 
         if cached_data:
-            logger.warning("远程插件市场数据获取失败，使用缓存数据")
-            return Response().ok(cached_data, "使用缓存数据，可能不是最新版本").__dict__
+            logger.warning(t("dashboard-routes-plugin-line_220_fallback_to_cache"))
+            return (
+                Response()
+                .ok(
+                    cached_data,
+                    t("dashboard-routes-plugin-line_221_using_cache_warning"),
+                )
+                .__dict__
+            )
 
-        return Response().error("获取插件列表失败，且没有可用的缓存数据").__dict__
+        return (
+            Response()
+            .error(t("dashboard-routes-plugin-line_223_fetch_failed_no_cache"))
+            .__dict__
+        )
 
     def _build_registry_source(self, custom_url: str | None) -> RegistrySource:
         """构建注册表源信息"""
@@ -256,7 +334,9 @@ class PluginRoute(Route):
                 cache_data = json.load(f)
             return cache_data.get("md5")
         except Exception as e:
-            logger.warning(f"加载缓存MD5失败: {e}")
+            logger.warning(
+                t("dashboard-routes-plugin-line_259_load_cached_md5_failed", e=e)
+            )
             return None
 
     async def _fetch_remote_md5(self, md5_url: str | None) -> str | None:
@@ -279,7 +359,7 @@ class PluginRoute(Route):
                     data = await response.json()
                     return data.get("md5", "")
         except Exception as e:
-            logger.debug(f"获取远程MD5失败: {e}")
+            logger.debug(t("dashboard-routes-plugin-line_282_remote_md5_failed", e=e))
         return None
 
     async def _is_cache_valid(self, source: RegistrySource) -> bool:
@@ -287,22 +367,33 @@ class PluginRoute(Route):
         try:
             cached_md5 = self._load_cached_md5(source.cache_file)
             if not cached_md5:
-                logger.debug("缓存文件中没有MD5信息")
+                logger.debug(t("dashboard-routes-plugin-line_290_no_md5_in_cache"))
                 return False
 
             remote_md5 = await self._fetch_remote_md5(source.md5_url)
             if remote_md5 is None:
-                logger.warning("无法获取远程MD5，将使用缓存")
+                logger.warning(
+                    t(
+                        "dashboard-routes-plugin-line_295_cannot_get_remote_md5_use_cache"
+                    )
+                )
                 return True  # 如果无法获取远程MD5，认为缓存有效
 
             is_valid = cached_md5 == remote_md5
             logger.debug(
-                f"插件数据MD5: 本地={cached_md5}, 远程={remote_md5}, 有效={is_valid}",
+                t(
+                    "dashboard-routes-plugin-plugin_data_md5_comparison",
+                    cached_md5=cached_md5,
+                    remote_md5=remote_md5,
+                    is_valid=is_valid,
+                ),
             )
             return is_valid
 
         except Exception as e:
-            logger.warning(f"检查缓存有效性失败: {e}")
+            logger.warning(
+                t("dashboard-routes-plugin-check_cache_validity_failed", e=e)
+            )
             return False
 
     def _load_plugin_cache(self, cache_file: str):
@@ -314,11 +405,17 @@ class PluginRoute(Route):
                     # 检查缓存是否有效
                     if "data" in cache_data and "timestamp" in cache_data:
                         logger.debug(
-                            f"加载缓存文件: {cache_file}, 缓存时间: {cache_data['timestamp']}",
+                            t(
+                                "dashboard-routes-plugin-loaded_cache_file",
+                                cache_file=cache_file,
+                                timestamp=cache_data["timestamp"],
+                            ),
                         )
                         return cache_data["data"]
         except Exception as e:
-            logger.warning(f"加载插件市场缓存失败: {e}")
+            logger.warning(
+                t("dashboard-routes-plugin-load_plugin_market_cache_failed", e=e)
+            )
         return None
 
     def _save_plugin_cache(self, cache_file: str, data, md5: str | None = None) -> None:
@@ -335,9 +432,17 @@ class PluginRoute(Route):
 
             with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(cache_data, f, ensure_ascii=False, indent=2)
-            logger.debug(f"插件市场数据已缓存到: {cache_file}, MD5: {md5}")
+            logger.debug(
+                t(
+                    "dashboard-routes-plugin-plugin_market_data_cached",
+                    cache_file=cache_file,
+                    md5=md5,
+                )
+            )
         except Exception as e:
-            logger.warning(f"保存插件市场缓存失败: {e}")
+            logger.warning(
+                t("dashboard-routes-plugin-save_plugin_market_cache_failed", e=e)
+            )
 
     async def get_plugin_logo_token(self, logo_path: str):
         try:
@@ -348,7 +453,7 @@ class PluginRoute(Route):
             self._logo_cache[logo_path] = token
             return token
         except Exception as e:
-            logger.warning(f"获取插件 Logo 失败: {e}")
+            logger.warning(t("dashboard-routes-plugin-fetch_plugin_logo_failed", e=e))
             return None
 
     async def get_plugins(self):
@@ -427,34 +532,34 @@ class PluginRoute(Route):
                     handler.event_filters
                 ):  # 正常handler就只有 1~2 个 filter，因此这里时间复杂度不会太高
                     if isinstance(filter, CommandFilter):
-                        info["type"] = "指令"
+                        info["type"] = t("dashboard-routes-plugin-type_command")
                         info["cmd"] = (
                             f"{filter.parent_command_names[0]} {filter.command_name}"
                         )
                         info["cmd"] = info["cmd"].strip()
                     elif isinstance(filter, CommandGroupFilter):
-                        info["type"] = "指令组"
+                        info["type"] = t("dashboard-routes-plugin-type_command_group")
                         info["cmd"] = filter.get_complete_command_names()[0]
                         info["cmd"] = info["cmd"].strip()
                         info["sub_command"] = filter.print_cmd_tree(
                             filter.sub_command_filters,
                         )
                     elif isinstance(filter, RegexFilter):
-                        info["type"] = "正则匹配"
+                        info["type"] = t("dashboard-routes-plugin-type_regex_match")
                         info["cmd"] = filter.regex_str
                     elif isinstance(filter, PermissionTypeFilter):
                         has_admin = True
                 info["has_admin"] = has_admin
                 if "cmd" not in info:
-                    info["cmd"] = "未知"
+                    info["cmd"] = t("dashboard-routes-plugin-cmd_unknown")
                 if "type" not in info:
-                    info["type"] = "事件监听器"
+                    info["type"] = t("dashboard-routes-plugin-type_event_listener")
             else:
-                info["cmd"] = "自动触发"
-                info["type"] = "无"
+                info["cmd"] = t("dashboard-routes-plugin-cmd_auto_trigger")
+                info["type"] = t("dashboard-routes-plugin-type_none")
 
             if not info["desc"]:
-                info["desc"] = "无描述"
+                info["desc"] = t("dashboard-routes-plugin-desc_no_description")
 
             handlers.append(info)
 
@@ -477,15 +582,30 @@ class PluginRoute(Route):
             proxy = proxy.removesuffix("/")
 
         try:
-            logger.info(f"正在安装插件 {repo_url}")
+            logger.info(
+                t("dashboard-routes-plugin-installing_plugin", repo_url=repo_url)
+            )
             plugin_info = await self.plugin_manager.install_plugin(
                 repo_url,
                 proxy,
                 ignore_version_check=ignore_version_check,
             )
             # self.core_lifecycle.restart()
-            logger.info(f"安装插件 {repo_url} 成功。")
-            return Response().ok(plugin_info, "安装成功。").__dict__
+            logger.info(
+                t(
+                    "dashboard-routes-plugin-plugin_installed_successfully",
+                    repo_url=repo_url,
+                    file="",
+                )
+            )
+            return (
+                Response()
+                .ok(
+                    plugin_info,
+                    t("dashboard-routes-plugin-installation_success_response"),
+                )
+                .__dict__
+            )
         except PluginVersionIncompatibleError as e:
             return {
                 "status": "warning",
@@ -514,7 +634,9 @@ class PluginRoute(Route):
             ignore_version_check = (
                 str(form_data.get("ignore_version_check", "false")).lower() == "true"
             )
-            logger.info(f"正在安装用户上传的插件 {file.filename}")
+            logger.info(
+                t("dashboard-routes-plugin-installing_user_uploaded_plugin", file=file)
+            )
             file_path = os.path.join(
                 get_astrbot_temp_path(),
                 f"plugin_upload_{file.filename}",
@@ -525,8 +647,18 @@ class PluginRoute(Route):
                 ignore_version_check=ignore_version_check,
             )
             # self.core_lifecycle.restart()
-            logger.info(f"安装插件 {file.filename} 成功")
-            return Response().ok(plugin_info, "安装成功。").__dict__
+            logger.info(
+                t(
+                    "dashboard-routes-plugin-plugin_installed_successfully",
+                    file=file,
+                    repo_url="",
+                )
+            )
+            return (
+                Response()
+                .ok(plugin_info, t("dashboard-routes-plugin-install_success"))
+                .__dict__
+            )
         except PluginVersionIncompatibleError as e:
             return {
                 "status": "warning",
@@ -553,14 +685,25 @@ class PluginRoute(Route):
         delete_config = post_data.get("delete_config", False)
         delete_data = post_data.get("delete_data", False)
         try:
-            logger.info(f"正在卸载插件 {plugin_name}")
+            logger.info(
+                t(
+                    "dashboard-routes-plugin-uninstalling_plugin",
+                    plugin_name=plugin_name,
+                )
+            )
             await self.plugin_manager.uninstall_plugin(
                 plugin_name,
                 delete_config=delete_config,
                 delete_data=delete_data,
             )
-            logger.info(f"卸载插件 {plugin_name} 成功")
-            return Response().ok(None, "卸载成功").__dict__
+            logger.info(
+                t("dashboard-routes-plugin-uninstall_success", plugin_name=plugin_name)
+            )
+            return (
+                Response()
+                .ok(None, t("dashboard-routes-plugin-uninstall_success_response"))
+                .__dict__
+            )
         except Exception as e:
             logger.error(traceback.format_exc())
             return Response().error(str(e)).__dict__
@@ -577,12 +720,20 @@ class PluginRoute(Route):
         plugin_name = post_data["name"]
         proxy: str = post_data.get("proxy", None)
         try:
-            logger.info(f"正在更新插件 {plugin_name}")
+            logger.info(
+                t("dashboard-routes-plugin-updating_plugin", plugin_name=plugin_name)
+            )
             await self.plugin_manager.update_plugin(plugin_name, proxy)
             # self.core_lifecycle.restart()
             await self.plugin_manager.reload(plugin_name)
-            logger.info(f"更新插件 {plugin_name} 成功。")
-            return Response().ok(None, "更新成功。").__dict__
+            logger.info(
+                t("dashboard-routes-plugin-update_success", plugin_name=plugin_name)
+            )
+            return (
+                Response()
+                .ok(None, t("dashboard-routes-plugin-update_success_response"))
+                .__dict__
+            )
         except Exception as e:
             logger.error(f"/api/plugin/update: {traceback.format_exc()}")
             return Response().error(str(e)).__dict__
@@ -600,7 +751,11 @@ class PluginRoute(Route):
         proxy: str = post_data.get("proxy", "")
 
         if not isinstance(plugin_names, list) or not plugin_names:
-            return Response().error("插件列表不能为空").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-plugin-plugin_list_empty_error"))
+                .__dict__
+            )
 
         results = []
         sem = asyncio.Semaphore(PLUGIN_UPDATE_CONCURRENCY)
@@ -608,12 +763,24 @@ class PluginRoute(Route):
         async def _update_one(name: str):
             async with sem:
                 try:
-                    logger.info(f"批量更新插件 {name}")
+                    logger.info(
+                        t("dashboard-routes-plugin-batch_updating_plugins", name=name)
+                    )
                     await self.plugin_manager.update_plugin(name, proxy)
-                    return {"name": name, "status": "ok", "message": "更新成功"}
+                    return {
+                        "name": name,
+                        "status": "ok",
+                        "message": t(
+                            "dashboard-routes-plugin-batch_update_success_item"
+                        ),
+                    }
                 except Exception as e:
                     logger.error(
-                        f"/api/plugin/update-all: 更新插件 {name} 失败: {traceback.format_exc()}",
+                        t(
+                            "dashboard-routes-plugin-update_plugin_failure",
+                            name=name,
+                            format_exc=traceback.format_exc(),
+                        ),
                     )
                     return {"name": name, "status": "error", "message": str(e)}
 
@@ -633,9 +800,13 @@ class PluginRoute(Route):
 
         failed = [r for r in results if r["status"] == "error"]
         message = (
-            "批量更新完成，全部成功。"
+            t("dashboard-routes-plugin-batch_update_all_success")
             if not failed
-            else f"批量更新完成，其中 {len(failed)}/{len(results)} 个插件失败。"
+            else t(
+                "dashboard-routes-plugin-batch_update_completed_with_failures",
+                failed=failed,
+                results=results,
+            )
         )
 
         return Response().ok({"results": results}, message).__dict__
@@ -652,8 +823,14 @@ class PluginRoute(Route):
         plugin_name = post_data["name"]
         try:
             await self.plugin_manager.turn_off_plugin(plugin_name)
-            logger.info(f"停用插件 {plugin_name} 。")
-            return Response().ok(None, "停用成功。").__dict__
+            logger.info(
+                t("dashboard-routes-plugin-disabling_plugin", plugin_name=plugin_name)
+            )
+            return (
+                Response()
+                .ok(None, t("dashboard-routes-plugin-disable_success_response"))
+                .__dict__
+            )
         except Exception as e:
             logger.error(f"/api/plugin/off: {traceback.format_exc()}")
             return Response().error(str(e)).__dict__
@@ -670,19 +847,31 @@ class PluginRoute(Route):
         plugin_name = post_data["name"]
         try:
             await self.plugin_manager.turn_on_plugin(plugin_name)
-            logger.info(f"启用插件 {plugin_name} 。")
-            return Response().ok(None, "启用成功。").__dict__
+            logger.info(
+                t("dashboard-routes-plugin-enabling_plugin", plugin_name=plugin_name)
+            )
+            return (
+                Response()
+                .ok(None, t("dashboard-routes-plugin-enable_success_response"))
+                .__dict__
+            )
         except Exception as e:
             logger.error(f"/api/plugin/on: {traceback.format_exc()}")
             return Response().error(str(e)).__dict__
 
     async def get_plugin_readme(self):
         plugin_name = request.args.get("name")
-        logger.debug(f"正在获取插件 {plugin_name} 的README文件内容")
+        logger.debug(
+            t("dashboard-routes-plugin-fetching_readme", plugin_name=plugin_name)
+        )
 
         if not plugin_name:
-            logger.warning("插件名称为空")
-            return Response().error("插件名称不能为空").__dict__
+            logger.warning(t("dashboard-routes-plugin-plugin_name_empty_warning"))
+            return (
+                Response()
+                .error(t("dashboard-routes-plugin-plugin_name_empty_error"))
+                .__dict__
+            )
 
         plugin_obj = None
         for plugin in self.plugin_manager.context.get_all_stars():
@@ -691,12 +880,37 @@ class PluginRoute(Route):
                 break
 
         if not plugin_obj:
-            logger.warning(f"插件 {plugin_name} 不存在")
-            return Response().error(f"插件 {plugin_name} 不存在").__dict__
+            logger.warning(
+                t("dashboard-routes-plugin-plugin_not_exists", plugin_name=plugin_name)
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-plugin-error_plugin_not_exists",
+                        plugin_name=plugin_name,
+                    )
+                )
+                .__dict__
+            )
 
         if not plugin_obj.root_dir_name:
-            logger.warning(f"插件 {plugin_name} 目录不存在")
-            return Response().error(f"插件 {plugin_name} 目录不存在").__dict__
+            logger.warning(
+                t(
+                    "dashboard-routes-plugin-plugin_dir_not_exists",
+                    plugin_name=plugin_name,
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-plugin-error_plugin_dir_not_exists",
+                        plugin_name=plugin_name,
+                    )
+                )
+                .__dict__
+            )
 
         plugin_dir = os.path.join(
             self.plugin_manager.plugin_store_path,
@@ -704,14 +918,39 @@ class PluginRoute(Route):
         )
 
         if not os.path.isdir(plugin_dir):
-            logger.warning(f"无法找到插件目录: {plugin_dir}")
-            return Response().error(f"无法找到插件 {plugin_name} 的目录").__dict__
+            logger.warning(
+                t(
+                    "dashboard-routes-plugin-cannot_find_plugin_dir",
+                    plugin_dir=plugin_dir,
+                )
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-plugin-error_cannot_find_plugin_directory",
+                        plugin_name=plugin_name,
+                    )
+                )
+                .__dict__
+            )
 
         readme_path = os.path.join(plugin_dir, "README.md")
 
         if not os.path.isfile(readme_path):
-            logger.warning(f"插件 {plugin_name} 没有README文件")
-            return Response().error(f"插件 {plugin_name} 没有README文件").__dict__
+            logger.warning(
+                t("dashboard-routes-plugin-plugin_no_readme", plugin_name=plugin_name)
+            )
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-plugin-error_plugin_no_readme",
+                        plugin_name=plugin_name,
+                    )
+                )
+                .__dict__
+            )
 
         try:
             with open(readme_path, encoding="utf-8") as f:
@@ -719,12 +958,19 @@ class PluginRoute(Route):
 
             return (
                 Response()
-                .ok({"content": readme_content}, "成功获取README内容")
+                .ok(
+                    {"content": readme_content},
+                    t("dashboard-routes-plugin-success_get_readme_content"),
+                )
                 .__dict__
             )
         except Exception as e:
             logger.error(f"/api/plugin/readme: {traceback.format_exc()}")
-            return Response().error(f"读取README文件失败: {e!s}").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-plugin-failed_to_read_readme_response", e=e))
+                .__dict__
+            )
 
     async def get_plugin_changelog(self):
         """获取插件更新日志
@@ -732,10 +978,19 @@ class PluginRoute(Route):
         读取插件目录下的 CHANGELOG.md 文件内容。
         """
         plugin_name = request.args.get("name")
-        logger.debug(f"正在获取插件 {plugin_name} 的更新日志")
+        logger.debug(
+            t(
+                "dashboard-routes-plugin-fetching_plugin_changelog",
+                plugin_name=plugin_name,
+            )
+        )
 
         if not plugin_name:
-            return Response().error("插件名称不能为空").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-plugin-error_plugin_name_empty"))
+                .__dict__
+            )
 
         # 查找插件
         plugin_obj = None
@@ -745,10 +1000,28 @@ class PluginRoute(Route):
                 break
 
         if not plugin_obj:
-            return Response().error(f"插件 {plugin_name} 不存在").__dict__
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-plugin-error_plugin_not_found",
+                        plugin_name=plugin_name,
+                    )
+                )
+                .__dict__
+            )
 
         if not plugin_obj.root_dir_name:
-            return Response().error(f"插件 {plugin_name} 目录不存在").__dict__
+            return (
+                Response()
+                .error(
+                    t(
+                        "dashboard-routes-plugin-error_plugin_directory_missing",
+                        plugin_name=plugin_name,
+                    )
+                )
+                .__dict__
+            )
 
         plugin_dir = os.path.join(
             self.plugin_manager.plugin_store_path,
@@ -765,15 +1038,31 @@ class PluginRoute(Route):
                         changelog_content = f.read()
                     return (
                         Response()
-                        .ok({"content": changelog_content}, "成功获取更新日志")
+                        .ok(
+                            {"content": changelog_content},
+                            t("dashboard-routes-plugin-success_get_changelog"),
+                        )
                         .__dict__
                     )
                 except Exception as e:
                     logger.error(f"/api/plugin/changelog: {traceback.format_exc()}")
-                    return Response().error(f"读取更新日志失败: {e!s}").__dict__
+                    return (
+                        Response()
+                        .error(
+                            t(
+                                "dashboard-routes-plugin-failed_to_read_changelog_response",
+                                e=e,
+                            )
+                        )
+                        .__dict__
+                    )
 
         # 没有找到 changelog 文件，返回 ok 但 content 为 null
-        return Response().ok({"content": None}, "该插件没有更新日志文件").__dict__
+        return (
+            Response()
+            .ok({"content": None}, t("dashboard-routes-plugin-no_changelog_file"))
+            .__dict__
+        )
 
     async def get_custom_source(self):
         """获取自定义插件源"""
@@ -789,7 +1078,9 @@ class PluginRoute(Route):
                 return Response().error("sources fields must be a list").__dict__
 
             await sp.global_put("custom_plugin_sources", sources)
-            return Response().ok(None, "保存成功").__dict__
+            return (
+                Response().ok(None, t("dashboard-routes-plugin-save_success")).__dict__
+            )
         except Exception as e:
             logger.error(f"/api/plugin/source/save: {traceback.format_exc()}")
             return Response().error(str(e)).__dict__

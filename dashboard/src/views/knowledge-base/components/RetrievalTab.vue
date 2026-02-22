@@ -123,7 +123,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
-import { useModuleI18n } from '@/i18n/composables'
+import { useModuleI18n } from '@/i18n/composables';
 
 const { tm: t } = useModuleI18n('features/knowledge-base/detail')
 

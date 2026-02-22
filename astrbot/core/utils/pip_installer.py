@@ -11,6 +11,7 @@ import sys
 import threading
 from collections import deque
 
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_site_packages_path
 from astrbot.core.utils.runtime_env import is_packaged_desktop_runtime
 
@@ -127,7 +128,7 @@ def _extract_requirement_names(requirements_path: str) -> set[str]:
                 if requirement_name:
                     names.add(requirement_name)
     except Exception as exc:
-        logger.warning("读取依赖文件失败，跳过冲突检测: %s", exc)
+        logger.warning(t("core-utils-pip_installer-read_dependency_failed"), exc)
     return names
 
 
@@ -161,7 +162,7 @@ def _collect_candidate_modules(
             canonical_name = _canonicalize_distribution_name(distribution_name)
             by_name.setdefault(canonical_name, []).append(distribution)
     except Exception as exc:
-        logger.warning("读取 site-packages 元数据失败，使用回退模块名: %s", exc)
+        logger.warning(t("core-utils-pip_installer-site_packages_metadata_failed"), exc)
 
     expanded_requirement_names: set[str] = set()
     pending = deque(requirement_names)
@@ -223,9 +224,9 @@ def _ensure_preferred_modules(
         unresolved_modules.append(f"{module_name} -> {loaded_from}")
 
     if unresolved_modules:
-        conflict_message = (
-            "检测到插件依赖与当前运行时发生冲突，无法安全加载该插件。"
-            f"冲突模块: {', '.join(unresolved_modules)}"
+        conflict_message = t("core-utils-pip_installer-plugin_dependency_conflict") + t(
+            "core-utils-pip_installer-conflicting_modules",
+            unresolved_modules=", ".join(unresolved_modules),
         )
         raise RuntimeError(conflict_message)
 
@@ -566,11 +567,16 @@ class PipInstaller:
         if self.pip_install_arg:
             args.extend(self.pip_install_arg.split())
 
-        logger.info(f"Pip 包管理器: pip {' '.join(args)}")
+        logger.info(t("core-utils-pip_installer-pip_command_log", args=" ".join(args)))
         result_code = await self._run_pip_in_process(args)
 
         if result_code != 0:
-            raise Exception(f"安装失败，错误码：{result_code}")
+            raise Exception(
+                t(
+                    "core-utils-pip_installer-installation_failed",
+                    result_code=result_code,
+                )
+            )
 
         if target_site_packages:
             _prepend_sys_path(target_site_packages)

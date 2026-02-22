@@ -68,7 +68,7 @@
   },
   "accountDialog": {
     "title": "修改账户",
-    "securityWarning": "安全提醒: 请修改默认密码以确保账户安全",
+    "securityWarning": "安全提醒：请修改默认密码以确保账户安全",
     "form": {
       "currentPassword": "当前密码",
       "newPassword": "新密码",

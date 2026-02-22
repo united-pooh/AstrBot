@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from astrbot.core import logger
 from astrbot.core.config.astrbot_config import RateLimitStrategy
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 
 from ..context import PipelineContext
@@ -72,13 +73,21 @@ class RateLimitStage(Stage):
                 match self.rl_strategy:
                     case RateLimitStrategy.STALL.value:
                         logger.info(
-                            f"会话 {session_id} 被限流。根据限流策略，此会话处理将被暂停 {stall_duration:.2f} 秒。",
+                            t(
+                                "core-pipeline-rate_limit_check-stage-session_rate_limited_pause",
+                                session_id=session_id,
+                                stall_duration=stall_duration,
+                            ),
                         )
                         await asyncio.sleep(stall_duration)
                         now = datetime.now()
                     case RateLimitStrategy.DISCARD.value:
                         logger.info(
-                            f"会话 {session_id} 被限流。根据限流策略，此请求已被丢弃，直到限额于 {stall_duration:.2f} 秒后重置。",
+                            t(
+                                "core-pipeline-rate_limit_check-stage-session_rate_limited_discarded",
+                                session_id=session_id,
+                                stall_duration=stall_duration,
+                            ),
                         )
                         return event.stop_event()
 

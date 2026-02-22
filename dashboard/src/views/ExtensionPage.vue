@@ -434,7 +434,7 @@ const getExtensions = async () => {
 const handleReloadAllFailed = async () => {
     const dirNames = Object.keys(failedPluginsDict.value);
     if (dirNames.length === 0) {
-        toast("没有需要重载的失败插件", "info");
+        toast(t('src.views.extensionpage.no_failed_plugins_to_reload'), "info");
         return;
     }
 
@@ -445,7 +445,7 @@ const handleReloadAllFailed = async () => {
         );
         await Promise.all(promises);
         
-        toast("已尝试重载所有失败插件", "success");
+        toast(t('src.views.extensionpage.reloaded_all_failed_plugins'), "success");
         
         // 清空 message 关闭对话框
         extension_data.message = "";
@@ -454,8 +454,8 @@ const handleReloadAllFailed = async () => {
         await getExtensions();
         
     } catch (e) {
-        console.error("重载失败:", e);
-        toast("批量重载过程中出现错误", "error");
+        console.error(t('src.views.extensionpage.reload_failed'), e);
+        toast(t('src.views.extensionpage.batch_reload_error'), "error");
     } finally {
         loading_.value = false;
     }
@@ -1491,7 +1491,7 @@ watch(activeTab, (newTab) => {
                               prepend-icon="mdi-refresh"
                               @click="handleReloadAllFailed"
                           >
-                              尝试一键重载修复
+                              {{ t('src.views.extensionpage.one_click_reload_fix') }}
                           </v-btn>
                           <v-spacer></v-spacer>
                           <v-btn
@@ -2709,7 +2709,7 @@ watch(activeTab, (newTab) => {
             prepend-inner-icon="mdi-rename-box"
             hide-details
             class="mb-4"
-            placeholder="我的插件源"
+            :placeholder="t('src.views.extensionpage.my_plugin_source_placeholder')"
           ></v-text-field>
 
           <v-text-field

@@ -2,6 +2,8 @@ from pathlib import Path
 
 import click
 
+from astrbot.core.lang import t
+
 
 def check_astrbot_root(path: str | Path) -> bool:
     """检查路径是否为 AstrBot 根目录"""
@@ -30,28 +32,33 @@ async def check_dashboard(astrbot_root: Path) -> None:
         dashboard_version = await get_dashboard_version()
         match dashboard_version:
             case None:
-                click.echo("未安装管理面板")
+                click.echo(t("cli-utils-basic-management_panel_not_installed"))
                 if click.confirm(
-                    "是否安装管理面板？",
+                    t("cli-utils-basic-ask_install_management_panel"),
                     default=True,
                     abort=True,
                 ):
-                    click.echo("正在安装管理面板...")
+                    click.echo(t("cli-utils-basic-installing_management_panel"))
                     await download_dashboard(
                         path="data/dashboard.zip",
                         extract_path=str(astrbot_root),
                         version=f"v{VERSION}",
                         latest=False,
                     )
-                    click.echo("管理面板安装完成")
+                    click.echo(t("cli-utils-basic-management_panel_installed"))
 
             case str():
                 if VersionComparator.compare_version(VERSION, dashboard_version) <= 0:
-                    click.echo("管理面板已是最新版本")
+                    click.echo(t("cli-utils-basic-management_panel_up_to_date"))
                     return
                 try:
                     version = dashboard_version.split("v")[1]
-                    click.echo(f"管理面板版本: {version}")
+                    click.echo(
+                        t(
+                            "cli-utils-basic-management_panel_version_display",
+                            version=version,
+                        )
+                    )
                     await download_dashboard(
                         path="data/dashboard.zip",
                         extract_path=str(astrbot_root),
@@ -59,10 +66,12 @@ async def check_dashboard(astrbot_root: Path) -> None:
                         latest=False,
                     )
                 except Exception as e:
-                    click.echo(f"下载管理面板失败: {e}")
+                    click.echo(
+                        t("cli-utils-basic-download_management_panel_failed", e=e)
+                    )
                     return
     except FileNotFoundError:
-        click.echo("初始化管理面板目录...")
+        click.echo(t("cli-utils-basic-initializing_management_panel_dir"))
         try:
             await download_dashboard(
                 path=str(astrbot_root / "dashboard.zip"),
@@ -70,7 +79,7 @@ async def check_dashboard(astrbot_root: Path) -> None:
                 version=f"v{VERSION}",
                 latest=False,
             )
-            click.echo("管理面板初始化完成")
+            click.echo(t("cli-utils-basic-management_panel_init_completed"))
         except Exception as e:
-            click.echo(f"下载管理面板失败: {e}")
+            click.echo(t("cli-utils-basic-management_panel_download_failed", e=e))
             return

@@ -1,6 +1,7 @@
 from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageEventResult
-from astrbot.core import DEMO_MODE, logger, t
+from astrbot.core import DEMO_MODE, logger
+from astrbot.core.lang import t
 from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
 from astrbot.core.star.star_handler import StarHandlerMetadata, star_handlers_registry

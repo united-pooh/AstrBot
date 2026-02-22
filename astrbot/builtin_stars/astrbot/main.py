@@ -4,7 +4,8 @@ from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.message_components import Image, Plain
 from astrbot.api.provider import LLMResponse, ProviderRequest
-from astrbot.core import logger, t
+from astrbot.core import logger
+from astrbot.core.lang import t
 
 from .long_term_memory import LongTermMemory
 

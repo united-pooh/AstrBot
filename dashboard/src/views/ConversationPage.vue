@@ -505,7 +505,7 @@ export default {
         // 将对话历史转换为 MessageList 组件期望的格式
         formattedMessages() {
             return this.conversationHistory.map(msg => {
-                console.log('处理消息:', msg.role, msg.content);
+                console.log(t('src.views.conversationpage.log_processing_message'), msg.role, msg.content);
                 
                 // 将消息内容转换为 MessagePart[] 格式
                 const messageParts = this.convertContentToMessageParts(msg.content);
@@ -636,7 +636,7 @@ export default {
                         const data = response.data.data;
 
                         if (!data || !data.conversations) {
-                            console.error('API 返回数据格式不符合预期:', data);
+                            console.error(t('src.views.conversationpage.error_invalid_api_data_format'), data);
                             this.showErrorMessage(this.tm('messages.fetchError'));
                             return;
                         }
@@ -657,7 +657,7 @@ export default {
                                 total_pages: data.pagination.total_pages || 1
                             };
                         } else {
-                            console.warn('API 响应中没有分页信息');
+                            console.warn(t('src.views.conversationpage.warn_no_pagination_info'));
                         }
                     } else {
                         this.showErrorMessage(response.data.message || this.tm('messages.fetchError'));
@@ -665,10 +665,10 @@ export default {
                 } catch (error) {
                     if (axios.isCancel(error)) return;
                     
-                    console.error('获取对话列表出错:', error);
+                    console.error(t('src.views.conversationpage.error_fetch_conversation_list'), error);
                     if (error.response) {
-                        console.error('错误响应数据:', error.response.data);
-                        console.error('错误状态码:', error.response.status);
+                        console.error(t('src.views.conversationpage.error_response_data'), error.response.data);
+                        console.error(t('src.views.conversationpage.error_status_code'), error.response.status);
                     }
                     this.showErrorMessage(error.response?.data?.message || error.message || this.tm('messages.fetchError'));
                 } finally {
@@ -684,7 +684,7 @@ export default {
             this.isEditingHistory = false;
 
             try {
-                console.log(`正在请求对话详情，user_id=${item.user_id}, cid=${item.cid}`);
+                console.log(this.t('src.views.conversationpage.log_requesting_conversation_details', { user_id: item.user_id, cid: item.cid }));
                 const response = await axios.post('/api/conversation/detail', {
                     user_id: item.user_id,
                     cid: item.cid
@@ -698,14 +698,14 @@ export default {
                     } catch (e) {
                         this.conversationHistory = [];
                         this.editedHistory = '[]';
-                        console.error('解析对话历史失败:', e);
+                        console.error(t('src.views.conversationpage.error_parse_conversation_history'), e);
                     }
                     this.dialogView = true;
                 } else {
                     this.showErrorMessage(response.data.message || this.tm('messages.historyError'));
                 }
             } catch (error) {
-                console.error('获取对话详情出错:', error);
+                console.error(t('src.views.conversationpage.error_fetch_conversation_details'), error);
                 this.showErrorMessage(error.response?.data?.message || error.message || this.tm('messages.historyError'));
             } finally {
                 this.loading = false;
@@ -742,7 +742,7 @@ export default {
                     this.showErrorMessage(response.data.message || this.tm('messages.historySaveError'));
                 }
             } catch (error) {
-                console.error('更新对话历史出错:', error);
+                console.error(t('src.views.conversationpage.error_update_conversation_history'), error);
                 this.showErrorMessage(error.response?.data?.message || error.message || this.tm('messages.historySaveError'));
             } finally {
                 this.savingHistory = false;
@@ -913,7 +913,7 @@ export default {
                     this.showErrorMessage(response.data.message || this.tm('messages.batchDeleteError'));
                 }
             } catch (error) {
-                console.error('批量删除对话出错:', error);
+                console.error(t('src.views.conversationpage.bulk_delete_conversations_error'), error);
                 this.showErrorMessage(error.response?.data?.message || error.message || this.tm('messages.batchDeleteError'));
             } finally {
                 this.loading = false;

@@ -13,7 +13,7 @@
                             <span class="bot-name">AstrBot ⭐</span>
                         </div>
                         <p class="text-caption text-medium-emphasis mt-2">
-                            测试配置: {{ configId || 'default' }}
+                            {{ t('src.components.chat.standalonechat.test_config_label', { configId: configId || 'default' }) }}
                         </p>
                     </div>
 

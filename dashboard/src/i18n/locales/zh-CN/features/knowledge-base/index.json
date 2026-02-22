@@ -28,8 +28,8 @@
     "emojiLabel": "图标",
     "embeddingModelLabel": "嵌入模型 (Embedding Model)",
     "rerankModelLabel": "重排序模型 (Rerank Model, 可选)",
-    "providerInfo": "提供商: {id} | 维度: {dimensions}",
-    "rerankProviderInfo": "提供商: {id}",
+    "providerInfo": "提供商：{id} | 维度：{dimensions}",
+    "rerankProviderInfo": "提供商：{id}",
     "cancel": "取消",
     "submit": "创建",
     "nameRequired": "请输入知识库名称"
@@ -40,7 +40,7 @@
   },
   "delete": {
     "title": "删除知识库",
-    "confirmText": "确定要删除知识库「{name}」吗?",
+    "confirmText": "确定要删除知识库「{name}」吗？",
     "warning": "此操作不可逆,所有文档、分块和关联配置都将被永久删除。",
     "cancel": "取消",
     "confirm": "删除"

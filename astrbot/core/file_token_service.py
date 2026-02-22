@@ -5,6 +5,8 @@ import time
 import uuid
 from urllib.parse import unquote, urlparse
 
+from astrbot.core.lang import t
+
 
 class FileTokenService:
     """维护一个简单的基于令牌的文件下载服务，支持超时和懒清除。"""
@@ -61,7 +63,11 @@ class FileTokenService:
 
             if not os.path.exists(local_path):
                 raise FileNotFoundError(
-                    f"文件不存在: {local_path} (原始输入: {file_path})",
+                    t(
+                        "core-file_token_service-file_not_found_with_original",
+                        local_path=local_path,
+                        file_path=file_path,
+                    ),
                 )
 
             file_token = str(uuid.uuid4())
@@ -90,9 +96,16 @@ class FileTokenService:
             await self._cleanup_expired_tokens()
 
             if file_token not in self.staged_files:
-                raise KeyError(f"无效或过期的文件 token: {file_token}")
+                raise KeyError(
+                    t(
+                        "core-file_token_service-invalid_or_expired_token",
+                        file_token=file_token,
+                    )
+                )
 
             file_path, _ = self.staged_files.pop(file_token)
             if not os.path.exists(file_path):
-                raise FileNotFoundError(f"文件不存在: {file_path}")
+                raise FileNotFoundError(
+                    t("core-file_token_service-file_not_found", file_path=file_path)
+                )
             return file_path

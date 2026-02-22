@@ -7,6 +7,7 @@ from quart import request
 
 from astrbot.core import logger
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
+from astrbot.core.lang import t
 from astrbot.core.platform import Platform
 
 from .route import Response, Route, RouteContext
@@ -55,8 +56,15 @@ class PlatformRoute(Route):
         platform_adapter = self._find_platform_by_uuid(webhook_uuid)
 
         if not platform_adapter:
-            logger.warning(f"未找到 webhook_uuid 为 {webhook_uuid} 的平台")
-            return Response().error("未找到对应平台").__dict__, 404
+            logger.warning(
+                t(
+                    "dashboard-routes-platform-webhook_platform_not_found_warning",
+                    webhook_uuid=webhook_uuid,
+                )
+            )
+            return Response().error(
+                t("dashboard-routes-platform-platform_not_found")
+            ).__dict__, 404
 
         # 调用平台适配器的 webhook_callback 方法
         try:
@@ -64,12 +72,22 @@ class PlatformRoute(Route):
             return result
         except NotImplementedError:
             logger.error(
-                f"平台 {platform_adapter.meta().name} 未实现 webhook_callback 方法"
+                t(
+                    "dashboard-routes-platform-webhook_callback_not_implemented",
+                    name=platform_adapter.meta().name,
+                )
             )
-            return Response().error("平台未支持统一 Webhook 模式").__dict__, 500
+            return Response().error(
+                t("dashboard-routes-platform-webhook_mode_not_supported")
+            ).__dict__, 500
         except Exception as e:
-            logger.error(f"处理 webhook 回调时发生错误: {e}", exc_info=True)
-            return Response().error("处理回调失败").__dict__, 500
+            logger.error(
+                t("dashboard-routes-platform-webhook_callback_error_log", e=e),
+                exc_info=True,
+            )
+            return Response().error(
+                t("dashboard-routes-platform-webhook_callback_failed")
+            ).__dict__, 500
 
     def _find_platform_by_uuid(self, webhook_uuid: str) -> Platform | None:
         """根据 webhook_uuid 查找对应的平台适配器
@@ -96,5 +114,10 @@ class PlatformRoute(Route):
             stats = self.platform_manager.get_all_stats()
             return Response().ok(stats).__dict__
         except Exception as e:
-            logger.error(f"获取平台统计信息失败: {e}", exc_info=True)
-            return Response().error(f"获取统计信息失败: {e}").__dict__, 500
+            logger.error(
+                t("dashboard-routes-platform-platform_stats_fetch_failed_log", e=e),
+                exc_info=True,
+            )
+            return Response().error(
+                t("dashboard-routes-platform-platform_stats_failed_response", e=e)
+            ).__dict__, 500

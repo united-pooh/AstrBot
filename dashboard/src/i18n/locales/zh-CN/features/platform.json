@@ -76,7 +76,7 @@
       "scope": "在此实例下的应用范围"
     },
     "routeTableHeaders": {
-      "source": "消息会话来源(消息类型:会话 ID)",
+      "source": "消息会话来源(消息类型：会话 ID)",
       "config": "使用配置文件",
       "actions": "操作"
     },
@@ -92,20 +92,20 @@
     }
   },
   "messages": {
-    "updateSuccess": "更新成功!",
-    "addSuccess": "添加成功!",
-    "deleteSuccess": "删除成功!",
-    "statusUpdateSuccess": "状态更新成功!",
+    "updateSuccess": "更新成功！",
+    "addSuccess": "添加成功！",
+    "deleteSuccess": "删除成功！",
+    "statusUpdateSuccess": "状态更新成功！",
     "deleteConfirm": "确定要删除平台适配器",
     "configNotFoundOpenConfig": "目标配置文件不存在，已打开配置页面以便检查。",
     "updateMissingPlatformId": "更新失败，缺少平台 ID。",
     "platformUpdateFailed": "平台更新失败。",
     "addSuccessWithConfig": "平台添加成功，配置文件已更新",
     "configIdMissing": "无法获取配置文件ID。",
-    "routingUpdateFailed": "更新路由表失败: {message}",
-    "createConfigFailed": "创建新配置文件失败: {message}",
+    "routingUpdateFailed": "更新路由表失败：{message}",
+    "createConfigFailed": "创建新配置文件失败：{message}",
     "platformIdMissing": "无法获取平台 ID。",
-    "routingSaveFailed": "保存路由表失败: {message}"
+    "routingSaveFailed": "保存路由表失败：{message}"
   },
   "status": {
     "enabled": "已启用",
@@ -132,4 +132,4 @@
     "traceback": "错误堆栈",
     "close": "关闭"
   }
-} 
+}

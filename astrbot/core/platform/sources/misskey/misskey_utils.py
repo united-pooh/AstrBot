@@ -4,6 +4,7 @@ from typing import Any
 
 import astrbot.api.message_components as Comp
 from astrbot.api.platform import AstrBotMessage, MessageMember, MessageType
+from astrbot.core.lang import t
 
 
 class FileIDExtractor:
@@ -85,10 +86,10 @@ def serialize_message_chain(chain: list[Any]) -> tuple[str, bool]:
             return component.text
         if isinstance(component, Comp.File):
             # 为文件组件返回占位符，但适配器仍会处理原组件
-            return "[文件]"
+            return t("core-platform-sources-misskey-misskey_utils-file_placeholder")
         if isinstance(component, Comp.Image):
             # 为图片组件返回占位符，但适配器仍会处理原组件
-            return "[图片]"
+            return t("core-platform-sources-misskey-misskey_utils-image_placeholder")
         if isinstance(component, Comp.At):
             has_at = True
             # 优先使用name字段（用户名），如果没有则使用qq字段
@@ -269,16 +270,30 @@ def add_at_mention_if_needed(
 def create_file_component(file_info: dict[str, Any]) -> tuple[Any, str]:
     """创建文件组件和描述文本"""
     file_url = file_info.get("url", "")
-    file_name = file_info.get("name", "未知文件")
+    file_name = file_info.get(
+        "name", t("core-platform-sources-misskey-misskey_utils-unknown_file_fallback")
+    )
     file_type = file_info.get("type", "")
 
     if file_type.startswith("image/"):
-        return Comp.Image(url=file_url, file=file_name), f"图片[{file_name}]"
+        return Comp.Image(url=file_url, file=file_name), t(
+            "core-platform-sources-misskey-misskey_utils-image_fallback_text",
+            file_name=file_name,
+        )
     if file_type.startswith("audio/"):
-        return Comp.Record(url=file_url, file=file_name), f"音频[{file_name}]"
+        return Comp.Record(url=file_url, file=file_name), t(
+            "core-platform-sources-misskey-misskey_utils-audio_fallback_text",
+            file_name=file_name,
+        )
     if file_type.startswith("video/"):
-        return Comp.Video(url=file_url, file=file_name), f"视频[{file_name}]"
-    return Comp.File(name=file_name, url=file_url), f"文件[{file_name}]"
+        return Comp.Video(url=file_url, file=file_name), t(
+            "core-platform-sources-misskey-misskey_utils-video_fallback_text",
+            file_name=file_name,
+        )
+    return Comp.File(name=file_name, url=file_url), t(
+        "core-platform-sources-misskey-misskey_utils-file_fallback_text",
+        file_name=file_name,
+    )
 
 
 def process_files(
@@ -303,11 +318,21 @@ def format_poll(poll: dict[str, Any]) -> str:
     multiple = poll.get("multiple", False)
     choices = poll.get("choices", [])
     text_choices = [
-        f"({idx}) {c.get('text', '')} [{c.get('votes', 0)}票]"
+        t(
+            "core-platform-sources-misskey-misskey_utils-poll_choice_format",
+            idx=idx,
+            text=c.get("text", ""),
+            votes=c.get("votes", 0),
+        )
         for idx, c in enumerate(choices, start=1)
     ]
     parts = ["[投票]", ("允许多选" if multiple else "单选")] + (
-        ["选项: " + ", ".join(text_choices)] if text_choices else []
+        [
+            t("core-platform-sources-misskey-misskey_utils-poll_options_append")
+            + ", ".join(text_choices)
+        ]
+        if text_choices
+        else []
     )
     return " ".join(parts)
 

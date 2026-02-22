@@ -297,7 +297,7 @@ const syncPreviewVersion = async () => {
 }
 
 const previewData = computed(() => ({
-  text: tm('t2iTemplateEditor.previewText') || '这是一个示例文本，用于预览模板效果。\n\n这里可以包含多行文本，支持换行和各种格式。',
+  text: tm('t2iTemplateEditor.previewText') || t('src.components.shared.t2itemplateeditor.preview_text_fallback'),
   version: previewVersion.value 
 }))
 
@@ -308,7 +308,7 @@ const previewContent = computed(() => {
     content = content.replace(/\{\{\s*version\s*\}\}/g, previewData.value.version)
     return content
   } catch (error) {
-    return `<div style="color: red; padding: 20px;">模板渲染错误: ${error.message}</div>`
+    return t('src.components.shared.t2itemplateeditor.template_rendering_error', { message: error.message })
   }
 })
 
@@ -324,13 +324,13 @@ const loadInitialData = async () => {
     if (listRes.data.status === 'ok') {
       templates.value = listRes.data.data
     } else {
-      console.error('加载模板列表失败:', listRes.data.message)
+      console.error(t('src.components.shared.t2itemplateeditor.error_load_template_list'), listRes.data.message)
     }
 
     if (activeRes.data.status === 'ok') {
       activeTemplate.value = activeRes.data.data.active_template
     } else {
-      console.error('加载活动模板失败:', activeRes.data.message)
+      console.error(t('src.components.shared.t2itemplateeditor.error_load_active_template'), activeRes.data.message)
     }
 
     // 设置初始选中的模板
@@ -339,7 +339,7 @@ const loadInitialData = async () => {
     }
 
   } catch (error) {
-    console.error('加载初始数据失败:', error)
+    console.error(t('src.components.shared.t2itemplateeditor.error_load_initial_data'), error)
   } finally {
     loading.value = false
   }
@@ -353,10 +353,10 @@ const loadTemplateContent = async (name) => {
     if (response.data.status === 'ok') {
       templateContent.value = response.data.data.content
     } else {
-      console.error(`加载模板 '${name}' 失败:`, response.data.message)
+      console.error(t('src.components.shared.t2itemplateeditor.failed_to_load_template', { name: name }), response.data.message)
     }
   } catch (error) {
-    console.error(`加载模板 '${name}' 失败:`, error)
+    console.error(t('src.components.shared.t2itemplateeditor.load_template_failed_error', { name: name }), error)
   } finally {
     previewLoading.value = false
   }
@@ -383,7 +383,7 @@ const saveTemplate = async () => {
       })
     }
   } catch (error) {
-    console.error('保存模板失败:', error)
+    console.error(t('src.components.shared.t2itemplateeditor.error_save_template'), error)
     // 可以在此添加错误提示
   } finally {
     saveLoading.value = false
@@ -396,7 +396,7 @@ const setActiveTemplate = async (name) => {
     await axios.post('/api/t2i/templates/set_active', { name })
     activeTemplate.value = name
   } catch (error) {
-    console.error(`应用模板 '${name}' 失败:`, error)
+    console.error(t('src.components.shared.t2itemplateeditor.failed_to_apply_template', { name: name }), error)
   } finally {
     applyLoading.value = false
   }
@@ -417,7 +417,7 @@ const confirmDelete = async () => {
     await loadInitialData()
     selectedTemplate.value = 'base'
   } catch (error) {
-    console.error(`删除模板 '${selectedTemplate.value}' 失败:`, error)
+    console.error(t('src.components.shared.t2itemplateeditor.failed_to_delete_template', { value: selectedTemplate.value }), error)
   } finally {
     saveLoading.value = false
   }
@@ -435,7 +435,7 @@ const confirmReset = async () => {
         await setActiveTemplate('base')
     }
   } catch (error) {
-    console.error('重置模板失败:', error)
+    console.error(t('src.components.shared.t2itemplateeditor.reset_template_failed'), error)
   } finally {
     resetLoading.value = false
   }

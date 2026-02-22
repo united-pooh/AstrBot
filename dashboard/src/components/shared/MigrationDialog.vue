@@ -69,7 +69,7 @@
                                 <v-divider></v-divider>
 
                                 <v-card-text style="padding: 16px;">
-                                    <small>请选择该平台类型下您主要使用的平台适配器。</small>
+                                    <small>{{ t('src.components.shared.migrationdialog.select_platform_adapter_hint') }}</small>
                                     <v-radio-group v-model="selectedPlatforms[group.type]" :key="group.type"
                                         hide-details>
                                         <v-radio v-for="platform in group.platforms" :key="platform.id"

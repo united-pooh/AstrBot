@@ -15,6 +15,7 @@ from astrbot.core.conversation_mgr import ConversationManager
 from astrbot.core.cron.manager import CronJobManager
 from astrbot.core.db import BaseDatabase
 from astrbot.core.knowledge_base.kb_mgr import KnowledgeBaseManager
+from astrbot.core.lang import t
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.persona_mgr import PersonaManager
 from astrbot.core.platform import Platform
@@ -315,7 +316,7 @@ class Context:
         prov = self.provider_manager.inst_map.get(provider_id)
         if provider_id and not prov:
             logger.warning(
-                f"没有找到 ID 为 {provider_id} 的提供商，这可能是由于您修改了提供商（模型）ID 导致的。"
+                t("core-star-context-provider_id_not_found", provider_id=provider_id)
             )
         return prov
 
@@ -356,7 +357,7 @@ class Context:
             return None
         if not isinstance(prov, Provider):
             raise ValueError(
-                f"该会话来源的对话模型（提供商）的类型不正确: {type(prov)}"
+                t("core-star-context-invalid_provider_type", prov=type(prov))
             )
         return prov
 
@@ -377,7 +378,7 @@ class Context:
             umo=umo,
         )
         if prov and not isinstance(prov, TTSProvider):
-            raise ValueError("返回的 Provider 不是 TTSProvider 类型")
+            raise ValueError(t("core-star-context-not_tts_provider"))
         return prov
 
     def get_using_stt_provider(self, umo: str | None = None) -> STTProvider | None:
@@ -397,7 +398,7 @@ class Context:
             umo=umo,
         )
         if prov and not isinstance(prov, STTProvider):
-            raise ValueError("返回的 Provider 不是 STTProvider 类型")
+            raise ValueError(t("core-star-context-not_stt_provider"))
         return prov
 
     def get_config(self, umo: str | None = None) -> AstrBotConfig:
@@ -442,7 +443,7 @@ class Context:
             try:
                 session = MessageSesion.from_str(session)
             except BaseException as e:
-                raise ValueError("不合法的 session 字符串: " + str(e))
+                raise ValueError(t("core-star-context-invalid_session_string") + str(e))
 
         for platform in self.platform_manager.platform_insts:
             if platform.meta().id == session.platform_name:
@@ -481,7 +482,9 @@ class Context:
             )
 
             if tool.name in tool_name:
-                logger.warning("替换已存在的 LLM 工具: " + tool.name)
+                logger.warning(
+                    t("core-star-context-replacing_existing_tool") + tool.name
+                )
                 self.provider_manager.llm_tools.remove_func(tool.name)
             self.provider_manager.llm_tools.func_list.append(tool)
 

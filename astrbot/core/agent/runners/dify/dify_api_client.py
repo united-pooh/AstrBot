@@ -6,6 +6,7 @@ from typing import Any
 from aiohttp import ClientResponse, ClientSession, FormData
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 
 
 async def _stream_sse(resp: ClientResponse) -> AsyncGenerator[dict, None]:
@@ -65,7 +66,11 @@ class DifyAPIClient:
             if resp.status != 200:
                 text = await resp.text()
                 raise Exception(
-                    f"Dify /chat-messages 接口请求失败：{resp.status}. {text}",
+                    t(
+                        "core-agent-runners-dify-dify_api_client-chat_messages_request_failed",
+                        resp=resp,
+                        text=text,
+                    ),
                 )
             async for event in _stream_sse(resp):
                 yield event
@@ -94,7 +99,11 @@ class DifyAPIClient:
             if resp.status != 200:
                 text = await resp.text()
                 raise Exception(
-                    f"Dify /workflows/run 接口请求失败：{resp.status}. {text}",
+                    t(
+                        "core-agent-runners-dify-dify_api_client-workflow_run_request_failed",
+                        resp=resp,
+                        text=text,
+                    ),
                 )
             async for event in _stream_sse(resp):
                 yield event
@@ -143,7 +152,11 @@ class DifyAPIClient:
                     content_type=mime_type or "application/octet-stream",
                 )
         else:
-            raise ValueError("file_path 和 file_data 不能同时为 None")
+            raise ValueError(
+                t(
+                    "core-agent-runners-dify-dify_api_client-file_path_and_data_both_none"
+                )
+            )
 
         async with self.session.post(
             url,
@@ -152,7 +165,13 @@ class DifyAPIClient:
         ) as resp:
             if resp.status != 200 and resp.status != 201:
                 text = await resp.text()
-                raise Exception(f"Dify 文件上传失败：{resp.status}. {text}")
+                raise Exception(
+                    t(
+                        "core-agent-runners-dify-dify_api_client-file_upload_failed",
+                        resp=resp,
+                        text=text,
+                    )
+                )
             return await resp.json()  # {"id": "xxx", ...}
 
     async def close(self) -> None:

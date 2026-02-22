@@ -80,7 +80,7 @@ async function getEmbeddingDimensions(providerConfig) {
     if (response.data.status != "error" && response.data.data?.embedding_dimensions) {
       console.log(response.data.data.embedding_dimensions)
       providerConfig.embedding_dimensions = response.data.data.embedding_dimensions
-      useToast().success("获取成功: " + response.data.data.embedding_dimensions)
+      useToast().success(t('src.components.shared.astrbotconfig.fetch_embedding_dimensions_success') + response.data.data.embedding_dimensions)
     } else {
       useToast().error(response.data.message)
     }

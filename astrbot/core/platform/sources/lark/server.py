@@ -16,6 +16,7 @@ from collections.abc import Awaitable, Callable
 from Crypto.Cipher import AES
 
 from astrbot.api import logger
+from astrbot.core.lang import t
 
 
 class AESCipher:
@@ -109,7 +110,9 @@ class LarkWebhookServer:
             解密后的事件字典
         """
         if not self.cipher:
-            raise ValueError("未配置 encrypt_key，无法解密事件")
+            raise ValueError(
+                t("core-platform-sources-lark-server-error_encrypt_key_missing")
+            )
 
         decrypted_str = self.cipher.decrypt_string(encrypted_data)
         return json.loads(decrypted_str)
@@ -124,7 +127,12 @@ class LarkWebhookServer:
             包含 challenge 的响应
         """
         challenge = event_data.get("challenge", "")
-        logger.info(f"[Lark Webhook] 收到 challenge 验证请求: {challenge}")
+        logger.info(
+            t(
+                "core-platform-sources-lark-server-info_received_challenge",
+                challenge=challenge,
+            )
+        )
 
         return {"challenge": challenge}
 
@@ -143,11 +151,18 @@ class LarkWebhookServer:
         try:
             event_data = await request.json
         except Exception as e:
-            logger.error(f"[Lark Webhook] 解析请求体失败: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-server-error_parse_request_body_failed",
+                    e=e,
+                )
+            )
             return {"error": "Invalid JSON"}, 400
 
         if not event_data:
-            logger.error("[Lark Webhook] 请求体为空")
+            logger.error(
+                t("core-platform-sources-lark-server-error_request_body_empty")
+            )
             return {"error": "Empty request body"}, 400
 
         # 如果配置了 encrypt_key，进行签名验证
@@ -160,16 +175,30 @@ class LarkWebhookServer:
                 if not self.verify_signature(
                     timestamp, nonce, self.encrypt_key, body, signature
                 ):
-                    logger.error("[Lark Webhook] 签名验证失败")
+                    logger.error(
+                        t(
+                            "core-platform-sources-lark-server-error_signature_verification_failed"
+                        )
+                    )
                     return {"error": "Invalid signature"}, 401
 
         # 检查是否是加密事件
         if "encrypt" in event_data:
             try:
                 event_data = self.decrypt_event(event_data["encrypt"])
-                logger.debug(f"[Lark Webhook] 解密后的事件: {event_data}")
+                logger.debug(
+                    t(
+                        "core-platform-sources-lark-server-debug_decrypted_event",
+                        event_data=event_data,
+                    )
+                )
             except Exception as e:
-                logger.error(f"[Lark Webhook] 解密事件失败: {e}")
+                logger.error(
+                    t(
+                        "core-platform-sources-lark-server-error_decrypt_event_failed",
+                        e=e,
+                    )
+                )
                 return {"error": "Decryption failed"}, 400
 
         # 验证 token
@@ -180,7 +209,11 @@ class LarkWebhookServer:
             else:
                 token = event_data.get("token", "")
             if token != self.verification_token:
-                logger.error("[Lark Webhook] Verification Token 不匹配。")
+                logger.error(
+                    t(
+                        "core-platform-sources-lark-server-error_verification_token_mismatch"
+                    )
+                )
                 return {"error": "Invalid verification token"}, 401
 
         # 处理 URL 验证 (challenge)
@@ -192,7 +225,13 @@ class LarkWebhookServer:
             try:
                 await self.callback(event_data)
             except Exception as e:
-                logger.error(f"[Lark Webhook] 处理事件回调失败: {e}", exc_info=True)
+                logger.error(
+                    t(
+                        "core-platform-sources-lark-server-error_process_event_callback_failed",
+                        e=e,
+                    ),
+                    exc_info=True,
+                )
                 return {"error": "Event processing failed"}, 500
 
         return {}

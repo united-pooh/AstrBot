@@ -20,6 +20,7 @@ from astrbot.core.astr_main_agent_resources import (
     SEND_MESSAGE_TO_USER_TOOL,
 )
 from astrbot.core.cron.events import CronMessageEvent
+from astrbot.core.lang import t
 from astrbot.core.message.message_event_result import (
     CommandResult,
     MessageChain,
@@ -29,7 +30,6 @@ from astrbot.core.platform.message_session import MessageSession
 from astrbot.core.provider.entites import ProviderRequest
 from astrbot.core.provider.register import llm_tools
 from astrbot.core.utils.history_saver import persist_agent_history
-from astrbot.core import t
 
 
 class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
@@ -335,13 +335,21 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
                                 )
                             except Exception as e:
                                 logger.error(
-                                    t("tool-send-message-failed", error=str(e), traceback=traceback.format_exc()),
+                                    t(
+                                        "tool-send-message-failed",
+                                        error=str(e),
+                                        traceback=traceback.format_exc(),
+                                    ),
                                     exc_info=True,
                                 )
                     yield None
             except asyncio.TimeoutError:
                 raise Exception(
-                    t("tool-execution-timeout",tool_name=tool.name,timeout=tool_call_timeout or run_context.tool_call_timeout)
+                    t(
+                        "tool-execution-timeout",
+                        tool_name=tool.name,
+                        timeout=tool_call_timeout or run_context.tool_call_timeout,
+                    )
                 )
             except StopAsyncIteration:
                 break

@@ -20,13 +20,16 @@ from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.api.message_components import Image, Plain, Record
 from astrbot.api.platform import AstrBotMessage, PlatformMetadata
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.io import download_image_by_url, file_to_base64
 from astrbot.core.utils.tencent_record_helper import wav_to_tencent_silk
 
 
 class QQOfficialMessageEvent(AstrMessageEvent):
-    MARKDOWN_NOT_ALLOWED_ERROR = "不允许发送原生 markdown"
+    MARKDOWN_NOT_ALLOWED_ERROR = t(
+        "core-platform-sources-qqofficial-qqofficial_message_event-markdown_not_allowed"
+    )
 
     def __init__(
         self,
@@ -80,7 +83,13 @@ class QQOfficialMessageEvent(AstrMessageEvent):
                 ret = await self._post_send()
 
         except Exception as e:
-            logger.error(f"发送流式消息时出错: {e}", exc_info=True)
+            logger.error(
+                t(
+                    "core-platform-sources-qqofficial-qqofficial_message_event-streaming_send_error",
+                    e=e,
+                ),
+                exc_info=True,
+            )
             self.send_buffer = None
 
         return await super().send_streaming(generator, use_fallback)
@@ -98,7 +107,12 @@ class QQOfficialMessageEvent(AstrMessageEvent):
             | botpy.message.DirectMessage
             | botpy.message.C2CMessage,
         ):
-            logger.warning(f"[QQOfficial] 不支持的消息源类型: {type(source)}")
+            logger.warning(
+                t(
+                    "core-platform-sources-qqofficial-qqofficial_message_event-unsupported_source_type",
+                    source=type(source),
+                )
+            )
             return None
 
         (
@@ -131,7 +145,11 @@ class QQOfficialMessageEvent(AstrMessageEvent):
         match source:
             case botpy.message.GroupMessage():
                 if not source.group_openid:
-                    logger.error("[QQOfficial] GroupMessage 缺少 group_openid")
+                    logger.error(
+                        t(
+                            "core-platform-sources-qqofficial-qqofficial_message_event-missing_group_openid"
+                        )
+                    )
                     return None
 
                 if image_base64:
@@ -251,7 +269,9 @@ class QQOfficialMessageEvent(AstrMessageEvent):
                 raise
 
             logger.warning(
-                "[QQOfficial] markdown 发送被拒绝，回退到 content 模式重试。"
+                t(
+                    "core-platform-sources-qqofficial-qqofficial_message_event-markdown_rejected_fallback"
+                )
             )
             fallback_payload = payload.copy()
             fallback_payload["markdown"] = None
@@ -341,7 +361,12 @@ class QQOfficialMessageEvent(AstrMessageEvent):
 
             if result:
                 if not isinstance(result, dict):
-                    logger.error(f"上传文件响应格式错误: {result}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-qqofficial-qqofficial_message_event-upload_response_format_error",
+                            result=result,
+                        )
+                    )
                     return None
 
                 return Media(
@@ -350,7 +375,12 @@ class QQOfficialMessageEvent(AstrMessageEvent):
                     ttl=result.get("ttl", 0),
                 )
         except Exception as e:
-            logger.error(f"上传请求错误: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-qqofficial-qqofficial_message_event-upload_request_error",
+                    e=e,
+                )
+            )
 
         return None
 
@@ -422,10 +452,24 @@ class QQOfficialMessageEvent(AstrMessageEvent):
                             record_file_path = record_tecent_silk_path
                         else:
                             record_file_path = None
-                            logger.error("转换音频格式时出错：音频时长不大于0")
+                            logger.error(
+                                t(
+                                    "core-platform-sources-qqofficial-qqofficial_message_event-audio_duration_invalid"
+                                )
+                            )
                     except Exception as e:
-                        logger.error(f"处理语音时出错: {e}")
+                        logger.error(
+                            t(
+                                "core-platform-sources-qqofficial-qqofficial_message_event-voice_processing_error",
+                                e=e,
+                            )
+                        )
                         record_file_path = None
             else:
-                logger.debug(f"qq_official 忽略 {i.type}")
+                logger.debug(
+                    t(
+                        "core-platform-sources-qqofficial-qqofficial_message_event-ignoring_element_type",
+                        i=i,
+                    )
+                )
         return plain_text, image_base64, image_file_path, record_file_path

@@ -11,6 +11,7 @@ from astrbot.core import sp
 from astrbot.core.agent.message import AssistantMessageSegment, UserMessageSegment
 from astrbot.core.db import BaseDatabase
 from astrbot.core.db.po import Conversation, ConversationV2
+from astrbot.core.lang import t
 
 
 class ConversationManager:
@@ -53,7 +54,11 @@ class ConversationManager:
                 from astrbot.core import logger
 
                 logger.error(
-                    f"会话删除回调执行失败 (session: {unified_msg_origin}): {e}",
+                    t(
+                        "core-conversation_mgr-session_delete_callback_failed",
+                        unified_msg_origin=unified_msg_origin,
+                        e=e,
+                    ),
                 )
 
     def _convert_conv_from_v2_to_v1(self, conv_v2: ConversationV2) -> Conversation:
@@ -397,9 +402,16 @@ class ConversationManager:
                         record["tool_calls"],
                         ensure_ascii=False,
                     )
-                    temp_contexts.append(f"Assistant: [函数调用] {tool_calls_str}")
+                    temp_contexts.append(
+                        t(
+                            "core-conversation_mgr-append_function_call_msg",
+                            tool_calls_str=tool_calls_str,
+                        )
+                    )
                 else:
-                    temp_contexts.append("Assistant: [未知的内容]")
+                    temp_contexts.append(
+                        t("core-conversation_mgr-append_unknown_content_msg")
+                    )
                 contexts_groups.insert(0, temp_contexts)
                 temp_contexts = []
 

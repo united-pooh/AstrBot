@@ -9,6 +9,7 @@ from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.api.message_components import Image, Plain, Record
 from astrbot.api.platform import AstrBotMessage, PlatformMetadata
+from astrbot.core.lang import t
 from astrbot.core.utils.media_utils import convert_audio_to_amr
 
 
@@ -105,12 +106,27 @@ class WeixinOfficialAccountPlatformEvent(AstrMessageEvent):
                     try:
                         response = self.client.media.upload("image", f)
                     except Exception as e:
-                        logger.error(f"微信公众平台上传图片失败: {e}")
+                        logger.error(
+                            t(
+                                "core-platform-sources-weixin_official_account-weixin_offacc_event-image_upload_failure",
+                                e=e,
+                            )
+                        )
                         await self.send(
-                            MessageChain().message(f"微信公众平台上传图片失败: {e}"),
+                            MessageChain().message(
+                                t(
+                                    "core-platform-sources-weixin_official_account-weixin_offacc_event-image_upload_error_message",
+                                    e=e,
+                                )
+                            ),
                         )
                         return
-                    logger.debug(f"微信公众平台上传图片返回: {response}")
+                    logger.debug(
+                        t(
+                            "core-platform-sources-weixin_official_account-weixin_offacc_event-image_upload_response_debug",
+                            response=response,
+                        )
+                    )
 
                     if active_send_mode:
                         self.client.message.send_image(
@@ -136,14 +152,27 @@ class WeixinOfficialAccountPlatformEvent(AstrMessageEvent):
                         try:
                             response = self.client.media.upload("voice", f)
                         except Exception as e:
-                            logger.error(f"微信公众平台上传语音失败: {e}")
+                            logger.error(
+                                t(
+                                    "core-platform-sources-weixin_official_account-weixin_offacc_event-voice_upload_failure",
+                                    e=e,
+                                )
+                            )
                             await self.send(
                                 MessageChain().message(
-                                    f"微信公众平台上传语音失败: {e}"
+                                    t(
+                                        "core-platform-sources-weixin_official_account-weixin_offacc_event-voice_upload_error_message",
+                                        e=e,
+                                    )
                                 ),
                             )
                             return
-                        logger.info(f"微信公众平台上传语音返回: {response}")
+                        logger.info(
+                            t(
+                                "core-platform-sources-weixin_official_account-weixin_offacc_event-voice_upload_response_info",
+                                response=response,
+                            )
+                        )
 
                         if active_send_mode:
                             self.client.message.send_voice(
@@ -168,10 +197,20 @@ class WeixinOfficialAccountPlatformEvent(AstrMessageEvent):
                         try:
                             os.remove(record_path_amr)
                         except OSError as e:
-                            logger.warning(f"删除临时音频文件失败: {e}")
+                            logger.warning(
+                                t(
+                                    "core-platform-sources-weixin_official_account-weixin_offacc_event-temp_audio_deletion_failure",
+                                    e=e,
+                                )
+                            )
 
             else:
-                logger.warning(f"还没实现这个消息类型的发送逻辑: {comp.type}。")
+                logger.warning(
+                    t(
+                        "core-platform-sources-weixin_official_account-weixin_offacc_event-unimplemented_send_type",
+                        comp=comp,
+                    )
+                )
 
         await super().send(message)
 

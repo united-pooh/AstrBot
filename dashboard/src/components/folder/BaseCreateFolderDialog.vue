@@ -31,6 +31,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import type { CreateFolderData } from './types';
+import { t } from '@/i18n/composables';
 
 interface DefaultLabels {
     title: string;
@@ -42,12 +43,12 @@ interface DefaultLabels {
 }
 
 const defaultLabels: DefaultLabels = {
-    title: '创建文件夹',
-    nameLabel: '名称',
-    descriptionLabel: '描述',
-    nameRequired: '请输入文件夹名称',
-    cancelButton: '取消',
-    createButton: '创建'
+    title: t('src.components.folder.basecreatefolderdialog.title_create_folder'),
+    nameLabel: t('src.components.folder.basecreatefolderdialog.label_name'),
+    descriptionLabel: t('src.components.folder.basecreatefolderdialog.label_description'),
+    nameRequired: t('src.components.folder.basecreatefolderdialog.error_name_required'),
+    cancelButton: t('src.components.folder.basecreatefolderdialog.button_cancel'),
+    createButton: t('src.components.folder.basecreatefolderdialog.button_create')
 };
 
 export default defineComponent({
@@ -130,3 +131,4 @@ export default defineComponent({
     }
 });
 </script>
+

@@ -7,6 +7,7 @@ import uuid
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.api.message_components import File, Image, Json, Plain, Record
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
 from .webchat_queue_mgr import webchat_queue_mgr
@@ -116,7 +117,12 @@ class WebChatMessageEvent(AstrMessageEvent):
                     },
                 )
             else:
-                logger.debug(f"webchat 忽略: {comp.type}")
+                logger.debug(
+                    t(
+                        "core-platform-sources-webchat-webchat_event-component_ignored",
+                        comp=comp,
+                    )
+                )
 
         return data
 

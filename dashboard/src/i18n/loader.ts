@@ -1,3 +1,4 @@
+import { t } from '@/i18n/composables';
 /**
  * Dynamic I18n Loader
  * 动态国际化加载器，支持按需加载和缓存机制
@@ -89,7 +90,7 @@ export class I18nLoader {
 
     const moduleInfo = this.moduleRegistry.get(moduleName);
     if (!moduleInfo) {
-      console.warn(`模块 ${moduleName} 未注册`);
+      console.warn(t('src.i18n.loader.module_not_registered', { moduleName: moduleName }));
       return {};
     }
 
@@ -108,7 +109,7 @@ export class I18nLoader {
 
       return data;
     } catch (error) {
-      console.error(`加载模块 ${moduleName} 失败:`, error);
+      console.error(t('src.i18n.loader.failed_to_load_module', { moduleName: moduleName }), error);
       
       // 回退方案：尝试使用fetch（开发环境）
       try {
@@ -130,7 +131,7 @@ export class I18nLoader {
 
         return data;
       } catch (fetchError) {
-        console.error(`回退fetch加载也失败:`, fetchError);
+        console.error(t('src.i18n.loader.fallback_fetch_failed'), fetchError);
         return {};
       }
     }
@@ -226,8 +227,8 @@ export class I18nLoader {
       const fullPath = nameParts.join('.');
       
       if (current[finalKey] && pathRegistry.has(fullPath)) {
-        const existingModule = pathRegistry.get(fullPath);
-        console.warn(`⚠️ I18n模块路径冲突: "${fullPath}" 已被模块 "${existingModule}" 占用，模块 "${moduleName}" 可能会覆盖部分键值`);
+        const existingModule = pathRegistry.get(fullPath) ?? '';
+        console.warn(t('src.i18n.loader.i18n_module_path_conflict', { fullPath: fullPath, existingModule: existingModule, moduleName: moduleName }));
       }
       
       // 记录路径和模块名的映射

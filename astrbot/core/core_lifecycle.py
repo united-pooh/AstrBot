@@ -24,6 +24,7 @@ from astrbot.core.conversation_mgr import ConversationManager
 from astrbot.core.cron import CronJobManager
 from astrbot.core.db import BaseDatabase
 from astrbot.core.knowledge_base.kb_mgr import KnowledgeBaseManager
+from astrbot.core.lang import t
 from astrbot.core.persona_mgr import PersonaManager
 from astrbot.core.pipeline.scheduler import PipelineContext, PipelineScheduler
 from astrbot.core.platform.manager import PlatformManager
@@ -283,7 +284,13 @@ class AstrBotCoreLifecycle:
             pass  # 任务被取消, 静默处理
         except Exception as e:
             # 获取完整的异常堆栈信息, 按行分割并记录到日志中
-            logger.error(f"------- 任务 {task.get_name()} 发生错误: {e}")
+            logger.error(
+                t(
+                    "core-core_lifecycle-error_task_failed",
+                    get_name=task.get_name(),
+                    e=e,
+                )
+            )
             for line in traceback.format_exc().split("\n"):
                 logger.error(f"|    {line}")
             logger.error("-------")
@@ -294,7 +301,7 @@ class AstrBotCoreLifecycle:
         用load加载事件总线和任务并初始化, 执行启动完成事件钩子
         """
         self._load()
-        logger.info("AstrBot 启动完成。")
+        logger.info(t("core-core_lifecycle-startup_completed"))
 
         # 执行启动完成事件钩子
         handlers = star_handlers_registry.get_handlers_by_event_type(
@@ -330,7 +337,11 @@ class AstrBotCoreLifecycle:
             except Exception as e:
                 logger.warning(traceback.format_exc())
                 logger.warning(
-                    f"插件 {plugin.name} 未被正常终止 {e!s}, 可能会导致资源泄露等问题。",
+                    t(
+                        "core-core_lifecycle-warning_plugin_not_terminated_properly",
+                        plugin=plugin,
+                        e=e,
+                    ),
                 )
 
         await self.provider_manager.terminate()
@@ -345,7 +356,13 @@ class AstrBotCoreLifecycle:
             except asyncio.CancelledError:
                 pass
             except Exception as e:
-                logger.error(f"任务 {task.get_name()} 发生错误: {e}")
+                logger.error(
+                    t(
+                        "core-core_lifecycle-error_task_error",
+                        get_name=task.get_name(),
+                        e=e,
+                    )
+                )
 
     async def restart(self) -> None:
         """重启 AstrBot 核心生命周期管理类, 终止各个管理器并重新加载平台实例"""
@@ -397,7 +414,9 @@ class AstrBotCoreLifecycle:
         """
         ab_config = self.astrbot_config_mgr.confs.get(conf_id)
         if not ab_config:
-            raise ValueError(f"配置文件 {conf_id} 不存在")
+            raise ValueError(
+                t("core-core_lifecycle-config_file_not_found", conf_id=conf_id)
+            )
         scheduler = PipelineScheduler(
             PipelineContext(ab_config, self.plugin_manager, conf_id),
         )

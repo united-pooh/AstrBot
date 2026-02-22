@@ -337,7 +337,7 @@ export default {
           this.platformStats = stats;
         }
       }).catch((err) => {
-        console.warn('获取平台统计信息失败:', err);
+        console.warn(t('src.views.platformpage.fetch_platform_stats_failed'), err);
       });
     },
 

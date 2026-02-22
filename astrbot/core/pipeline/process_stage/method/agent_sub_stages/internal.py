@@ -13,6 +13,7 @@ from astrbot.core.astr_main_agent import (
     MainAgentBuildResult,
     build_main_agent,
 )
+from astrbot.core.lang import t
 from astrbot.core.message.components import File, Image
 from astrbot.core.message.message_event_result import (
     MessageChain,
@@ -216,7 +217,11 @@ class InternalAgentSubStage(Stage):
                 # 检测 Live Mode
                 if action_type == "live":
                     # Live Mode: 使用 run_live_agent
-                    logger.info("[Internal Agent] 检测到 Live Mode，启用 TTS 处理")
+                    logger.info(
+                        t(
+                            "core-pipeline-process_stage-method-agent_sub_stages-internal-live_mode_tts_enabled"
+                        )
+                    )
 
                     # 获取 TTS Provider
                     tts_provider = (
@@ -227,7 +232,9 @@ class InternalAgentSubStage(Stage):
 
                     if not tts_provider:
                         logger.warning(
-                            "[Live Mode] TTS Provider 未配置，将使用普通流式模式"
+                            t(
+                                "core-pipeline-process_stage-method-agent_sub_stages-internal-tts_provider_not_configured"
+                            )
                         )
 
                     # 使用 run_live_agent，总是使用流式响应
@@ -350,7 +357,11 @@ class InternalAgentSubStage(Stage):
             return
 
         if not llm_response.completion_text and not req.tool_calls_result:
-            logger.debug("LLM 响应为空，不保存记录。")
+            logger.debug(
+                t(
+                    "core-pipeline-process_stage-method-agent_sub_stages-internal-empty_llm_response_no_save"
+                )
+            )
             return
 
         message_to_save = []

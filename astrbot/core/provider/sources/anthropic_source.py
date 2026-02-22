@@ -12,6 +12,7 @@ from anthropic.types.usage import Usage
 from astrbot import logger
 from astrbot.api.provider import Provider
 from astrbot.core.agent.message import ContentPart, ImageURLPart, TextPart
+from astrbot.core.lang import t
 from astrbot.core.provider.entities import LLMResponse, TokenUsage
 from astrbot.core.provider.func_tool_manager import ToolSet
 from astrbot.core.utils.io import download_image_by_url
@@ -26,7 +27,7 @@ from ..register import register_provider_adapter
 
 @register_provider_adapter(
     "anthropic_chat_completion",
-    "Anthropic Claude API 提供商适配器",
+    t("core-provider-sources-anthropic_source-anthropic_claude_api_provider_adapter"),
 )
 class ProviderAnthropic(Provider):
     def __init__(
@@ -254,7 +255,11 @@ class ProviderAnthropic(Provider):
         logger.debug(f"completion: {completion}")
 
         if len(completion.content) == 0:
-            raise Exception("API 返回的 completion 为空。")
+            raise Exception(
+                t(
+                    "core-provider-sources-anthropic_source-api_returned_empty_completion"
+                )
+            )
 
         llm_response = LLMResponse(role="assistant")
 
@@ -278,7 +283,12 @@ class ProviderAnthropic(Provider):
 
         # TODO(Soulter): 处理 end_turn 情况
         if not llm_response.completion_text and not llm_response.tools_call_args:
-            raise Exception(f"Anthropic API 返回的 completion 无法解析：{completion}。")
+            raise Exception(
+                t(
+                    "core-provider-sources-anthropic_source-anthropic_api_completion_parse_failed",
+                    completion=completion,
+                )
+            )
 
         return llm_response
 
@@ -399,7 +409,12 @@ class ProviderAnthropic(Provider):
                             )
                         except json.JSONDecodeError:
                             # JSON 解析失败，跳过这个工具调用
-                            logger.warning(f"工具调用参数 JSON 解析失败: {tool_info}")
+                            logger.warning(
+                                t(
+                                    "core-provider-sources-anthropic_source-tool_call_json_parse_failed",
+                                    tool_info=tool_info,
+                                )
+                            )
 
                         # 清理缓冲区
                         del tool_use_buffer[event.index]
@@ -567,7 +582,12 @@ class ProviderAnthropic(Provider):
                 image_data, mime_type = await self.encode_image_bs64(image_url)
 
             if not image_data:
-                logger.warning(f"图片 {image_url} 得到的结果为空，将忽略。")
+                logger.warning(
+                    t(
+                        "core-provider-sources-anthropic_source-image_result_empty_ignored",
+                        image_url=image_url,
+                    )
+                )
                 return None
 
             return {
@@ -590,7 +610,14 @@ class ProviderAnthropic(Provider):
             content.append({"type": "text", "text": text})
         elif image_urls:
             # 如果没有文本但有图片，添加占位文本
-            content.append({"type": "text", "text": "[图片]"})
+            content.append(
+                {
+                    "type": "text",
+                    "text": t(
+                        "core-provider-sources-anthropic_source-image_placeholder_text"
+                    ),
+                }
+            )
         elif extra_user_content_parts:
             # 如果只有额外内容块，也需要添加占位文本
             content.append({"type": "text", "text": " "})
@@ -605,7 +632,12 @@ class ProviderAnthropic(Provider):
                     if image_dict:
                         content.append(image_dict)
                 else:
-                    raise ValueError(f"不支持的额外内容块类型: {type(block)}")
+                    raise ValueError(
+                        t(
+                            "core-provider-sources-anthropic_source-unsupported_content_block_type",
+                            block=type(block),
+                        )
+                    )
 
         # 3. 图片内容
         if image_urls:

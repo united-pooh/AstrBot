@@ -20,6 +20,7 @@ from astrbot.api.platform import (
     PlatformMetadata,
 )
 from astrbot.core import sp
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import MessageSesion
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.io import download_file
@@ -47,7 +48,9 @@ class MyEventHandler(dingtalk_stream.EventHandler):
 
 
 @register_platform_adapter(
-    "dingtalk", "钉钉机器人官方 API 适配器", support_streaming_message=True
+    "dingtalk",
+    t("core-platform-sources-dingtalk-dingtalk_adapter-dingtalk_official_bot_adapter"),
+    support_streaming_message=True,
 )
 class DingtalkPlatformAdapter(Platform):
     def __init__(
@@ -110,7 +113,9 @@ class DingtalkPlatformAdapter(Platform):
             staff_id = await self._get_sender_staff_id(session)
             if not staff_id:
                 logger.warning(
-                    "钉钉私聊会话缺少 staff_id 映射，回退使用 session_id 作为 userId 发送",
+                    t(
+                        "core-platform-sources-dingtalk-dingtalk_adapter-private_chat_fallback_to_session_id"
+                    ),
                 )
                 staff_id = session.session_id
             await self.send_message_chain_to_user(
@@ -139,7 +144,9 @@ class DingtalkPlatformAdapter(Platform):
     def meta(self) -> PlatformMetadata:
         return PlatformMetadata(
             name="dingtalk",
-            description="钉钉机器人官方 API 适配器",
+            description=t(
+                "core-platform-sources-dingtalk-dingtalk_adapter-description_official_bot_adapter"
+            ),
             id=cast(str, self.config.get("id")),
             support_streaming_message=True,
             support_proactive_message=True,
@@ -229,7 +236,12 @@ class DingtalkPlatformAdapter(Platform):
                         sender_staff_id,
                     )
         except Exception as e:
-            logger.warning(f"保存钉钉会话映射失败: {e}")
+            logger.warning(
+                t(
+                    "core-platform-sources-dingtalk-dingtalk_adapter-failed_save_session_mapping",
+                    e=e,
+                )
+            )
 
     async def download_ding_file(
         self,
@@ -266,7 +278,11 @@ class DingtalkPlatformAdapter(Platform):
         ):
             if resp.status != 200:
                 logger.error(
-                    f"下载钉钉文件失败: {resp.status}, {await resp.text()}",
+                    t(
+                        "core-platform-sources-dingtalk-dingtalk_adapter-download_file_failed",
+                        status=resp.status,
+                        text=await resp.text(),
+                    ),
                 )
                 return ""
             resp_data = await resp.json()
@@ -283,7 +299,12 @@ class DingtalkPlatformAdapter(Platform):
             if access_token:
                 return access_token
         except Exception as e:
-            logger.warning(f"通过 dingtalk_stream 获取 access_token 失败: {e}")
+            logger.warning(
+                t(
+                    "core-platform-sources-dingtalk-dingtalk_adapter-get_access_token_stream_failed",
+                    e=e,
+                )
+            )
 
         payload = {"appKey": self.client_id, "appSecret": self.client_secret}
         async with aiohttp.ClientSession() as session:
@@ -293,7 +314,11 @@ class DingtalkPlatformAdapter(Platform):
             ) as resp:
                 if resp.status != 200:
                     logger.error(
-                        f"获取钉钉机器人 access_token 失败: {resp.status}, {await resp.text()}",
+                        t(
+                            "core-platform-sources-dingtalk-dingtalk_adapter-get_bot_access_token_failed",
+                            status=resp.status,
+                            text=await resp.text(),
+                        ),
                     )
                     return ""
                 data = await resp.json()
@@ -309,7 +334,12 @@ class DingtalkPlatformAdapter(Platform):
             )
             return cast(str, staff_id or "")
         except Exception as e:
-            logger.warning(f"读取钉钉 staff_id 映射失败: {e}")
+            logger.warning(
+                t(
+                    "core-platform-sources-dingtalk-dingtalk_adapter-read_staff_id_mapping_failed",
+                    e=e,
+                )
+            )
             return ""
 
     async def _send_group_message(
@@ -321,7 +351,11 @@ class DingtalkPlatformAdapter(Platform):
     ) -> None:
         access_token = await self.get_access_token()
         if not access_token:
-            logger.error("钉钉群消息发送失败: access_token 为空")
+            logger.error(
+                t(
+                    "core-platform-sources-dingtalk-dingtalk_adapter-group_message_send_failed_token_empty"
+                )
+            )
             return
 
         payload = {
@@ -342,7 +376,11 @@ class DingtalkPlatformAdapter(Platform):
             ) as resp:
                 if resp.status != 200:
                     logger.error(
-                        f"钉钉群消息发送失败: {resp.status}, {await resp.text()}",
+                        t(
+                            "core-platform-sources-dingtalk-dingtalk_adapter-send_group_message_failed",
+                            status=resp.status,
+                            text=await resp.text(),
+                        ),
                     )
 
     async def _send_private_message(
@@ -354,7 +392,11 @@ class DingtalkPlatformAdapter(Platform):
     ) -> None:
         access_token = await self.get_access_token()
         if not access_token:
-            logger.error("钉钉私聊消息发送失败: access_token 为空")
+            logger.error(
+                t(
+                    "core-platform-sources-dingtalk-dingtalk_adapter-send_private_msg_access_token_empty"
+                )
+            )
             return
 
         payload = {
@@ -375,7 +417,11 @@ class DingtalkPlatformAdapter(Platform):
             ) as resp:
                 if resp.status != 200:
                     logger.error(
-                        f"钉钉私聊消息发送失败: {resp.status}, {await resp.text()}",
+                        t(
+                            "core-platform-sources-dingtalk-dingtalk_adapter-send_private_message_failed",
+                            status=resp.status,
+                            text=await resp.text(),
+                        ),
                     )
 
     def _safe_remove_file(self, file_path: str | None) -> None:
@@ -386,7 +432,13 @@ class DingtalkPlatformAdapter(Platform):
             if p.exists() and p.is_file():
                 p.unlink()
         except Exception as e:
-            logger.warning(f"清理临时文件失败: {file_path}, {e}")
+            logger.warning(
+                t(
+                    "core-platform-sources-dingtalk-dingtalk_adapter-cleanup_temp_file_failed",
+                    file_path=file_path,
+                    e=e,
+                )
+            )
 
     async def _prepare_voice_for_dingtalk(self, input_path: str) -> tuple[str, bool]:
         """优先转换为 OGG(Opus)，不可用时回退 AMR。"""
@@ -398,7 +450,12 @@ class DingtalkPlatformAdapter(Platform):
             converted = await convert_audio_format(input_path, "ogg")
             return converted, converted != input_path
         except Exception as e:
-            logger.warning(f"钉钉语音转 OGG 失败，回退 AMR: {e}")
+            logger.warning(
+                t(
+                    "core-platform-sources-dingtalk-dingtalk_adapter-voice_ogg_conversion_failed",
+                    e=e,
+                )
+            )
             converted = await convert_audio_format(input_path, "amr")
             return converted, converted != input_path
 
@@ -406,7 +463,11 @@ class DingtalkPlatformAdapter(Platform):
         media_file_path = Path(file_path)
         access_token = await self.get_access_token()
         if not access_token:
-            logger.error("钉钉媒体上传失败: access_token 为空")
+            logger.error(
+                t(
+                    "core-platform-sources-dingtalk-dingtalk_adapter-media_upload_access_token_empty"
+                )
+            )
             return ""
 
         form = aiohttp.FormData()
@@ -423,12 +484,21 @@ class DingtalkPlatformAdapter(Platform):
             ) as resp:
                 if resp.status != 200:
                     logger.error(
-                        f"钉钉媒体上传失败: {resp.status}, {await resp.text()}"
+                        t(
+                            "core-platform-sources-dingtalk-dingtalk_adapter-media_upload_failed",
+                            status=resp.status,
+                            text=await resp.text(),
+                        )
                     )
                     return ""
                 data = await resp.json()
                 if data.get("errcode") != 0:
-                    logger.error(f"钉钉媒体上传失败: {data}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-dingtalk-dingtalk_adapter-media_upload_failed_response",
+                            data=data,
+                        )
+                    )
                     return ""
                 return cast(str, data.get("media_id", ""))
 
@@ -504,7 +574,12 @@ class DingtalkPlatformAdapter(Platform):
                         },
                     )
                 except Exception as e:
-                    logger.warning(f"钉钉语音发送失败: {e}")
+                    logger.warning(
+                        t(
+                            "core-platform-sources-dingtalk-dingtalk_adapter-send_voice_failed",
+                            e=e,
+                        )
+                    )
                     continue
                 finally:
                     if converted_audio:
@@ -535,7 +610,12 @@ class DingtalkPlatformAdapter(Platform):
                         },
                     )
                 except Exception as e:
-                    logger.warning(f"钉钉视频发送失败: {e}")
+                    logger.warning(
+                        t(
+                            "core-platform-sources-dingtalk-dingtalk_adapter-send_video_failed",
+                            e=e,
+                        )
+                    )
                     continue
                 finally:
                     self._safe_remove_file(cover_path)
@@ -610,7 +690,11 @@ class DingtalkPlatformAdapter(Platform):
             )
             staff_id = sender_staff_id or await self._get_sender_staff_id(session)
             if not staff_id:
-                logger.error("钉钉私聊回复失败: 缺少 sender_staff_id")
+                logger.error(
+                    t(
+                        "core-platform-sources-dingtalk-dingtalk_adapter-reply_private_missing_sender_id"
+                    )
+                )
                 return
             await self.send_message_chain_to_user(
                 staff_id=staff_id,
@@ -643,9 +727,18 @@ class DingtalkPlatformAdapter(Platform):
                     task.result()
             except Exception as e:
                 if "Graceful shutdown" in str(e):
-                    logger.info("钉钉适配器已被关闭")
+                    logger.info(
+                        t(
+                            "core-platform-sources-dingtalk-dingtalk_adapter-adapter_shutdown"
+                        )
+                    )
                     return
-                logger.error(f"钉钉机器人启动失败: {e}")
+                logger.error(
+                    t(
+                        "core-platform-sources-dingtalk-dingtalk_adapter-bot_startup_failed",
+                        e=e,
+                    )
+                )
 
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, start_client, loop)

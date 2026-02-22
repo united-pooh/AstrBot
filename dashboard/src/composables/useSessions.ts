@@ -2,6 +2,7 @@ import { ref, computed } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import { buildWebchatUmoDetails, getStoredSelectedChatConfigId } from '@/utils/chatConfigBinding';
+import { t } from '@/i18n/composables';
 
 export interface Session {
     session_id: string;
@@ -132,7 +133,7 @@ export function useSessions(chatboxMode: boolean = false) {
             }
             editTitleDialog.value = false;
         } catch (err) {
-            console.error('重命名会话失败:', err);
+            console.error(t('src.composables.usesessions.rename_session_failed'), err);
         }
     }
 
@@ -173,3 +174,4 @@ export function useSessions(chatboxMode: boolean = false) {
         newChat
     };
 }
+

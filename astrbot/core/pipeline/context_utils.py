@@ -3,6 +3,7 @@ import traceback
 import typing as T
 
 from astrbot import logger
+from astrbot.core.lang import t
 from astrbot.core.message.message_event_result import CommandResult, MessageEventResult
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 from astrbot.core.star.star import star_map
@@ -36,7 +37,9 @@ async def call_handler(
     try:
         ready_to_call = handler(event, *args, **kwargs)
     except TypeError:
-        logger.error("处理函数参数不匹配，请检查 handler 的定义。", exc_info=True)
+        logger.error(
+            t("core-pipeline-context_utils-handler_params_mismatch"), exc_info=True
+        )
 
     if not ready_to_call:
         return
@@ -101,7 +104,11 @@ async def call_event_hook(
 
         if event.is_stopped():
             logger.info(
-                f"{star_map[handler.handler_module_path].name} - {handler.handler_name} 终止了事件传播。",
+                t(
+                    "core-pipeline-context_utils-handler_terminated_propagation",
+                    name=star_map[handler.handler_module_path].name,
+                    handler_name=handler.handler_name,
+                ),
             )
             return True
 

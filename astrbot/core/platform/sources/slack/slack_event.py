@@ -14,6 +14,7 @@ from astrbot.api.message_components import (
     Plain,
 )
 from astrbot.api.platform import Group, MessageMember
+from astrbot.core.lang import t
 
 
 class SlackMessageEvent(AstrMessageEvent):
@@ -43,7 +44,9 @@ class SlackMessageEvent(AstrMessageEvent):
                 return {
                     "type": "image",
                     "image_url": url,
-                    "alt_text": "图片",
+                    "alt_text": t(
+                        "core-platform-sources-slack-slack_event-image_alt_text"
+                    ),
                 }
             path = await segment.convert_to_file_path()
             response = await web_client.files_upload_v2(
@@ -54,7 +57,12 @@ class SlackMessageEvent(AstrMessageEvent):
                 logger.error(f"Slack file upload failed: {response['error']}")
                 return {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": "图片上传失败"},
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": t(
+                            "core-platform-sources-slack-slack_event-image_upload_failed_message"
+                        ),
+                    },
                 }
             image_url = cast(list, response["files"])[0]["url_private"]
             logger.debug(f"Slack file upload response: {response}")
@@ -63,7 +71,9 @@ class SlackMessageEvent(AstrMessageEvent):
                 "slack_file": {
                     "url": image_url,
                 },
-                "alt_text": "图片",
+                "alt_text": t(
+                    "core-platform-sources-slack-slack_event-image_alt_text_duplicate"
+                ),
             }
         if isinstance(segment, File):
             # upload file
@@ -76,14 +86,23 @@ class SlackMessageEvent(AstrMessageEvent):
                 logger.error(f"Slack file upload failed: {response['error']}")
                 return {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": "文件上传失败"},
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": t(
+                            "core-platform-sources-slack-slack_event-file_upload_failed"
+                        ),
+                    },
                 }
             file_url = cast(list, response["files"])[0]["permalink"]
             return {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"文件: <{file_url}|{segment.name or '文件'}>",
+                    "text": t(
+                        "core-platform-sources-slack-slack_event-file_link_with_name",
+                        file_url=file_url,
+                        file_link_with_name=segment.name or file_url,
+                    ),
                 },
             }
 
@@ -154,9 +173,18 @@ class SlackMessageEvent(AstrMessageEvent):
                 if isinstance(segment, Plain):
                     parts.append(segment.text)
                 elif isinstance(segment, File):
-                    parts.append(f" [文件: {segment.name}] ")
+                    parts.append(
+                        t(
+                            "core-platform-sources-slack-slack_event-file_placeholder",
+                            segment=segment,
+                        )
+                    )
                 elif isinstance(segment, Image):
-                    parts.append(" [图片] ")
+                    parts.append(
+                        t(
+                            "core-platform-sources-slack-slack_event-append_image_indicator"
+                        )
+                    )
             fallback_text = "".join(parts)
 
             if self.get_group_id():

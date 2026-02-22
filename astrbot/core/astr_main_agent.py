@@ -38,6 +38,7 @@ from astrbot.core.astr_main_agent_resources import (
     retrieve_knowledge_base,
 )
 from astrbot.core.conversation_mgr import Conversation
+from astrbot.core.lang import t
 from astrbot.core.message.components import File, Image, Reply
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 from astrbot.core.provider import Provider
@@ -139,10 +140,10 @@ def _select_provider(
     if sel_provider and isinstance(sel_provider, str):
         provider = plugin_context.get_provider_by_id(sel_provider)
         if not provider:
-            logger.error("未找到指定的提供商: %s。", sel_provider)
+            logger.error(t("core-astr_main_agent-provider_not_found"), sel_provider)
         if not isinstance(provider, Provider):
             logger.error(
-                "选择的提供商类型无效(%s)，跳过 LLM 请求处理。", type(provider)
+                t("core-astr_main_agent-invalid_provider_type"), type(provider)
             )
             return None
         return provider
@@ -166,7 +167,7 @@ async def _get_session_conv(
         cid = await conv_mgr.new_conversation(umo, event.get_platform_id())
         conversation = await conv_mgr.get_conversation(umo, cid)
     if not conversation:
-        raise RuntimeError("无法创建新的对话。")
+        raise RuntimeError(t("core-astr_main_agent-cannot_create_conversation"))
     return conversation
 
 
@@ -218,7 +219,7 @@ async def _apply_file_extract(
     if not file_paths:
         return
     if not req.prompt:
-        req.prompt = "总结一下文件里面讲了什么？"
+        req.prompt = t("core-astr_main_agent-file_summary_prompt")
     if config.file_extract_prov == "moonshotai":
         if not config.file_extract_msh_api_key:
             logger.error("Moonshot AI API key for file extract is not set")
@@ -480,7 +481,7 @@ async def _ensure_img_caption(
             )
             req.image_urls = []
     except Exception as exc:  # noqa: BLE001
-        logger.error("处理图片描述失败: %s", exc)
+        logger.error(t("core-astr_main_agent-image_description_failed"), exc)
 
 
 def _append_quoted_image_attachment(req: ProviderRequest, image_path: str) -> None:
@@ -555,7 +556,9 @@ async def _process_quote_message(
             else:
                 logger.warning("No provider found for image captioning in quote.")
         except BaseException as exc:
-            logger.error("处理引用图片失败: %s", exc)
+            logger.error(
+                t("core-astr_main_agent-referenced_image_processing_failed"), exc
+            )
 
     quoted_content = "\n".join(content_parts)
     quoted_text = f"<Quoted Message>\n{quoted_content}\n</Quoted Message>"
@@ -592,7 +595,7 @@ def _append_system_reminders(
                 now = datetime.datetime.now(zoneinfo.ZoneInfo(timezone))
                 current_time = now.strftime("%Y-%m-%d %H:%M (%Z)")
             except Exception as exc:  # noqa: BLE001
-                logger.error("时区设置错误: %s, 使用本地时区", exc)
+                logger.error(t("core-astr_main_agent-timezone_setting_error"), exc)
         if not current_time:
             current_time = (
                 datetime.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M (%Z)")
@@ -654,7 +657,9 @@ def _modalities_fix(provider: Provider, req: ProviderRequest) -> None:
                 "Provider %s does not support image, using placeholder.", provider
             )
             image_count = len(req.image_urls)
-            placeholder = " ".join(["[图片]"] * image_count)
+            placeholder = " ".join(
+                [t("core-astr_main_agent-image_placeholder_generation")] * image_count
+            )
             if req.prompt:
                 req.prompt = f"{placeholder} {req.prompt}"
             else:
@@ -857,13 +862,13 @@ def _get_compress_provider(
     provider = plugin_context.get_provider_by_id(config.llm_compress_provider_id)
     if provider is None:
         logger.warning(
-            "未找到指定的上下文压缩模型 %s，将跳过压缩。",
+            t("core-astr_main_agent-context_compression_model_not_found"),
             config.llm_compress_provider_id,
         )
         return None
     if not isinstance(provider, Provider):
         logger.warning(
-            "指定的上下文压缩模型 %s 不是对话模型，将跳过压缩。",
+            t("core-astr_main_agent-context_compression_model_invalid_type"),
             config.llm_compress_provider_id,
         )
         return None
@@ -920,14 +925,14 @@ async def build_main_agent(
     """
     provider = provider or _select_provider(event, plugin_context)
     if provider is None:
-        logger.info("未找到任何对话模型（提供商），跳过 LLM 请求处理。")
+        logger.info(t("core-astr_main_agent-no_conversation_models_found"))
         return None
 
     if req is None:
         if event.get_extra("provider_request"):
             req = event.get_extra("provider_request")
-            assert isinstance(req, ProviderRequest), (
-                "provider_request 必须是 ProviderRequest 类型。"
+            assert isinstance(req, ProviderRequest), t(
+                "core-astr_main_agent-invalid_provider_request_type"
             )
             if req.conversation:
                 req.contexts = json.loads(req.conversation.history)

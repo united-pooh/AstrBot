@@ -19,6 +19,7 @@ from astrbot.core.computer.tools import (
     LocalPythonTool,
     PythonTool,
 )
+from astrbot.core.lang import t
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.message_session import MessageSession
 from astrbot.core.star.context import Context
@@ -387,7 +388,9 @@ async def retrieve_knowledge_base(
 
         # 如果配置为空列表，明确表示不使用知识库
         if not kb_ids:
-            logger.info(f"[知识库] 会话 {umo} 已被配置为不使用知识库")
+            logger.info(
+                t("core-astr_main_agent_resources-kb_disabled_for_session", umo=umo)
+            )
             return
 
         top_k = session_config.get("top_k", 5)
@@ -400,29 +403,54 @@ async def retrieve_knowledge_base(
             if kb_helper:
                 kb_names.append(kb_helper.kb.kb_name)
             else:
-                logger.warning(f"[知识库] 知识库不存在或未加载: {kb_id}")
+                logger.warning(
+                    t(
+                        "core-astr_main_agent_resources-kb_not_found_or_not_loaded",
+                        kb_id=kb_id,
+                    )
+                )
                 invalid_kb_ids.append(kb_id)
 
         if invalid_kb_ids:
             logger.warning(
-                f"[知识库] 会话 {umo} 配置的以下知识库无效: {invalid_kb_ids}",
+                t(
+                    "core-astr_main_agent_resources-invalid_kb_ids_configured",
+                    umo=umo,
+                    invalid_kb_ids=invalid_kb_ids,
+                ),
             )
 
         if not kb_names:
             return
 
-        logger.debug(f"[知识库] 使用会话级配置，知识库数量: {len(kb_names)}")
+        logger.debug(
+            t(
+                "core-astr_main_agent_resources-using_session_kb_config",
+                kb_names=kb_names,
+            )
+        )
     else:
         kb_names = config.get("kb_names", [])
         top_k = config.get("kb_final_top_k", 5)
-        logger.debug(f"[知识库] 使用全局配置，知识库数量: {len(kb_names)}")
+        logger.debug(
+            t(
+                "core-astr_main_agent_resources-using_global_kb_config",
+                kb_names=kb_names,
+            )
+        )
 
     top_k_fusion = config.get("kb_fusion_top_k", 20)
 
     if not kb_names:
         return
 
-    logger.debug(f"[知识库] 开始检索知识库，数量: {len(kb_names)}, top_k={top_k}")
+    logger.debug(
+        t(
+            "core-astr_main_agent_resources-starting_kb_retrieval",
+            kb_names=kb_names,
+            top_k=top_k,
+        )
+    )
     kb_context = await kb_mgr.retrieve(
         query=query,
         kb_names=kb_names,
@@ -436,7 +464,13 @@ async def retrieve_knowledge_base(
     formatted = kb_context.get("context_text", "")
     if formatted:
         results = kb_context.get("results", [])
-        logger.debug(f"[知识库] 为会话 {umo} 注入了 {len(results)} 条相关知识块")
+        logger.debug(
+            t(
+                "core-astr_main_agent_resources-injected_relevant_chunks",
+                umo=umo,
+                results=results,
+            )
+        )
         return formatted
 
 

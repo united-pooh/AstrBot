@@ -20,6 +20,7 @@ from astrbot.api.platform import (
     PlatformMetadata,
     register_platform_adapter,
 )
+from astrbot.core.lang import t
 from astrbot.core.platform.astr_message_event import MessageSesion
 from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
@@ -34,7 +35,10 @@ else:
     from typing_extensions import override
 
 
-@register_platform_adapter("telegram", "telegram 适配器")
+@register_platform_adapter(
+    "telegram",
+    t("core-platform-sources-telegram-tg_adapter-adapter_registration_decorator"),
+)
 class TelegramPlatformAdapter(Platform):
     def __init__(
         self,
@@ -116,7 +120,13 @@ class TelegramPlatformAdapter(Platform):
     @override
     def meta(self) -> PlatformMetadata:
         id_ = self.config.get("id") or "telegram"
-        return PlatformMetadata(name="telegram", description="telegram 适配器", id=id_)
+        return PlatformMetadata(
+            name="telegram",
+            description=t(
+                "core-platform-sources-telegram-tg_adapter-platform_metadata_telegram"
+            ),
+            id=id_,
+        )
 
     @override
     async def run(self) -> None:
@@ -160,7 +170,12 @@ class TelegramPlatformAdapter(Platform):
                 await self.client.set_my_commands(commands)
 
         except Exception as e:
-            logger.error(f"向 Telegram 注册指令时发生错误: {e!s}")
+            logger.error(
+                t(
+                    "core-platform-sources-telegram-tg_adapter-command_registration_error",
+                    e=e,
+                )
+            )
 
     def collect_commands(self) -> list[BotCommand]:
         """从注册的处理器中收集所有指令"""
@@ -183,8 +198,11 @@ class TelegramPlatformAdapter(Platform):
                     for cmd_name, description in cmd_info_list:
                         if cmd_name in command_dict:
                             logger.warning(
-                                f"命令名 '{cmd_name}' 重复注册，将使用首次注册的定义: "
-                                f"'{command_dict[cmd_name]}'"
+                                t(
+                                    "core-platform-sources-telegram-tg_adapter-duplicate_command_registration",
+                                    cmd_name=cmd_name,
+                                )
+                                + f"'{command_dict[cmd_name]}'"
                             )
                         command_dict.setdefault(cmd_name, description)
 

@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from astrbot.api.platform import AstrBotMessage, MessageMember, MessageType
+from astrbot.core.lang import t
 from astrbot.core.message.components import BaseMessageComponent
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.astr_message_event import MessageSesion
@@ -108,7 +109,7 @@ class StarTools:
                 None,
             )
             if adapter is None:
-                raise ValueError("未找到适配器: AiocqhttpAdapter")
+                raise ValueError(t("core-star-star_tools-adapter_aiocqhttp_not_found"))
             await AiocqhttpMessageEvent.send_message(
                 bot=adapter.bot,
                 message_chain=message_chain,
@@ -116,7 +117,9 @@ class StarTools:
                 session_id=id,
             )
         else:
-            raise ValueError(f"不支持的平台: {platform}")
+            raise ValueError(
+                t("core-star-star_tools-unsupported_platform", platform=platform)
+            )
 
     @classmethod
     async def create_message(
@@ -188,7 +191,7 @@ class StarTools:
                 None,
             )
             if adapter is None:
-                raise ValueError("未找到适配器: AiocqhttpAdapter")
+                raise ValueError(t("core-star-star_tools-adapter_aiocqhttp_missing"))
             event = AiocqhttpMessageEvent(
                 message_str=abm.message_str,
                 message_obj=abm,
@@ -199,7 +202,9 @@ class StarTools:
             event.is_wake = is_wake
             adapter.commit_event(event)
         else:
-            raise ValueError(f"不支持的平台: {platform}")
+            raise ValueError(
+                t("core-star-star_tools-platform_not_supported", platform=platform)
+            )
 
     @classmethod
     def activate_llm_tool(cls, name: str) -> bool:
@@ -288,17 +293,19 @@ class StarTools:
                 module = inspect.getmodule(frame)
 
             if not module:
-                raise RuntimeError("无法获取调用者模块信息")
+                raise RuntimeError(t("core-star-star_tools-cannot_get_caller_module"))
 
             metadata = star_map.get(module.__name__, None)
 
             if not metadata:
-                raise RuntimeError(f"无法获取模块 {module.__name__} 的元数据信息")
+                raise RuntimeError(
+                    t("core-star-star_tools-error_metadata_fetch_failed", module=module)
+                )
 
             plugin_name = metadata.name
 
         if not plugin_name:
-            raise ValueError("无法获取插件名称")
+            raise ValueError(t("core-star-star_tools-cannot_get_plugin_name"))
 
         data_dir = Path(
             os.path.join(get_astrbot_data_path(), "plugin_data", plugin_name),
@@ -308,7 +315,18 @@ class StarTools:
             data_dir.mkdir(parents=True, exist_ok=True)
         except OSError as e:
             if isinstance(e, PermissionError):
-                raise RuntimeError(f"无法创建目录 {data_dir}：权限不足") from e
-            raise RuntimeError(f"无法创建目录 {data_dir}：{e!s}") from e
+                raise RuntimeError(
+                    t(
+                        "core-star-star_tools-raise_dir_permission_denied",
+                        data_dir=data_dir,
+                    )
+                ) from e
+            raise RuntimeError(
+                t(
+                    "core-star-star_tools-error_create_directory_failed",
+                    data_dir=data_dir,
+                    e=e,
+                )
+            ) from e
 
         return data_dir.resolve()

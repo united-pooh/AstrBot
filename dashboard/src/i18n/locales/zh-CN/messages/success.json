@@ -19,5 +19,10 @@
   "validation": {
     "valid": "验证通过",
     "completed": "操作完成"
+  },
+  "src": {
+    "app": {
+      "btn_close": "关闭"
+    }
   }
-} 
+}

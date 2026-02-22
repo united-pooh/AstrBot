@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator, Callable
 
 from astrbot import logger
+from astrbot.core.lang import t
 from astrbot.core.message.components import At, AtAll, Reply
 from astrbot.core.message.message_event_result import MessageChain, MessageEventResult
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
@@ -186,7 +187,11 @@ class WakingCheckStage(Stage):
                 except Exception as e:
                     await event.send(
                         MessageEventResult().message(
-                            f"插件 {star_map[handler.handler_module_path].name}: {e}",
+                            t(
+                                "core-pipeline-waking_check-stage-plugin_error",
+                                name=star_map[handler.handler_module_path].name,
+                                e=e,
+                            ),
                         ),
                     )
                     event.stop_event()
@@ -200,11 +205,18 @@ class WakingCheckStage(Stage):
                     if self.no_permission_reply:
                         await event.send(
                             MessageChain().message(
-                                f"您(ID: {event.get_sender_id()})的权限不足以使用此指令。通过 /sid 获取 ID 并请管理员添加。",
+                                t(
+                                    "core-pipeline-waking_check-stage-insufficient_permission_command",
+                                    get_sender_id=event.get_sender_id(),
+                                ),
                             ),
                         )
                     logger.info(
-                        f"触发 {star_map[handler.handler_module_path].name} 时, 用户(ID={event.get_sender_id()}) 权限不足。",
+                        t(
+                            "core-pipeline-waking_check-stage-insufficient_permission_trigger",
+                            name=star_map[handler.handler_module_path].name,
+                            get_sender_id=event.get_sender_id(),
+                        ),
                     )
                     event.stop_event()
                     return

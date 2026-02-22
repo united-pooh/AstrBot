@@ -99,7 +99,7 @@
           </v-alert>
 
           <v-alert type="warning" variant="tonal" class="mt-4" v-if="showEmbeddingWarning">
-            <strong>注意:</strong> 修改嵌入模型会导致现有的向量数据失效,建议重新上传文档。不同的嵌入模型生成的向量不兼容,可能导致检索结果不准确。
+            <span v-html="t('src.views.knowledge_base.components.settingstab.embedding_change_warning')"></span>
           </v-alert>
         </v-form>
       </v-card-text>
@@ -130,29 +130,29 @@
       <v-card>
         <v-card-title class="bg-warning text-white">
           <v-icon class="mr-2">mdi-alert</v-icon>
-          确认修改嵌入模型
+          {{ t('src.views.knowledge_base.components.settingstab.confirm_model_change_title') }}
         </v-card-title>
         <v-card-text class="pa-6">
           <v-alert type="warning" variant="tonal" class="mb-4">
-            <strong>警告:</strong> 修改嵌入模型将导致以下影响:
+            <span v-html="t('src.views.knowledge_base.components.settingstab.change_effects_warning')"></span>
           </v-alert>
           <ul class="text-body-2">
-            <li>现有的向量数据将失效</li>
-            <li>检索功能可能无法正常工作</li>
-            <li>建议删除现有文档后重新上传</li>
-            <li>不同嵌入模型生成的向量不兼容</li>
+            <li>{{ t('src.views.knowledge_base.components.settingstab.effect_existing_vectors_invalid') }}</li>
+            <li>{{ t('src.views.knowledge_base.components.settingstab.effect_retrieval_may_fail') }}</li>
+            <li>{{ t('src.views.knowledge_base.components.settingstab.effect_recommend_reupload') }}</li>
+            <li>{{ t('src.views.knowledge_base.components.settingstab.effect_models_incompatible') }}</li>
           </ul>
           <div class="mt-4 text-body-2">
-            您确定要将嵌入模型从 <strong>{{ originalEmbeddingProvider }}</strong> 修改为 <strong>{{ pendingEmbeddingProvider }}</strong> 吗?
+            <span v-html="t('src.views.knowledge_base.components.settingstab.confirm_change_prompt', { originalEmbeddingProvider: originalEmbeddingProvider, pendingEmbeddingProvider: pendingEmbeddingProvider })"></span>
           </div>
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="text" @click="cancelEmbeddingChange">
-            取消
+            {{ t('src.views.knowledge_base.components.settingstab.cancel_button') }}
           </v-btn>
           <v-btn color="warning" variant="elevated" @click="confirmEmbeddingChange">
-            确认修改
+            {{ t('src.views.knowledge_base.components.settingstab.confirm_change_button') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -163,7 +163,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import axios from 'axios'
-import { useModuleI18n } from '@/i18n/composables'
+import { useModuleI18n } from '@/i18n/composables';
 
 const { tm: t } = useModuleI18n('features/knowledge-base/detail')
 

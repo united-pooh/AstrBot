@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.platform import AstrMessageEvent
 from astrbot.core.platform.sources.webchat.webchat_event import WebChatMessageEvent
 from astrbot.core.platform.sources.wecom_ai_bot.wecomai_event import (
@@ -51,7 +52,10 @@ class PipelineScheduler:
                     # 此处是前置处理完成后的暂停点(yield), 下面开始执行后续阶段
                     if event.is_stopped():
                         logger.debug(
-                            f"阶段 {stage.__class__.__name__} 已终止事件传播。",
+                            t(
+                                "core-pipeline-scheduler-stage_terminated_propagation",
+                                stage=stage,
+                            ),
                         )
                         break
 
@@ -61,7 +65,10 @@ class PipelineScheduler:
                     # 此处是后续所有阶段处理完毕后返回的点, 执行后置处理
                     if event.is_stopped():
                         logger.debug(
-                            f"阶段 {stage.__class__.__name__} 已终止事件传播。",
+                            t(
+                                "core-pipeline-scheduler-stage_terminated_propagation_duplicate",
+                                stage=stage,
+                            ),
                         )
                         break
             else:
@@ -70,7 +77,12 @@ class PipelineScheduler:
                 await coroutine
 
                 if event.is_stopped():
-                    logger.debug(f"阶段 {stage.__class__.__name__} 已终止事件传播。")
+                    logger.debug(
+                        t(
+                            "core-pipeline-scheduler-stage_terminated_event_propagation",
+                            stage=stage,
+                        )
+                    )
                     break
 
     async def execute(self, event: AstrMessageEvent) -> None:
@@ -88,6 +100,6 @@ class PipelineScheduler:
             if isinstance(event, WebChatMessageEvent | WecomAIBotMessageEvent):
                 await event.send(None)
 
-            logger.debug("pipeline 执行完毕。")
+            logger.debug(t("core-pipeline-scheduler-pipeline_execution_completed"))
         finally:
             active_event_registry.unregister(event)

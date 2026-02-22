@@ -30,17 +30,17 @@
                         <v-list-item-subtitle class="provider-subtitle">
                             <span class="model-name">{{ provider.model }}</span>
                             <span class="meta-icons">
-                                <v-tooltip text="支持图像输入" location="top" v-if="supportsImageInput(provider)">
+                                <v-tooltip :text="t('src.components.chat.providermodelmenu.supports_image_tooltip')" location="top" v-if="supportsImageInput(provider)">
                                     <template v-slot:activator="{ props: tipProps }">
                                         <v-icon v-bind="tipProps" size="12" color="grey">mdi-eye-outline</v-icon>
                                     </template>
                                 </v-tooltip>
-                                <v-tooltip text="支持工具调用" location="top" v-if="supportsToolCall(provider)">
+                                <v-tooltip :text="t('src.components.chat.providermodelmenu.supports_tool_call_tooltip')" location="top" v-if="supportsToolCall(provider)">
                                     <template v-slot:activator="{ props: tipProps }">
                                         <v-icon v-bind="tipProps" size="12" color="grey">mdi-wrench</v-icon>
                                     </template>
                                 </v-tooltip>
-                                <v-tooltip text="支持推理" location="top" v-if="supportsReasoning(provider)">
+                                <v-tooltip :text="t('src.components.chat.providermodelmenu.supports_reasoning_tooltip')" location="top" v-if="supportsReasoning(provider)">
                                     <template v-slot:activator="{ props: tipProps }">
                                         <v-icon v-bind="tipProps" size="12" color="grey">mdi-brain</v-icon>
                                     </template>
@@ -61,6 +61,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useDisplay } from 'vuetify';
 import axios from 'axios';
+import { t } from '@/i18n/composables';
 
 interface ModelMetadata {
     modalities?: { input?: string[] };
@@ -120,7 +121,7 @@ function loadProviderConfigs() {
             );
         }
     }).catch(error => {
-        console.error('获取提供商列表失败:', error);
+        console.error(t('src.components.chat.providermodelmenu.fetch_providers_error_log'), error);
     });
 }
 
@@ -220,3 +221,4 @@ defineExpose({
     opacity: 0.6;
 }
 </style>
+

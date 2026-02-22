@@ -8,6 +8,7 @@ from quart import Response as QuartResponse
 from quart import make_response, request
 
 from astrbot.core import LogBroker, logger
+from astrbot.core.lang import t
 
 from .route import Response, Route, RouteContext
 
@@ -59,7 +60,7 @@ class LogRoute(Route):
         except ValueError:
             pass
         except Exception as e:
-            logger.error(f"Log SSE 补发历史错误: {e}")
+            logger.error(t("dashboard-routes-log-error_sse_resend_history_failed", e=e))
 
     async def log(self) -> QuartResponse:
         last_event_id = request.headers.get("Last-Event-ID")
@@ -80,7 +81,7 @@ class LogRoute(Route):
             except asyncio.CancelledError:
                 pass
             except Exception as e:
-                logger.error(f"Log SSE 连接错误: {e}")
+                logger.error(t("dashboard-routes-log-error_sse_connection_failed", e=e))
             finally:
                 if queue:
                     self.log_broker.unregister(queue)
@@ -114,8 +115,12 @@ class LogRoute(Route):
                 .__dict__
             )
         except Exception as e:
-            logger.error(f"获取日志历史失败: {e}")
-            return Response().error(f"获取日志历史失败: {e}").__dict__
+            logger.error(t("dashboard-routes-log-error_fetch_log_history_failed", e=e))
+            return (
+                Response()
+                .error(t("dashboard-routes-log-response_error_fetch_log_history", e=e))
+                .__dict__
+            )
 
     async def get_trace_settings(self):
         """获取 Trace 设置"""
@@ -123,22 +128,44 @@ class LogRoute(Route):
             trace_enable = self.config.get("trace_enable", True)
             return Response().ok(data={"trace_enable": trace_enable}).__dict__
         except Exception as e:
-            logger.error(f"获取 Trace 设置失败: {e}")
-            return Response().error(f"获取 Trace 设置失败: {e}").__dict__
+            logger.error(t("dashboard-routes-log-error_get_trace_settings_failed", e=e))
+            return (
+                Response()
+                .error(t("dashboard-routes-log-response_error_get_trace_settings", e=e))
+                .__dict__
+            )
 
     async def update_trace_settings(self):
         """更新 Trace 设置"""
         try:
             data = await request.json
             if data is None:
-                return Response().error("请求数据为空").__dict__
+                return (
+                    Response()
+                    .error(t("dashboard-routes-log-response_error_request_data_empty"))
+                    .__dict__
+                )
 
             trace_enable = data.get("trace_enable")
             if trace_enable is not None:
                 self.config["trace_enable"] = bool(trace_enable)
                 self.config.save_config()
 
-            return Response().ok(message="Trace 设置已更新").__dict__
+            return (
+                Response()
+                .ok(
+                    message=t("dashboard-routes-log-response_ok_trace_settings_updated")
+                )
+                .__dict__
+            )
         except Exception as e:
-            logger.error(f"更新 Trace 设置失败: {e}")
-            return Response().error(f"更新 Trace 设置失败: {e}").__dict__
+            logger.error(
+                t("dashboard-routes-log-error_update_trace_settings_failed", e=e)
+            )
+            return (
+                Response()
+                .error(
+                    t("dashboard-routes-log-response_error_update_trace_settings", e=e)
+                )
+                .__dict__
+            )

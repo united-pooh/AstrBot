@@ -2,7 +2,7 @@
   "hero": {
     "title": "AstrBot",
     "subtitle": "A project out of interests and loves ❤️",
-    "starButton": "Star 这个项目! 🌟",
+    "starButton": "Star 这个项目！ 🌟",
     "issueButton": "提交 Issue"
   },
   "contributors": {
@@ -14,4 +14,4 @@
     "title": "全球部署",
     "license": "AstrBot 采用 AGPL v3 协议开源"
   }
-} 
+}

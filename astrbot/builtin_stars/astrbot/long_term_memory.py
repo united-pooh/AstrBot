@@ -9,8 +9,8 @@ from astrbot.api.event import AstrMessageEvent
 from astrbot.api.message_components import At, Image, Plain
 from astrbot.api.platform import MessageType
 from astrbot.api.provider import LLMResponse, Provider, ProviderRequest
-from astrbot.core import t
 from astrbot.core.astrbot_config_mgr import AstrBotConfigManager
+from astrbot.core.lang import t
 
 """
 聊天记忆增强

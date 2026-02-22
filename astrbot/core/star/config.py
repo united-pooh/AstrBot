@@ -3,6 +3,7 @@
 import json
 import os
 
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
 
@@ -33,13 +34,13 @@ def put_config(namespace: str, name: str, key: str, value, description: str) -> 
     注意：value一定要是该配置项对应类型的值，否则类型判断会乱。
     """
     if namespace == "":
-        raise ValueError("namespace 不能为空。")
+        raise ValueError(t("core-star-config-namespace_empty"))
     if namespace.startswith("internal_"):
-        raise ValueError("namespace 不能以 internal_ 开头。")
+        raise ValueError(t("core-star-config-namespace_internal_prefix"))
     if not isinstance(key, str):
-        raise ValueError("key 只支持 str 类型。")
+        raise ValueError(t("core-star-config-key_type_invalid"))
     if not isinstance(value, str | int | float | bool | list):
-        raise ValueError("value 只支持 str, int, float, bool, list 类型。")
+        raise ValueError(t("core-star-config-value_type_invalid"))
 
     config_dir = os.path.join(get_astrbot_data_path(), "config")
     path = os.path.join(config_dir, f"{namespace}.json")
@@ -72,12 +73,14 @@ def update_config(namespace: str, key: str, value) -> None:
     """
     path = os.path.join(get_astrbot_data_path(), "config", f"{namespace}.json")
     if not os.path.exists(path):
-        raise FileNotFoundError(f"配置文件 {namespace}.json 不存在。")
+        raise FileNotFoundError(
+            t("core-star-config-config_file_not_found", namespace=namespace)
+        )
     with open(path, encoding="utf-8-sig") as f:
         d = json.load(f)
     assert isinstance(d, dict)
     if key not in d:
-        raise KeyError(f"配置项 {key} 不存在。")
+        raise KeyError(t("core-star-config-config_key_not_found", key=key))
     d[key]["value"] = value
     with open(path, "w", encoding="utf-8-sig") as f:
         json.dump(d, f, indent=2, ensure_ascii=False)

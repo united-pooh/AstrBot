@@ -1,5 +1,6 @@
 from quart import request
 
+from astrbot.core.lang import t
 from astrbot.core.star.command_management import (
     list_command_conflicts,
     list_commands,
@@ -48,7 +49,11 @@ class CommandRoute(Route):
         enabled = data.get("enabled")
 
         if handler_full_name is None or enabled is None:
-            return Response().error("handler_full_name 与 enabled 均为必填。").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-command-missing_handler_and_enabled"))
+                .__dict__
+            )
 
         if isinstance(enabled, str):
             enabled = enabled.lower() in ("1", "true", "yes", "on")
@@ -68,7 +73,11 @@ class CommandRoute(Route):
         aliases = data.get("aliases")
 
         if not handler_full_name or not new_name:
-            return Response().error("handler_full_name 与 new_name 均为必填。").__dict__
+            return (
+                Response()
+                .error(t("dashboard-routes-command-missing_handler_and_new_name"))
+                .__dict__
+            )
 
         try:
             await rename_command_service(handler_full_name, new_name, aliases=aliases)
@@ -85,7 +94,9 @@ class CommandRoute(Route):
 
         if not handler_full_name or not permission:
             return (
-                Response().error("handler_full_name 与 permission 均为必填。").__dict__
+                Response()
+                .error(t("dashboard-routes-command-missing_handler_and_permission"))
+                .__dict__
             )
 
         try:

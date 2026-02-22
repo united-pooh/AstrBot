@@ -32,7 +32,7 @@
         <div class="kb-card-content">
           <div class="kb-emoji">{{ kb.emoji || '📚' }}</div>
           <h3 class="kb-name">{{ kb.kb_name }}</h3>
-          <p class="kb-description text-medium-emphasis">{{ kb.description || '暂无描述' }}</p>
+          <p class="kb-description text-medium-emphasis">{{ kb.description || t('src.views.knowledge_base.kblist.kb_description_fallback') }}</p>
 
           <div class="kb-stats mt-4">
             <div class="stat-item">
@@ -87,14 +87,14 @@
           <v-form ref="formRef" @submit.prevent="submitForm">
             <v-text-field v-model="formData.kb_name" :label="t('create.nameLabel')"
               :placeholder="t('create.namePlaceholder')" variant="outlined"
-              :rules="[v => !!v || t('create.nameRequired')]" required class="mb-4" hint="后续如修改知识库名称，需重新在配置文件更新。" persistent-hint />
+              :rules="[v => !!v || t('create.nameRequired')]" required class="mb-4" :hint="t('create.nameRequired')" persistent-hint />
 
             <v-textarea v-model="formData.description" :label="t('create.descriptionLabel')"
               :placeholder="t('create.descriptionPlaceholder')" variant="outlined" rows="3" class="mb-4" />
 
             <v-select v-model="formData.embedding_provider_id" :items="embeddingProviders"
               :item-title="item => item.embedding_model || item.id" :item-value="'id'"
-              :label="t('create.embeddingModelLabel')" variant="outlined" class="mb-4" :disabled="editingKB !== null" hint="嵌入模型选择后无法修改，如需更换请创建新的知识库。" persistent-hint>
+              :label="t('create.embeddingModelLabel')" variant="outlined" class="mb-4" :disabled="editingKB !== null" :hint="t('create.embeddingModelLabel')" persistent-hint>
               <template #item="{ props, item }">
                 <v-list-item v-bind="props">
                   <template #subtitle>
@@ -190,7 +190,7 @@
     </v-snackbar>
 
     <div class="position-absolute" style="bottom: 0px; right: 16px;">
-      <small @click="router.push('/alkaid/knowledge-base')"><a style="text-decoration: underline; cursor: pointer;">切换到旧版知识库</a></small>
+      <small @click="router.push('/alkaid/knowledge-base')"><a style="text-decoration: underline; cursor: pointer;">{{ t('src.views.knowledge_base.kblist.switch_to_legacy_kb') }}</a></small>
     </div>
 
   </div>
@@ -200,7 +200,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { useModuleI18n } from '@/i18n/composables'
+import { useModuleI18n } from '@/i18n/composables';
 
 const { tm: t } = useModuleI18n('features/knowledge-base/index')
 const router = useRouter()

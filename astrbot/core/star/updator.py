@@ -3,6 +3,7 @@ import shutil
 import zipfile
 
 from astrbot.core import logger
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_plugin_path
 from astrbot.core.utils.io import on_error, remove_dir
 
@@ -31,21 +32,35 @@ class PluginUpdator(RepoZipUpdator):
         repo_url = plugin.repo
 
         if not repo_url:
-            raise Exception(f"插件 {plugin.name} 没有指定仓库地址。")
+            raise Exception(
+                t("core-star-updator-error_no_repository_url", plugin=plugin)
+            )
 
         if not plugin.root_dir_name:
-            raise Exception(f"插件 {plugin.name} 的根目录名未指定。")
+            raise Exception(
+                t("core-star-updator-error_no_root_directory_name", plugin=plugin)
+            )
 
         plugin_path = os.path.join(self.plugin_store_path, plugin.root_dir_name)
 
-        logger.info(f"正在更新插件，路径: {plugin_path}，仓库地址: {repo_url}")
+        logger.info(
+            t(
+                "core-star-updator-log_updating_plugin",
+                plugin_path=plugin_path,
+                repo_url=repo_url,
+            )
+        )
         await self.download_from_repo_url(plugin_path, repo_url, proxy=proxy)
 
         try:
             remove_dir(plugin_path)
         except BaseException as e:
             logger.error(
-                f"删除旧版本插件 {plugin_path} 文件夹失败: {e!s}，使用覆盖安装。",
+                t(
+                    "core-star-updator-warning_delete_old_version_failed",
+                    plugin_path=plugin_path,
+                    e=e,
+                ),
             )
 
         self.unzip_file(plugin_path + ".zip", plugin_path)
@@ -55,7 +70,7 @@ class PluginUpdator(RepoZipUpdator):
     def unzip_file(self, zip_path: str, target_dir: str) -> None:
         os.makedirs(target_dir, exist_ok=True)
         update_dir = ""
-        logger.info(f"正在解压压缩包: {zip_path}")
+        logger.info(t("core-star-updator-log_extracting_archive", zip_path=zip_path))
         with zipfile.ZipFile(zip_path, "r") as z:
             update_dir = z.namelist()[0]
             z.extractall(target_dir)
@@ -71,11 +86,19 @@ class PluginUpdator(RepoZipUpdator):
 
         try:
             logger.info(
-                f"删除临时文件: {zip_path} 和 {os.path.join(target_dir, update_dir)}",
+                t(
+                    "core-star-updator-deleting_temp_files",
+                    zip_path=zip_path,
+                    update_dir=os.path.join(target_dir, update_dir),
+                ),
             )
             shutil.rmtree(os.path.join(target_dir, update_dir), onerror=on_error)
             os.remove(zip_path)
         except BaseException:
             logger.warning(
-                f"删除更新文件失败，可以手动删除 {zip_path} 和 {os.path.join(target_dir, update_dir)}",
+                t(
+                    "core-star-updator-delete_update_files_failed",
+                    zip_path=zip_path,
+                    update_dir=os.path.join(target_dir, update_dir),
+                ),
             )

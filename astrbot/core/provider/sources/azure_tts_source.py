@@ -12,6 +12,7 @@ from httpx import AsyncClient, Timeout
 
 from astrbot import logger
 from astrbot.core.config.default import VERSION
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
 from ..entities import ProviderType
@@ -33,7 +34,9 @@ class OTTSProvider:
         self.retry_count = 3
         self.proxy = config.get("proxy", "")
         if self.proxy:
-            logger.info(f"[Azure TTS] 使用代理: {self.proxy}")
+            logger.info(
+                t("core-provider-sources-azure_tts_source-using_proxy", self=self)
+            )
         self._client: AsyncClient | None = None
 
     @property
@@ -65,7 +68,11 @@ class OTTSProvider:
             self.last_sync_time = local_time
         except Exception as e:
             if time.time() - self.last_sync_time > 3600:
-                raise RuntimeError("时间同步失败") from e
+                raise RuntimeError(
+                    t(
+                        "core-provider-sources-azure_tts_source-time_synchronization_failed"
+                    )
+                ) from e
 
     async def _generate_signature(self) -> str:
         await self._sync_time()
@@ -104,9 +111,16 @@ class OTTSProvider:
                 return str(file_path.resolve())
             except Exception as e:
                 if attempt == self.retry_count - 1:
-                    raise RuntimeError(f"OTTS请求失败: {e!s}") from e
+                    raise RuntimeError(
+                        t(
+                            "core-provider-sources-azure_tts_source-otts_request_failed",
+                            e=e,
+                        )
+                    ) from e
                 await asyncio.sleep(0.5 * (attempt + 1))
-        raise RuntimeError("OTTS未返回音频文件")
+        raise RuntimeError(
+            t("core-provider-sources-azure_tts_source-otts_no_audio_returned")
+        )
 
 
 class AzureNativeProvider(TTSProvider):
@@ -117,7 +131,11 @@ class AzureNativeProvider(TTSProvider):
             "",
         ).strip()
         if not re.fullmatch(r"^[a-zA-Z0-9]{32}$", self.subscription_key):
-            raise ValueError("无效的Azure订阅密钥")
+            raise ValueError(
+                t(
+                    "core-provider-sources-azure_tts_source-invalid_azure_subscription_key"
+                )
+            )
         self.region = provider_config.get("azure_tts_region", "eastus").strip()
         self.endpoint = (
             f"https://{self.region}.tts.speech.microsoft.com/cognitiveservices/v1"
@@ -134,7 +152,12 @@ class AzureNativeProvider(TTSProvider):
         }
         self.proxy = provider_config.get("proxy", "")
         if self.proxy:
-            logger.info(f"[Azure TTS Native] 使用代理: {self.proxy}")
+            logger.info(
+                t(
+                    "core-provider-sources-azure_tts_source-using_proxy_native",
+                    self=self,
+                )
+            )
 
     @property
     def client(self) -> AsyncClient:
@@ -219,25 +242,42 @@ class AzureTTSProvider(TTSProvider):
             try:
                 match = re.match(r"other\[(.*)\]", key_value, re.DOTALL)
                 if not match:
-                    raise ValueError("无效的other[...]格式，应形如 other[{...}]")
+                    raise ValueError(
+                        t("core-provider-sources-azure_tts_source-invalid_other_format")
+                    )
                 json_str = match.group(1).strip()
                 otts_config = json.loads(json_str)
                 required = {"OTTS_SKEY", "OTTS_URL", "OTTS_AUTH_TIME"}
                 if missing := required - otts_config.keys():
-                    raise ValueError(f"缺少OTTS参数: {', '.join(missing)}")
+                    raise ValueError(
+                        t(
+                            "core-provider-sources-azure_tts_source-missing_otts_params",
+                            missing=", ".join(missing),
+                        )
+                    )
                 return OTTSProvider(otts_config)
             except json.JSONDecodeError as e:
                 error_msg = (
-                    f"JSON解析失败，请检查格式（错误位置：行 {e.lineno} 列 {e.colno}）\n"
-                    f"错误详情: {e.msg}\n"
-                    f"错误上下文: {json_str[max(0, e.pos - 30) : e.pos + 30]}"
+                    t("core-provider-sources-azure_tts_source-json_parse_failed", e=e)
+                    + t("core-provider-sources-azure_tts_source-error_details", e=e)
+                    + t(
+                        "core-provider-sources-azure_tts_source-error_context_snippet",
+                        pos=json_str[max(0, e.pos - 30) : e.pos + 30],
+                    )
                 )
                 raise ValueError(error_msg) from e
             except KeyError as e:
-                raise ValueError(f"配置错误: 缺少必要参数 {e}") from e
+                raise ValueError(
+                    t(
+                        "core-provider-sources-azure_tts_source-config_missing_required_parameter",
+                        e=e,
+                    )
+                ) from e
         if re.fullmatch(r"^[a-zA-Z0-9]{32}$", key_value):
             return AzureNativeProvider(config, self.provider_settings)
-        raise ValueError("订阅密钥格式无效，应为32位字母数字或other[...]格式")
+        raise ValueError(
+            t("core-provider-sources-azure_tts_source-invalid_subscription_key_format")
+        )
 
     async def get_audio(self, text: str) -> str:
         if isinstance(self.provider, OTTSProvider):

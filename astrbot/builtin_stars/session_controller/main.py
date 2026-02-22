@@ -5,7 +5,7 @@ import astrbot.api.message_components as Comp
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star
-from astrbot.core import t
+from astrbot.core.lang import t
 from astrbot.core.utils.session_waiter import (
     FILTERS,
     USER_SESSIONS,
@@ -73,9 +73,15 @@ class Main(Star):
                             # 使用 LLM 生成回复
                             yield event.request_llm(
                                 prompt=(
-                                    "注意，你正在社交媒体上中与用户进行聊天，用户只是通过@来唤醒你，但并未在这条消息中输入内容，他可能会在接下来一条发送他想发送的内容。"
-                                    "你友好地询问用户想要聊些什么或者需要什么帮助，回复要符合人设，不要太过机械化。"
-                                    "请注意，你仅需要输出要回复用户的内容，不要输出其他任何东西"
+                                    t(
+                                        "builtin_stars-session_controller-main-social_media_wakeup_note"
+                                    )
+                                    + t(
+                                        "builtin_stars-session_controller-main-friendly_inquiry"
+                                    )
+                                    + t(
+                                        "builtin_stars-session_controller-main-reply_only_instruction"
+                                    )
                                 ),
                                 session_id=curr_cid,
                                 contexts=[],

@@ -21,7 +21,12 @@ class Lang:
 
         # 寻找匹配的 locale (忽略大小写)
         matched_locale = next(
-            (l for l in self.available_locales if l.lower() == locale.lower()), locale
+            (
+                matched
+                for matched in self.available_locales
+                if matched.lower() == locale.lower()
+            ),
+            locale,
         )
 
         # 3. 默认搜索语言包下所有 .ftl 文件
@@ -58,7 +63,12 @@ class Lang:
 
         # 寻找匹配的 locale (忽略大小写)
         matched_locale = next(
-            (l for l in self.available_locales if l.lower() == locale.lower()), locale
+            (
+                matched
+                for matched in self.available_locales
+                if matched.lower() == locale.lower()
+            ),
+            locale,
         )
         logger.debug(f"[Lang] matched_locale:{matched_locale}")
 

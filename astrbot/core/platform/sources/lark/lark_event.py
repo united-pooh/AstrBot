@@ -21,6 +21,7 @@ from astrbot import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.api.message_components import At, File, Plain, Record, Video
 from astrbot.api.message_components import Image as AstrBotImage
+from astrbot.core.lang import t
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.io import download_image_by_url
 from astrbot.core.utils.media_utils import (
@@ -66,7 +67,9 @@ class LarkMessageEvent(AstrMessageEvent):
             是否发送成功
         """
         if lark_client.im is None:
-            logger.error("[Lark] API Client im 模块未初始化")
+            logger.error(
+                t("core-platform-sources-lark-lark_event-im_module_not_initialized")
+            )
             return False
 
         if reply_message_id:
@@ -92,7 +95,9 @@ class LarkMessageEvent(AstrMessageEvent):
 
             if receive_id_type is None or receive_id is None:
                 logger.error(
-                    "[Lark] 主动发送消息时，receive_id 和 receive_id_type 不能为空",
+                    t(
+                        "core-platform-sources-lark-lark_event-receive_id_required_for_proactive_message"
+                    ),
                 )
                 return False
 
@@ -112,7 +117,12 @@ class LarkMessageEvent(AstrMessageEvent):
             response = await lark_client.im.v1.message.acreate(request)
 
         if not response.success():
-            logger.error(f"[Lark] 发送飞书消息失败({response.code}): {response.msg}")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-lark_event-error_send_message_failed",
+                    response=response,
+                )
+            )
             return False
 
         return True
@@ -137,11 +147,17 @@ class LarkMessageEvent(AstrMessageEvent):
             成功返回file_key，失败返回None
         """
         if not path or not os.path.exists(path):
-            logger.error(f"[Lark] 文件不存在: {path}")
+            logger.error(
+                t("core-platform-sources-lark-lark_event-file_not_found", path=path)
+            )
             return None
 
         if lark_client.im is None:
-            logger.error("[Lark] API Client im 模块未初始化，无法上传文件")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-lark_event-upload_file_im_not_initialized"
+                )
+            )
             return None
 
         try:
@@ -164,20 +180,37 @@ class LarkMessageEvent(AstrMessageEvent):
 
                 if not response.success():
                     logger.error(
-                        f"[Lark] 无法上传文件({response.code}): {response.msg}"
+                        t(
+                            "core-platform-sources-lark-lark_event-error_upload_file_failed",
+                            response=response,
+                        )
                     )
                     return None
 
                 if response.data is None:
-                    logger.error("[Lark] 上传文件成功但未返回数据(data is None)")
+                    logger.error(
+                        t(
+                            "core-platform-sources-lark-lark_event-upload_success_no_data"
+                        )
+                    )
                     return None
 
                 file_key = response.data.file_key
-                logger.debug(f"[Lark] 文件上传成功: {file_key}")
+                logger.debug(
+                    t(
+                        "core-platform-sources-lark-lark_event-file_upload_success",
+                        file_key=file_key,
+                    )
+                )
                 return file_key
 
         except Exception as e:
-            logger.error(f"[Lark] 无法打开或上传文件: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-lark_event-file_open_or_upload_failed",
+                    e=e,
+                )
+            )
             return None
 
     @staticmethod
@@ -214,12 +247,19 @@ class LarkMessageEvent(AstrMessageEvent):
 
                 if image_file is None:
                     if not file_path:
-                        logger.error("[Lark] 图片路径为空，无法上传")
+                        logger.error(
+                            t("core-platform-sources-lark-lark_event-image_path_empty")
+                        )
                         continue
                     try:
                         image_file = open(file_path, "rb")
                     except Exception as e:
-                        logger.error(f"[Lark] 无法打开图片文件: {e}")
+                        logger.error(
+                            t(
+                                "core-platform-sources-lark-lark_event-open_image_failed",
+                                e=e,
+                            )
+                        )
                         continue
 
                 request = (
@@ -234,16 +274,29 @@ class LarkMessageEvent(AstrMessageEvent):
                 )
 
                 if lark_client.im is None:
-                    logger.error("[Lark] API Client im 模块未初始化，无法上传图片")
+                    logger.error(
+                        t(
+                            "core-platform-sources-lark-lark_event-upload_image_im_not_initialized"
+                        )
+                    )
                     continue
 
                 response = await lark_client.im.v1.image.acreate(request)
                 if not response.success():
-                    logger.error(f"无法上传飞书图片({response.code}): {response.msg}")
+                    logger.error(
+                        t(
+                            "core-platform-sources-lark-lark_event-error_upload_image_failed",
+                            response=response,
+                        )
+                    )
                     continue
 
                 if response.data is None:
-                    logger.error("[Lark] 上传图片成功但未返回数据(data is None)")
+                    logger.error(
+                        t(
+                            "core-platform-sources-lark-lark_event-image_upload_success_no_data"
+                        )
+                    )
                     continue
 
                 image_key = response.data.image_key
@@ -253,18 +306,35 @@ class LarkMessageEvent(AstrMessageEvent):
                 _stage.clear()
             elif isinstance(comp, File):
                 # 文件将通过 _send_file_message 方法单独发送，这里跳过
-                logger.debug("[Lark] 检测到文件组件，将单独发送")
+                logger.debug(
+                    t(
+                        "core-platform-sources-lark-lark_event-debug_file_component_separate"
+                    )
+                )
                 continue
             elif isinstance(comp, Record):
                 # 音频将通过 _send_audio_message 方法单独发送，这里跳过
-                logger.debug("[Lark] 检测到音频组件，将单独发送")
+                logger.debug(
+                    t(
+                        "core-platform-sources-lark-lark_event-debug_audio_component_separate"
+                    )
+                )
                 continue
             elif isinstance(comp, Video):
                 # 视频将通过 _send_media_message 方法单独发送，这里跳过
-                logger.debug("[Lark] 检测到视频组件，将单独发送")
+                logger.debug(
+                    t(
+                        "core-platform-sources-lark-lark_event-debug_video_component_separate"
+                    )
+                )
                 continue
             else:
-                logger.warning(f"飞书 暂时不支持消息段: {comp.type}")
+                logger.warning(
+                    t(
+                        "core-platform-sources-lark-lark_event-warning_unsupported_message_segment",
+                        comp=comp,
+                    )
+                )
 
         if _stage:
             ret.append(_stage)
@@ -288,7 +358,11 @@ class LarkMessageEvent(AstrMessageEvent):
             receive_id_type: 接收者ID类型，如 'open_id', 'chat_id'（用于主动发送）
         """
         if lark_client.im is None:
-            logger.error("[Lark] API Client im 模块未初始化")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-lark_event-error_im_module_not_initialized"
+                )
+            )
             return
 
         # 分离文件、音频、视频组件和其他组件
@@ -409,11 +483,18 @@ class LarkMessageEvent(AstrMessageEvent):
         try:
             original_audio_path = await audio_comp.convert_to_file_path()
         except Exception as e:
-            logger.error(f"[Lark] 无法获取音频文件路径: {e}")
+            logger.error(
+                t("core-platform-sources-lark-lark_event-error_audio_path_failed", e=e)
+            )
             return
 
         if not original_audio_path or not os.path.exists(original_audio_path):
-            logger.error(f"[Lark] 音频文件不存在: {original_audio_path}")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-lark_event-error_audio_file_not_found",
+                    original_audio_path=original_audio_path,
+                )
+            )
             return
 
         # 转换为opus格式
@@ -426,7 +507,12 @@ class LarkMessageEvent(AstrMessageEvent):
             else:
                 audio_path = original_audio_path
         except Exception as e:
-            logger.error(f"[Lark] 音频格式转换失败，将尝试直接上传: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-lark_event-error_audio_conversion_failed",
+                    e=e,
+                )
+            )
             # 如果转换失败，继续尝试直接上传原始文件
             audio_path = original_audio_path
 
@@ -445,9 +531,19 @@ class LarkMessageEvent(AstrMessageEvent):
         if converted_audio_path and os.path.exists(converted_audio_path):
             try:
                 os.remove(converted_audio_path)
-                logger.debug(f"[Lark] 已删除转换后的音频文件: {converted_audio_path}")
+                logger.debug(
+                    t(
+                        "core-platform-sources-lark-lark_event-debug_deleted_converted_audio",
+                        converted_audio_path=converted_audio_path,
+                    )
+                )
             except Exception as e:
-                logger.warning(f"[Lark] 删除转换后的音频文件失败: {e}")
+                logger.warning(
+                    t(
+                        "core-platform-sources-lark-lark_event-warning_delete_converted_audio_failed",
+                        e=e,
+                    )
+                )
 
         if not file_key:
             return
@@ -482,11 +578,18 @@ class LarkMessageEvent(AstrMessageEvent):
         try:
             original_video_path = await media_comp.convert_to_file_path()
         except Exception as e:
-            logger.error(f"[Lark] 无法获取视频文件路径: {e}")
+            logger.error(
+                t("core-platform-sources-lark-lark_event-error_video_path_failed", e=e)
+            )
             return
 
         if not original_video_path or not os.path.exists(original_video_path):
-            logger.error(f"[Lark] 视频文件不存在: {original_video_path}")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-lark_event-error_video_file_not_found",
+                    original_video_path=original_video_path,
+                )
+            )
             return
 
         # 转换为mp4格式
@@ -499,7 +602,12 @@ class LarkMessageEvent(AstrMessageEvent):
             else:
                 video_path = original_video_path
         except Exception as e:
-            logger.error(f"[Lark] 视频格式转换失败，将尝试直接上传: {e}")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-lark_event-error_video_conversion_failed",
+                    e=e,
+                )
+            )
             # 如果转换失败，继续尝试直接上传原始文件
             video_path = original_video_path
 
@@ -518,9 +626,19 @@ class LarkMessageEvent(AstrMessageEvent):
         if converted_video_path and os.path.exists(converted_video_path):
             try:
                 os.remove(converted_video_path)
-                logger.debug(f"[Lark] 已删除转换后的视频文件: {converted_video_path}")
+                logger.debug(
+                    t(
+                        "core-platform-sources-lark-lark_event-debug_deleted_converted_video",
+                        converted_video_path=converted_video_path,
+                    )
+                )
             except Exception as e:
-                logger.warning(f"[Lark] 删除转换后的视频文件失败: {e}")
+                logger.warning(
+                    t(
+                        "core-platform-sources-lark-lark_event-warning_delete_converted_video_failed",
+                        e=e,
+                    )
+                )
 
         if not file_key:
             return
@@ -536,7 +654,11 @@ class LarkMessageEvent(AstrMessageEvent):
 
     async def react(self, emoji: str) -> None:
         if self.bot.im is None:
-            logger.error("[Lark] API Client im 模块未初始化，无法发送表情")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-lark_event-error_im_not_init_cannot_send_emoji"
+                )
+            )
             return
 
         request = (
@@ -552,7 +674,12 @@ class LarkMessageEvent(AstrMessageEvent):
 
         response = await self.bot.im.v1.message_reaction.acreate(request)
         if not response.success():
-            logger.error(f"发送飞书表情回应失败({response.code}): {response.msg}")
+            logger.error(
+                t(
+                    "core-platform-sources-lark-lark_event-error_send_emoji_reaction_failed",
+                    response=response,
+                )
+            )
             return
 
     async def send_streaming(self, generator, use_fallback: bool = False):

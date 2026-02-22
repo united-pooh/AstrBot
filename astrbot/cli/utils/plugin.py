@@ -9,14 +9,16 @@ import click
 import httpx
 import yaml
 
+from astrbot.core.lang import t
+
 from .version_comparator import VersionComparator
 
 
 class PluginStatus(str, Enum):
-    INSTALLED = "已安装"
-    NEED_UPDATE = "需更新"
-    NOT_INSTALLED = "未安装"
-    NOT_PUBLISHED = "未发布"
+    INSTALLED = t("cli-utils-plugin-status_installed")
+    NEED_UPDATE = t("cli-utils-plugin-status_needs_update")
+    NOT_INSTALLED = t("cli-utils-plugin-status_not_installed")
+    NOT_PUBLISHED = t("cli-utils-plugin-status_not_published")
 
 
 def get_git_repo(url: str, target_path: Path, proxy: str | None = None) -> None:
@@ -44,10 +46,16 @@ def get_git_repo(url: str, target_path: Path, proxy: str | None = None) -> None:
                     download_url = releases[0]["zipball_url"]
                 else:
                     # 没有 release，使用默认分支
-                    click.echo(f"正在从默认分支下载 {author}/{repo}")
+                    click.echo(
+                        t(
+                            "cli-utils-plugin-downloading_from_default_branch",
+                            author=author,
+                            repo=repo,
+                        )
+                    )
                     download_url = f"https://github.com/{author}/{repo}/archive/refs/heads/master.zip"
         except Exception as e:
-            click.echo(f"获取 release 信息失败: {e}，将直接使用提供的 URL")
+            click.echo(t("cli-utils-plugin-fetch_release_info_failed_fallback", e=e))
             download_url = url
 
         # 应用代理
@@ -65,7 +73,7 @@ def get_git_repo(url: str, target_path: Path, proxy: str | None = None) -> None:
                 and "archive/refs/heads/master.zip" in download_url
             ):
                 alt_url = download_url.replace("master.zip", "main.zip")
-                click.echo("master 分支不存在，尝试下载 main 分支")
+                click.echo(t("cli-utils-plugin-master_not_found_try_main"))
                 resp = client.get(alt_url)
                 resp.raise_for_status()
             else:
@@ -98,7 +106,10 @@ def load_yaml_metadata(plugin_dir: Path) -> dict:
         try:
             return yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
         except Exception as e:
-            click.echo(f"读取 {yaml_path} 失败: {e}", err=True)
+            click.echo(
+                t("cli-utils-plugin-read_yaml_failed", yaml_path=yaml_path, e=e),
+                err=True,
+            )
     return {}
 
 
@@ -160,7 +171,7 @@ def build_plug_list(plugins_dir: Path) -> list:
                     },
                 )
     except Exception as e:
-        click.echo(f"获取在线插件列表失败: {e}", err=True)
+        click.echo(t("cli-utils-plugin-fetch_online_plugin_list_failed", e=e), err=True)
 
     # 与在线插件比对，更新状态
     online_plugin_names = {plugin["name"] for plugin in online_plugins}
@@ -218,7 +229,12 @@ def manage_plugin(
 
     # 检查插件是否存在
     if is_update and not target_path.exists():
-        raise click.ClickException(f"插件 {plugin_name} 未安装，无法更新")
+        raise click.ClickException(
+            t(
+                "cli-utils-plugin-plugin_not_installed_cannot_update",
+                plugin_name=plugin_name,
+            )
+        )
 
     # 备份现有插件
     if is_update and backup_path is not None and backup_path.exists():
@@ -228,19 +244,49 @@ def manage_plugin(
 
     try:
         click.echo(
-            f"正在从 {repo_url} {'更新' if is_update else '下载'}插件 {plugin_name}...",
+            t(
+                "cli-utils-plugin-download_or_update_plugin-true",
+                repo_url=repo_url,
+                plugin_name=plugin_name,
+            )
+            if is_update
+            else t(
+                "cli-utils-plugin-download_or_update_plugin-false",
+                repo_url=repo_url,
+                plugin_name=plugin_name,
+            ),
         )
         get_git_repo(repo_url, target_path, proxy)
 
         # 更新成功，删除备份
         if is_update and backup_path is not None and backup_path.exists():
             shutil.rmtree(backup_path)
-        click.echo(f"插件 {plugin_name} {'更新' if is_update else '安装'}成功")
+        click.echo(
+            t(
+                "cli-utils-plugin-plugin_install_update_success-true",
+                plugin_name=plugin_name,
+            )
+            if is_update
+            else t(
+                "cli-utils-plugin-plugin_install_update_success-false",
+                plugin_name=plugin_name,
+            )
+        )
     except Exception as e:
         if target_path.exists():
             shutil.rmtree(target_path, ignore_errors=True)
         if is_update and backup_path is not None and backup_path.exists():
             shutil.move(backup_path, target_path)
         raise click.ClickException(
-            f"{'更新' if is_update else '安装'}插件 {plugin_name} 时出错: {e}",
+            t(
+                "cli-utils-plugin-plugin_install_update_error-true",
+                plugin_name=plugin_name,
+                e=e,
+            )
+            if is_update
+            else t(
+                "cli-utils-plugin-plugin_install_update_error-false",
+                plugin_name=plugin_name,
+                e=e,
+            ),
         )
