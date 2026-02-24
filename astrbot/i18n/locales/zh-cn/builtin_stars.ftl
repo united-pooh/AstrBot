@@ -218,3 +218,21 @@ builtin-stars-conversation-rename-success = 重命名对话成功。
 builtin-stars-conversation-delete-permission-denied = 会话处于群聊，并且未开启独立会话，并且您 (ID { $sender_id }) 不是管理员，因此没有权限删除当前对话。
 builtin-stars-conversation-no-active-conversation-with-index = 当前未处于对话状态，请 /switch 序号 切换或 /new 创建。
 builtin-stars-conversation-delete-success = 删除当前对话成功。不再处于对话状态，使用 /switch 序号 切换到其他对话或 /new 创建。
+
+
+### astrbot/long_term_memory.py
+
+
+### astrbot/main.py
+
+
+### builtin_commands/commands/utils/rst_scene.py
+
+
+### builtin_commands/main.py
+
+
+### web_searcher/engines/bing.py
+
+
+### web_searcher/engines/sogo.py

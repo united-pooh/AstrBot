@@ -50,3 +50,87 @@ dashboard-auth-wrong-old-pwd = 原密码错误。
 dashboard-auth-empty-fields = 新用户名和新密码不能同时为空，你改了个寂寞。
 dashboard-auth-edit-success = 修改成功。
 dashboard-auth-jwt-secret-not-found = 配置文件中未设置 JWT 秘钥。
+
+
+### routes/api_key.py
+
+
+### routes/backup.py
+
+
+### routes/chat.py
+
+
+### routes/chatui_project.py
+
+
+### routes/command.py
+
+
+### routes/config.py
+
+
+### routes/conversation.py
+
+
+### routes/cron.py
+
+
+### routes/file.py
+
+
+### routes/knowledge_base.py
+
+
+### routes/lang_route.py
+
+
+### routes/live_chat.py
+
+
+### routes/log.py
+
+
+### routes/open_api.py
+
+
+### routes/persona.py
+
+
+### routes/platform.py
+
+
+### routes/plugin.py
+
+
+### routes/route.py
+
+
+### routes/session_management.py
+
+
+### routes/skills.py
+
+
+### routes/stat.py
+
+
+### routes/static_file.py
+
+
+### routes/subagent.py
+
+
+### routes/t2i.py
+
+
+### routes/tools.py
+
+
+### routes/update.py
+
+
+### routes/util.py
+
+
+### utils.py

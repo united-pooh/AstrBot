@@ -59,9 +59,16 @@ class RepoZipUpdator:
                 if response.status != 200:
                     text = await response.text()
                     logger.error(
-                        t("repo-request-failed", url=url, status_code=response.status, content=text),
+                        t(
+                            "repo-request-failed",
+                            url=url,
+                            status_code=response.status,
+                            content=text,
+                        ),
                     )
-                    raise Exception(t("repo-request-failed-exception", status_code=response.status))
+                    raise Exception(
+                        t("repo-request-failed-exception", status_code=response.status)
+                    )
                 result = await response.json()
             if not result:
                 return []
@@ -157,7 +164,9 @@ class RepoZipUpdator:
         logger.info(t("repo-downloading-update", repo=repo))
 
         if branch:
-            logger.info(t("repo-downloading-branch", branch=branch, author=author, repo=repo))
+            logger.info(
+                t("repo-downloading-branch", branch=branch, author=author, repo=repo)
+            )
             release_url = (
                 f"https://github.com/{author}/{repo}/archive/refs/heads/{branch}.zip"
             )
@@ -167,7 +176,12 @@ class RepoZipUpdator:
                 releases = await self.fetch_release_info(url=release_url)
             except Exception as e:
                 logger.warning(
-                    t("repo-fetch-releases-failed", author=author, repo=repo, error=str(e))
+                    t(
+                        "repo-fetch-releases-failed",
+                        author=author,
+                        repo=repo,
+                        error=str(e),
+                    )
                 )
                 releases = []
             if not releases:
@@ -225,11 +239,23 @@ class RepoZipUpdator:
             shutil.move(os.path.join(target_dir, update_dir, f), target_dir)
 
         try:
-            logger.debug(t("repo-delete-temp", zip_path=zip_path, temp_dir=os.path.join(target_dir, update_dir)))
+            logger.debug(
+                t(
+                    "repo-delete-temp",
+                    zip_path=zip_path,
+                    temp_dir=os.path.join(target_dir, update_dir),
+                )
+            )
             shutil.rmtree(os.path.join(target_dir, update_dir), onerror=on_error)
             os.remove(zip_path)
         except BaseException:
-            logger.warning(t("repo-delete-failed", zip_path=zip_path, temp_dir=os.path.join(target_dir, update_dir)))
+            logger.warning(
+                t(
+                    "repo-delete-failed",
+                    zip_path=zip_path,
+                    temp_dir=os.path.join(target_dir, update_dir),
+                )
+            )
 
     def format_name(self, name: str) -> str:
         return name.replace("-", "_").lower()
