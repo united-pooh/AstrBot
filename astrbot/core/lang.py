@@ -1,4 +1,5 @@
 # lang.py
+import threading
 from pathlib import Path
 
 from fluent.runtime import FluentLocalization, FluentResourceLoader
@@ -15,11 +16,12 @@ class Lang:
         namespace_files: dict[str, list[str]] | None = None,
         default_namespace: str = "default",
     ):
+        self._lock = threading.RLock()
         self.locale = locale
         self.files = files
         self.default_namespace = default_namespace
 
-        base_dir = Path(get_astrbot_path()) / "astrbot" / "i18n" / "locales"
+        base_dir = self._get_core_locales_dir()
         if namespace_paths is None:
             self.namespace_paths: dict[str, Path] = {self.default_namespace: base_dir}
         else:
@@ -34,6 +36,17 @@ class Lang:
         self.available_locales_by_namespace: dict[str, list[str]] = {}
         self._l10n_map: dict[str, FluentLocalization] = {}
         self.load_locale(self.locale, self.files)
+
+    @staticmethod
+    def _get_core_locales_dir() -> Path:
+        return Path(get_astrbot_path()) / "astrbot" / "i18n" / "locales"
+
+    @staticmethod
+    def _validate_namespace(namespace: str) -> None:
+        if not namespace:
+            raise ValueError("Namespace must not be empty.")
+        if "." in namespace:
+            raise ValueError("Namespace must not contain '.'.")
 
     @staticmethod
     def _collect_files(base_dir: Path, files: list[str] | None) -> list[str]:
@@ -79,6 +92,28 @@ class Lang:
             locales_preference, merged_files, loader
         ), available_locales
 
+    def _update_available_locales(self) -> None:
+        if self.default_namespace in self.available_locales_by_namespace:
+            self.available_locales = self.available_locales_by_namespace[
+                self.default_namespace
+            ]
+            return
+
+        all_locales: set[str] = set()
+        for locales in self.available_locales_by_namespace.values():
+            all_locales.update(locales)
+        self.available_locales = sorted(all_locales)
+
+    def _refresh_namespace(self, namespace: str) -> None:
+        base_dir = self.namespace_paths[namespace]
+        ns_files = self.namespace_files.get(namespace, self.files)
+        l10n, available_locales = self._build_localization(
+            base_dir, self.locale, ns_files
+        )
+        self._l10n_map[namespace] = l10n
+        self.available_locales_by_namespace[namespace] = available_locales
+        self._update_available_locales()
+
     def load_locale(
         self,
         locale: str = "zh-cn",
@@ -86,36 +121,87 @@ class Lang:
         namespace_paths: dict[str, str | Path] | None = None,
         namespace_files: dict[str, list[str]] | None = None,
     ):
-        if namespace_paths is not None:
-            self.namespace_paths = {
-                namespace: Path(path) for namespace, path in namespace_paths.items()
+        with self._lock:
+            if namespace_paths is not None:
+                self.namespace_paths = {
+                    namespace: Path(path) for namespace, path in namespace_paths.items()
+                }
+                if self.default_namespace not in self.namespace_paths:
+                    self.namespace_paths[self.default_namespace] = (
+                        self._get_core_locales_dir()
+                    )
+            if namespace_files is not None:
+                self.namespace_files = namespace_files
+
+            self.locale = locale
+            if files is not None:
+                self.files = files
+
+            l10n_map: dict[str, FluentLocalization] = {}
+            available_by_namespace: dict[str, list[str]] = {}
+            for namespace, base_dir in self.namespace_paths.items():
+                ns_files = self.namespace_files.get(namespace, self.files)
+                l10n, available_locales = self._build_localization(
+                    base_dir, locale, ns_files
+                )
+                l10n_map[namespace] = l10n
+                available_by_namespace[namespace] = available_locales
+
+            self._l10n_map = l10n_map
+            self.available_locales_by_namespace = available_by_namespace
+            self._update_available_locales()
+
+    def register_namespace(
+        self,
+        namespace: str,
+        path: str | Path,
+        files: list[str] | None = None,
+        replace: bool = False,
+    ) -> None:
+        self._validate_namespace(namespace)
+        with self._lock:
+            if namespace in self.namespace_paths and not replace:
+                raise ValueError(
+                    f"Namespace '{namespace}' already exists. Set replace=True to overwrite."
+                )
+
+            self.namespace_paths[namespace] = Path(path)
+            if files is None:
+                self.namespace_files.pop(namespace, None)
+            else:
+                self.namespace_files[namespace] = files
+            self._refresh_namespace(namespace)
+
+    def unregister_namespace(self, namespace: str) -> None:
+        self._validate_namespace(namespace)
+        with self._lock:
+            if namespace == self.default_namespace:
+                raise ValueError("Default namespace cannot be unregistered.")
+            if namespace not in self.namespace_paths:
+                raise ValueError(f"Namespace '{namespace}' is not registered.")
+
+            self.namespace_paths.pop(namespace, None)
+            self.namespace_files.pop(namespace, None)
+            self._l10n_map.pop(namespace, None)
+            self.available_locales_by_namespace.pop(namespace, None)
+            self._update_available_locales()
+
+    def list_namespaces(self) -> list[str]:
+        with self._lock:
+            return sorted(self.namespace_paths.keys())
+
+    def get_namespace_meta(self) -> dict[str, dict[str, object]]:
+        with self._lock:
+            return {
+                namespace: {
+                    "path": str(path),
+                    "files": self.namespace_files.get(namespace),
+                    "available_locales": self.available_locales_by_namespace.get(
+                        namespace, []
+                    ),
+                }
+                for namespace, path in self.namespace_paths.items()
             }
-            if self.default_namespace not in self.namespace_paths:
-                base_dir = Path(get_astrbot_path()) / "astrbot" / "i18n" / "locales"
-                self.namespace_paths[self.default_namespace] = base_dir
-        if namespace_files is not None:
-            self.namespace_files = namespace_files
-
-        self.locale = locale
-        if files is not None:
-            self.files = files
-
-        l10n_map: dict[str, FluentLocalization] = {}
-        available_by_namespace: dict[str, list[str]] = {}
-        for namespace, base_dir in self.namespace_paths.items():
-            ns_files = self.namespace_files.get(namespace, self.files)
-            l10n, available_locales = self._build_localization(
-                base_dir, locale, ns_files
-            )
-            l10n_map[namespace] = l10n
-            available_by_namespace[namespace] = available_locales
-
-        self._l10n_map = l10n_map
-        self.available_locales_by_namespace = available_by_namespace
-        self.available_locales = available_by_namespace.get(
-            self.default_namespace,
-            sorted(set().union(*available_by_namespace.values())),
-        )
 
     def _resolve_key(self, key: str) -> tuple[str, str]:
         if "." not in key:
@@ -127,8 +213,11 @@ class Lang:
         return self.default_namespace, key
 
     def __call__(self, key: str, **kwargs) -> str:
-        namespace, real_key = self._resolve_key(key)
-        l10n = self._l10n_map.get(namespace) or self._l10n_map[self.default_namespace]
+        with self._lock:
+            namespace, real_key = self._resolve_key(key)
+            l10n = (
+                self._l10n_map.get(namespace) or self._l10n_map[self.default_namespace]
+            )
         return l10n.format_value(real_key, kwargs)
 
 
