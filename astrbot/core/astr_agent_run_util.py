@@ -8,6 +8,7 @@ from astrbot.core import logger
 from astrbot.core.agent.message import Message
 from astrbot.core.agent.runners.tool_loop_agent_runner import ToolLoopAgentRunner
 from astrbot.core.astr_agent_context import AstrAgentContext
+from astrbot.core.lang import t
 from astrbot.core.message.components import BaseMessageComponent, Json, Plain
 from astrbot.core.message.message_event_result import (
     MessageChain,
@@ -16,7 +17,6 @@ from astrbot.core.message.message_event_result import (
 )
 from astrbot.core.provider.entities import LLMResponse
 from astrbot.core.provider.provider import TTSProvider
-from astrbot.core import t
 
 AgentRunner = ToolLoopAgentRunner[AstrAgentContext]
 
@@ -234,9 +234,11 @@ async def run_agent(
                     pass
             logger.error(traceback.format_exc())
 
-            err_msg = t("agent-request-failed",
-                        error_type=type(e).__name__,
-                        error_message=str(e))
+            err_msg = t(
+                "agent-request-failed",
+                error_type=type(e).__name__,
+                error_message=str(e),
+            )
 
             error_llm_response = LLMResponse(
                 role="err",
@@ -446,7 +448,12 @@ async def _run_agent_feeder(
 
                         if len(temp_buffer) >= 10:
                             if temp_buffer.strip():
-                                logger.info(t("live-agent-feeder-sentence", sentence=temp_buffer))
+                                logger.info(
+                                    t(
+                                        "live-agent-feeder-sentence",
+                                        sentence=temp_buffer,
+                                    )
+                                )
                                 await text_queue.put(temp_buffer)
                             temp_buffer = ""
 
@@ -498,9 +505,9 @@ async def _simulated_stream_tts(
                         audio_data = f.read()
                     await audio_queue.put((text, audio_data))
             except Exception as e:
-                logger.error(t("live-tts-simulated-error",
-                               text_preview=text[:20],
-                               error=str(e)))
+                logger.error(
+                    t("live-tts-simulated-error", text_preview=text[:20], error=str(e))
+                )
                 # 继续处理下一句
 
     except Exception as e:

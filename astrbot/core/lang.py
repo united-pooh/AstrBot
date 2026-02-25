@@ -213,6 +213,8 @@ class Lang:
         return self.default_namespace, key
 
     def __call__(self, key: str, **kwargs) -> str:
+        if not key:
+            return ""
         with self._lock:
             namespace, real_key = self._resolve_key(key)
             l10n = (

@@ -412,7 +412,7 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
             event=cron_event, plugin_context=ctx, config=config, req=req
         )
         if not result:
-            logger.error(t("background-task-build-failed",tool_name=tool_name))
+            logger.error(t("background-task-build-failed", tool_name=tool_name))
             return
 
         runner = result.agent_runner
@@ -513,13 +513,21 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
                                 )
                             except Exception as e:
                                 logger.error(
-                                    t("tool-send-message-failed", error=str(e), traceback=traceback.format_exc()),
+                                    t(
+                                        "tool-send-message-failed",
+                                        error=str(e),
+                                        traceback=traceback.format_exc(),
+                                    ),
                                     exc_info=True,
                                 )
                     yield None
             except asyncio.TimeoutError:
                 raise Exception(
-                    t("tool-execution-timeout",tool_name=tool.name,timeout=tool_call_timeout or run_context.tool_call_timeout)
+                    t(
+                        "tool-execution-timeout",
+                        tool_name=tool.name,
+                        timeout=tool_call_timeout or run_context.tool_call_timeout,
+                    )
                 )
             except StopAsyncIteration:
                 break

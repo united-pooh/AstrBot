@@ -1,4 +1,4 @@
-### astrbot\cli\commands\cmd_conf.py
+### astrbot/cli/commands/cmd_conf.py
 invalid-log-level = 日志级别必须是 DEBUG, INFO, WARNING, ERROR, CRITICAL 之一"
 invalid-dashboard-port = 端口必须在 {$min}-{$max} 范围内
 invalid-dashboard-port-value = 端口必须是数字
@@ -9,7 +9,7 @@ invalid-callback-api-base = 回调接口基址必须以 http:// 或 https:// 开
 invalid-astrbot-root = {$root}不是有效的 AstrBot 根目录，如需初始化请使用 astrbot init
 config-parse-failed = 配置文件解析失败：{$error}
 config-path-conflict = 配置路径冲突: {$path} 不是字典
-invalid-config-key = 不支持的配置项: {$k}\
+invalid-config-key = 不支持的配置项: {$k}
 config-updated = 配置已更新: {$k}
 value-remains-intact-for-security = 原值: ********
 config-restart-reminder = 新值: ********
@@ -23,3 +23,23 @@ unknown-config-key = 未知的配置项: {$k}
 get-config-failed = 获取配置失败: {$error}
 current-config = 当前配置:
 get-config-value = {$k}: {$value}
+
+### __main__.py
+
+
+### commands/cmd_init.py
+
+
+### commands/cmd_plug.py
+
+
+### commands/cmd_run.py
+
+
+### utils/basic.py
+
+
+### utils/plugin.py
+
+
+### utils/version_comparator.py
