@@ -1,22 +1,13 @@
 """
 从 Python 源文件中提取 logger / print / click.echo / raise XxxError 的消息，
 转换为 FTL 格式，并将含变量的调用重写为 t("id", key=val) 形式。
-
-用法：
-    # 预览模式（不修改文件，输出到终端）
-    python extract_logger.py <文件路径>
-
-    # 原地重写源文件，并将 FTL 条目写入文件
-    python extract_logger.py <文件路径> --rewrite [--ftl output.ftl]
-
-作为模块调用：
-    from extract_logger import extract_and_rewrite
-    ftl_entries, new_source = extract_and_rewrite(source_code)
+扫描所有 .py 文件并将 FTL 条目统一输出到 astrbot/i18n/locales/zh-cn/** 下。
 """
 
 import ast
 import hashlib
 import re
+import os
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -220,7 +211,11 @@ def extract_and_rewrite(source: str):
       new_source  : 将含变量的第一个参数替换为 t("id", key=val) 后的源码
     纯字符串（无变量）的调用保持原样不动。
     """
-    tree = ast.parse(source)
+    try:
+        tree = ast.parse(source)
+    except Exception as e:
+        print(f"Error parsing source: {e}")
+        return [], source
 
     # 收集替换信息：(起始偏移, 结束偏移, 新文本, msg_id, ftl_value)
     replacements = []
@@ -300,38 +295,105 @@ def extract_and_rewrite(source: str):
 # 命令行入口
 # ---------------------------------------------------------------------------
 
+def get_ftl_category(file_path: Path) -> str:
+    """根据文件路径确定 FTL 分类"""
+    parts = file_path.parts
+    if "astrbot" in parts:
+        idx = parts.index("astrbot")
+        if idx + 1 < len(parts):
+            category = parts[idx + 1]
+            # 排除 __init__.py 等文件直接在 astrbot 下的情况
+            if category.endswith(".py"):
+                return "main"
+            return category
+    return "main"
 
 def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="提取 i18n 消息并重写日志/异常调用")
-    parser.add_argument("file", help="要处理的 Python 源文件路径")
     parser.add_argument("--rewrite", action="store_true", help="原地重写源文件")
-    parser.add_argument(
-        "--ftl", default=None, help="FTL 条目输出路径（默认打印到终端）"
-    )
     args = parser.parse_args()
 
-    source = Path(args.file).read_text(encoding="utf-8")
-    ftl_entries, new_source = extract_and_rewrite(source)
+    root_dir = Path(".")
+    ftl_base_dir = Path("astrbot/i18n/locales/zh-cn")
+    ftl_base_dir.mkdir(parents=True, exist_ok=True)
 
-    ftl_text = "\n".join(f"{msg_id} = {value}" for msg_id, value in ftl_entries)
+    # 记录所有生成的 FTL 条目，按类别分组
+    # category -> { file_path -> [ (msg_id, ftl_value) ] }
+    all_ftl_entries = {}
 
-    if args.ftl and len(ftl_entries) > 0:
-        Path(args.ftl).write_text(ftl_text + "\n", encoding="utf-8")
-        print(f"[FTL] 已写入 {len(ftl_entries)} 条到 {args.ftl}")
+    exclude_dirs = {".git", "__pycache__", ".venv", "venv", "tests", ".pytest_cache", ".ruff_cache", ".idea", ".vscode", "data"}
 
-    if args.rewrite:
-        # 如果源文件中没有导入 t，则在文件开头追加导入语句
-        import_stmt = "from astrbot.core.lang import t"
-        if import_stmt not in new_source:
-            new_source = import_stmt + "\n" + new_source
-        Path(args.file).write_text(new_source, encoding="utf-8")
-        print(f"[重写] {args.file} 已原地更新")
-    else:
-        print("\n=== 重写后源码 ===")
-        print(new_source)
+    for root, dirs, files in os.walk(root_dir):
+        dirs[:] = [d for d in dirs if d not in exclude_dirs]
+        for file in files:
+            if not file.endswith(".py"):
+                continue
+            if file == "automatic_i18n.py" or file == "runtime_bootstrap.py":
+                continue
 
+            file_path = Path(root) / file
+            print(f"Processing {file_path}...")
+
+            try:
+                source = file_path.read_text(encoding="utf-8")
+                ftl_entries, new_source = extract_and_rewrite(source)
+
+                if not ftl_entries:
+                    continue
+
+                if args.rewrite:
+                    import_stmt = "from astrbot.core.lang import t"
+                    if import_stmt not in new_source:
+                        # 插入到 docstring 之后或文件开头
+                        if new_source.startswith('"""') or new_source.startswith("'''"):
+                            end_doc = new_source.find(new_source[:3], 3)
+                            if end_doc != -1:
+                                insert_pos = end_doc + 3
+                                new_source = new_source[:insert_pos] + "\n" + import_stmt + new_source[insert_pos:]
+                            else:
+                                new_source = import_stmt + "\n" + new_source
+                        else:
+                            new_source = import_stmt + "\n" + new_source
+                    file_path.write_text(new_source, encoding="utf-8")
+                    print(f"  [Rewritten] {file_path}")
+
+                category = get_ftl_category(file_path)
+                if category not in all_ftl_entries:
+                    all_ftl_entries[category] = {}
+                
+                # 使用相对于根目录的路径作为标识
+                rel_path = file_path.relative_to(root_dir)
+                all_ftl_entries[category][str(rel_path)] = ftl_entries
+
+            except Exception as e:
+                print(f"  [Error] Failed to process {file_path}: {e}")
+
+    # 写入 FTL 文件
+    for category, files_data in all_ftl_entries.items():
+        ftl_file = ftl_base_dir / f"{category}.ftl"
+        
+        # 读取现有内容以避免重复写入相同文件的 header
+        existing_content = ""
+        if ftl_file.exists():
+            existing_content = ftl_file.read_text(encoding="utf-8")
+        
+        new_ftl_lines = []
+        for rel_path, entries in files_data.items():
+            header = f"### {rel_path}"
+            # 只有当 header 不存在时才添加 header 和内容
+            # 这里简单处理，总是追加。如果需要更复杂的去重可以进一步优化。
+            new_ftl_lines.append(f"\n{header}")
+            for msg_id, ftl_value in entries:
+                # 简单的去重逻辑：检查 msg_id 是否已存在
+                if f"{msg_id} =" not in existing_content:
+                    new_ftl_lines.append(f"{msg_id} = {ftl_value}")
+
+        if new_ftl_lines:
+            with open(ftl_file, "a", encoding="utf-8") as f:
+                f.write("\n".join(new_ftl_lines) + "\n")
+            print(f"[FTL] Updated {ftl_file} with {len(new_ftl_lines)} lines.")
 
 if __name__ == "__main__":
     main()
