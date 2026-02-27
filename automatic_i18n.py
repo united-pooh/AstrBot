@@ -240,6 +240,15 @@ def extract_and_rewrite(source: str):
         if not node.args:
             continue
 
+        # 第一个参数已经是 t(...) 调用，说明已处理过，跳过
+        first = node.args[0]
+        if (
+            isinstance(first, ast.Call)
+            and isinstance(first.func, ast.Name)
+            and first.func.id == "t"
+        ):
+            continue
+
         result = extract_string_expr(node.args[0])
         if result is None:
             continue
@@ -308,14 +317,15 @@ def main():
 
     ftl_text = "\n".join(f"{msg_id} = {value}" for msg_id, value in ftl_entries)
 
-    if args.ftl:
+    if args.ftl and len(ftl_entries) > 0:
         Path(args.ftl).write_text(ftl_text + "\n", encoding="utf-8")
         print(f"[FTL] 已写入 {len(ftl_entries)} 条到 {args.ftl}")
-    else:
-        print("=== FTL 条目 ===")
-        print(ftl_text)
 
     if args.rewrite:
+        # 如果源文件中没有导入 t，则在文件开头追加导入语句
+        import_stmt = "from astrbot.core.lang import t"
+        if import_stmt not in new_source:
+            new_source = import_stmt + "\n" + new_source
         Path(args.file).write_text(new_source, encoding="utf-8")
         print(f"[重写] {args.file} 已原地更新")
     else:
