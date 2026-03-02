@@ -727,7 +727,7 @@ class ProviderCommands:
                 except Exception as e:
                     message.set_result(
                         MessageEventResult().message(
-                            safe_error("切换 Key 未知错误: ", e)
+                            safe_error(t("msg-f52481b8"), e)
                         ),
                     )
                     return
