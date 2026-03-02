@@ -1,3 +1,4 @@
+from astrbot.core.lang import t
 import copy
 from sys import maxsize
 
@@ -5,7 +6,6 @@ import astrbot.api.message_components as Comp
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.star import Context, Star
-from astrbot.core import t
 from astrbot.core.utils.session_waiter import (
     FILTERS,
     USER_SESSIONS,
@@ -83,18 +83,9 @@ class Main(Star):
                                 conversation=conversation,
                             )
                         except Exception as e:
-                            logger.error(
-                                t(
-                                    "builtin-stars-session-controller-llm-response-failed",
-                                    error=str(e),
-                                )
-                            )
+                            logger.error(t("msg-b48bf3fe", e=e))
                             # LLM 回复失败，使用原始预设回复
-                            yield event.plain_result(
-                                t(
-                                    "builtin-stars-session-controller-empty-mention-fallback-reply"
-                                )
-                            )
+                            yield event.plain_result("想要问什么呢？😄")
 
                     @session_waiter(60)
                     async def empty_mention_waiter(
@@ -116,18 +107,8 @@ class Main(Star):
                     except TimeoutError as _:
                         pass
                     except Exception as e:
-                        yield event.plain_result(
-                            t(
-                                "builtin-stars-session-controller-empty-mention-handler-error",
-                                error=str(e),
-                            )
-                        )
+                        yield event.plain_result("发生错误，请联系管理员: " + str(e))
                     finally:
                         event.stop_event()
         except Exception as e:
-            logger.error(
-                t(
-                    "builtin-stars-session-controller-handle-empty-mention-error",
-                    error=str(e),
-                )
-            )
+            logger.error("handle_empty_mention error: " + str(e))

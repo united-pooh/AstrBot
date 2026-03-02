@@ -1,6 +1,6 @@
+from astrbot.core.lang import t
 from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.core import t
 from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
 from astrbot.core.star.filter.permission import PermissionTypeFilter
@@ -32,7 +32,7 @@ class AlterCmdCommands(CommandParserMixin):
         if token.len < 3:
             await event.send(
                 MessageChain().message(
-                    t("builtin-stars-alter-cmd-usage"),
+                    t("msg-d7a36c19"),
                 ),
             )
             return
@@ -52,16 +52,15 @@ class AlterCmdCommands(CommandParserMixin):
             group_unique_off = reset_cfg.get("group_unique_off", "admin")
             private = reset_cfg.get("private", "member")
 
-            await event.send(
-                MessageChain().message(
-                    t(
-                        "builtin-stars-alter-cmd-reset-config-menu",
-                        group_unique_on=group_unique_on,
-                        group_unique_off=group_unique_off,
-                        private=private,
-                    )
-                )
-            )
+            config_menu = f"""reset命令权限细粒度配置
+                当前配置：
+                1. 群聊+会话隔离开: {group_unique_on}
+                2. 群聊+会话隔离关: {group_unique_off}
+                3. 私聊: {private}
+                修改指令格式：
+                /alter_cmd reset scene <场景编号> <admin/member>
+                例如: /alter_cmd reset scene 2 member"""
+            await event.send(MessageChain().message(t("msg-afe0fa58", config_menu=config_menu)))
             return
 
         if cmd_name == "reset" and cmd_type == "scene" and token.len >= 4:
@@ -69,26 +68,18 @@ class AlterCmdCommands(CommandParserMixin):
             perm_type = token.get(4)
 
             if scene_num is None or perm_type is None:
-                await event.send(
-                    MessageChain().message(
-                        t("builtin-stars-alter-cmd-scene-and-perm-required")
-                    )
-                )
+                await event.send(MessageChain().message(t("msg-0c85d498")))
                 return
 
             if not scene_num.isdigit() or int(scene_num) < 1 or int(scene_num) > 3:
                 await event.send(
-                    MessageChain().message(
-                        t("builtin-stars-alter-cmd-scene-index-invalid")
-                    ),
+                    MessageChain().message(t("msg-4e0afcd1")),
                 )
                 return
 
             if perm_type not in ["admin", "member"]:
                 await event.send(
-                    MessageChain().message(
-                        t("builtin-stars-alter-cmd-perm-type-invalid")
-                    ),
+                    MessageChain().message(t("msg-830d6eb8")),
                 )
                 return
 
@@ -100,18 +91,14 @@ class AlterCmdCommands(CommandParserMixin):
 
             await event.send(
                 MessageChain().message(
-                    t(
-                        "builtin-stars-alter-cmd-reset-scene-updated",
-                        scene_name=scene.name,
-                        perm_type=perm_type,
-                    ),
+                    t("msg-d1180ead", res=scene.name, perm_type=perm_type),
                 ),
             )
             return
 
         if cmd_type not in ["admin", "member"]:
             await event.send(
-                MessageChain().message(t("builtin-stars-alter-cmd-type-invalid")),
+                MessageChain().message(t("msg-8d9bc364")),
             )
             return
 
@@ -134,9 +121,7 @@ class AlterCmdCommands(CommandParserMixin):
                         break
 
         if not found_command:
-            await event.send(
-                MessageChain().message(t("builtin-stars-alter-cmd-command-not-found"))
-            )
+            await event.send(MessageChain().message(t("msg-1f2f65e0")))
             return
 
         found_plugin = star_map[found_command.handler_module_path]
@@ -177,18 +162,9 @@ class AlterCmdCommands(CommandParserMixin):
                     else filter.PermissionType.MEMBER,
                 ),
             )
-        cmd_group_str = (
-            t("builtin-stars-alter-cmd-group-label")
-            if cmd_group
-            else t("builtin-stars-alter-cmd-command-label")
-        )
+        cmd_group_str = "指令组" if cmd_group else "指令"
         await event.send(
             MessageChain().message(
-                t(
-                    "builtin-stars-alter-cmd-updated",
-                    cmd_name=cmd_name,
-                    cmd_group_str=cmd_group_str,
-                    cmd_type=cmd_type,
-                ),
+                t("msg-cd271581", cmd_name=cmd_name, cmd_group_str=cmd_group_str, cmd_type=cmd_type),
             ),
         )

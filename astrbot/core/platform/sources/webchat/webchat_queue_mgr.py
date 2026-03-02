@@ -1,3 +1,4 @@
+from astrbot.core.lang import t
 import asyncio
 from collections.abc import Awaitable, Callable
 
@@ -75,6 +76,10 @@ class WebChatQueueMgr:
         if task is not None:
             task.cancel()
 
+    def list_back_request_ids(self, conversation_id: str) -> list[str]:
+        """List active back-queue request IDs for a conversation."""
+        return list(self._conversation_back_requests.get(conversation_id, set()))
+
     def has_queue(self, conversation_id: str) -> bool:
         """Check if a queue exists for the given conversation ID"""
         return conversation_id in self.queues
@@ -119,7 +124,7 @@ class WebChatQueueMgr:
         task.add_done_callback(
             lambda _: self._listener_tasks.pop(conversation_id, None)
         )
-        logger.debug(f"Started listener for conversation: {conversation_id}")
+        logger.debug(t("msg-4af4f885", conversation_id=conversation_id))
 
     async def _listen_to_queue(
         self,
@@ -146,7 +151,7 @@ class WebChatQueueMgr:
                     await self._listener_callback(data)
                 except Exception as e:
                     logger.error(
-                        f"Error processing message from conversation {conversation_id}: {e}"
+                        t("msg-10237240", conversation_id=conversation_id, e=e)
                     )
             except asyncio.CancelledError:
                 break

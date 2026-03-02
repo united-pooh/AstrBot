@@ -1,6 +1,6 @@
+from astrbot.core.lang import t
 from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.core import t
 
 
 class LLMCommands:
@@ -13,11 +13,9 @@ class LLMCommands:
         enable = cfg["provider_settings"].get("enable", True)
         if enable:
             cfg["provider_settings"]["enable"] = False
-            status = t("builtin-stars-llm-status-disabled")
+            status = "关闭"
         else:
             cfg["provider_settings"]["enable"] = True
-            status = t("builtin-stars-llm-status-enabled")
+            status = "开启"
         cfg.save_config()
-        await event.send(
-            MessageChain().message(t("builtin-stars-llm-toggle-result", status=status))
-        )
+        await event.send(MessageChain().message(t("msg-72cd5f57", status=status)))

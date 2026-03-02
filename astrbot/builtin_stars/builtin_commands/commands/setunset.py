@@ -1,6 +1,6 @@
+from astrbot.core.lang import t
 from astrbot.api import sp, star
 from astrbot.api.event import AstrMessageEvent, MessageEventResult
-from astrbot.core import t
 
 
 class SetUnsetCommands:
@@ -16,11 +16,7 @@ class SetUnsetCommands:
 
         event.set_result(
             MessageEventResult().message(
-                t(
-                    "builtin-stars-setunset-set-success",
-                    uid=uid,
-                    key=key,
-                ),
+                t("msg-8b56b437", uid=uid, key=key),
             ),
         )
 
@@ -31,17 +27,11 @@ class SetUnsetCommands:
 
         if key not in session_var:
             event.set_result(
-                MessageEventResult().message(t("builtin-stars-setunset-key-not-found")),
+                MessageEventResult().message(t("msg-dfd31d9d")),
             )
         else:
             del session_var[key]
             await sp.session_put(uid, "session_variables", session_var)
             event.set_result(
-                MessageEventResult().message(
-                    t(
-                        "builtin-stars-setunset-unset-success",
-                        uid=uid,
-                        key=key,
-                    )
-                ),
+                MessageEventResult().message(t("msg-bf181241", uid=uid, key=key)),
             )

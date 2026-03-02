@@ -1,9 +1,9 @@
+from astrbot.core.lang import t
 import builtins
 from typing import TYPE_CHECKING
 
 from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageEventResult
-from astrbot.core import t
 
 if TYPE_CHECKING:
     from astrbot.core.db.po import Persona
@@ -55,14 +55,14 @@ class PersonaCommands:
         l = message.message_str.split(" ")  # noqa: E741
         umo = message.unified_msg_origin
 
-        curr_persona_name = t("builtin-stars-persona-none")
+        curr_persona_name = "无"
         cid = await self.context.conversation_manager.get_curr_conversation_id(umo)
         default_persona = await self.context.persona_manager.get_default_persona_v3(
             umo=umo,
         )
         force_applied_persona_id = None
 
-        curr_cid_title = t("builtin-stars-persona-none")
+        curr_cid_title = "无"
         if cid:
             conv = await self.context.conversation_manager.get_conversation(
                 unified_msg_origin=umo,
@@ -72,7 +72,7 @@ class PersonaCommands:
             if conv is None:
                 message.set_result(
                     MessageEventResult().message(
-                        t("builtin-stars-persona-current-conversation-not-found"),
+                        t("msg-4f52d0dd"),
                     ),
                 )
                 return
@@ -99,28 +99,16 @@ class PersonaCommands:
                 curr_persona_name = persona_id
 
             if force_applied_persona_id:
-                curr_persona_name = t(
-                    "builtin-stars-persona-name-with-custom-rule",
-                    persona_name=curr_persona_name,
-                )
+                curr_persona_name = f"{curr_persona_name} (自定义规则)"
 
-            curr_cid_title = (
-                conv.title
-                if conv.title
-                else t("builtin-stars-persona-new-conversation")
-            )
+            curr_cid_title = conv.title if conv.title else "新对话"
             curr_cid_title += f"({cid[:4]})"
 
         if len(l) == 1:
             message.set_result(
                 MessageEventResult()
                 .message(
-                    t(
-                        "builtin-stars-persona-overview",
-                        default_persona_name=default_persona["name"],
-                        curr_cid_title=curr_cid_title,
-                        curr_persona_name=curr_persona_name,
-                    ),
+                    t("msg-e092b97c", res=default_persona['name'], curr_cid_title=curr_cid_title, curr_persona_name=curr_persona_name),
                 )
                 .use_t2i(False),
             )
@@ -129,7 +117,7 @@ class PersonaCommands:
             folder_tree = await self.context.persona_manager.get_folder_tree()
             all_personas = self.context.persona_manager.personas
 
-            lines = [t("builtin-stars-persona-list-title")]
+            lines = ["📂 人格列表：\n"]
 
             # 构建树状输出
             tree_lines = self._build_tree_output(folder_tree, all_personas)
@@ -145,19 +133,15 @@ class PersonaCommands:
 
             # 统计信息
             total_count = len(all_personas)
-            lines.append(t("builtin-stars-persona-list-total", total_count=total_count))
-            lines.append(t("builtin-stars-persona-list-set-tip"))
-            lines.append(t("builtin-stars-persona-list-view-tip"))
+            lines.append(f"\n共 {total_count} 个人格")
+            lines.append("\n*使用 `/persona <人格名>` 设置人格")
+            lines.append("*使用 `/persona view <人格名>` 查看详细信息")
 
             msg = "\n".join(lines)
-            message.set_result(MessageEventResult().message(msg).use_t2i(False))
+            message.set_result(MessageEventResult().message(t("msg-c046b6e4", msg=msg)).use_t2i(False))
         elif l[1] == "view":
             if len(l) == 2:
-                message.set_result(
-                    MessageEventResult().message(
-                        t("builtin-stars-persona-view-need-name")
-                    )
-                )
+                message.set_result(MessageEventResult().message(t("msg-99139ef8")))
                 return
             ps = l[2].strip()
             if persona := next(
@@ -167,32 +151,28 @@ class PersonaCommands:
                 ),
                 None,
             ):
-                msg = t("builtin-stars-persona-view-detail-title", persona_name=ps)
+                msg = f"人格{ps}的详细信息：\n"
                 msg += f"{persona['prompt']}\n"
             else:
-                msg = t("builtin-stars-persona-view-not-found", persona_name=ps)
-            message.set_result(MessageEventResult().message(msg))
+                msg = f"人格{ps}不存在"
+            message.set_result(MessageEventResult().message(t("msg-c046b6e4", msg=msg)))
         elif l[1] == "unset":
             if not cid:
                 message.set_result(
-                    MessageEventResult().message(
-                        t("builtin-stars-persona-unset-no-conversation")
-                    ),
+                    MessageEventResult().message(t("msg-a44c7ec0")),
                 )
                 return
             await self.context.conversation_manager.update_conversation_persona_id(
                 message.unified_msg_origin,
                 "[%None]",
             )
-            message.set_result(
-                MessageEventResult().message(t("builtin-stars-persona-unset-success"))
-            )
+            message.set_result(MessageEventResult().message(t("msg-a90c75d4")))
         else:
             ps = "".join(l[1:]).strip()
             if not cid:
                 message.set_result(
                     MessageEventResult().message(
-                        t("builtin-stars-persona-set-no-conversation"),
+                        t("msg-a712d71a"),
                     ),
                 )
                 return
@@ -209,19 +189,18 @@ class PersonaCommands:
                 )
                 force_warn_msg = ""
                 if force_applied_persona_id:
-                    force_warn_msg = t("builtin-stars-persona-custom-rule-warning")
+                    force_warn_msg = (
+                        "提醒：由于自定义规则，您现在切换的人格将不会生效。"
+                    )
 
                 message.set_result(
                     MessageEventResult().message(
-                        t(
-                            "builtin-stars-persona-set-success",
-                            force_warn_msg=force_warn_msg,
-                        ),
+                        t("msg-4e4e746d", force_warn_msg=force_warn_msg),
                     ),
                 )
             else:
                 message.set_result(
                     MessageEventResult().message(
-                        t("builtin-stars-persona-set-not-found"),
+                        t("msg-ab60a2e7"),
                     ),
                 )

@@ -1,3 +1,4 @@
+from astrbot.core.lang import t
 import asyncio
 import re
 import time
@@ -8,12 +9,14 @@ from astrbot.core import logger
 from astrbot.core.agent.message import Message
 from astrbot.core.agent.runners.tool_loop_agent_runner import ToolLoopAgentRunner
 from astrbot.core.astr_agent_context import AstrAgentContext
-from astrbot.core.lang import t
 from astrbot.core.message.components import BaseMessageComponent, Json, Plain
 from astrbot.core.message.message_event_result import (
     MessageChain,
     MessageEventResult,
     ResultContentType,
+)
+from astrbot.core.persona_error_reply import (
+    extract_persona_custom_error_message_from_event,
 )
 from astrbot.core.provider.entities import LLMResponse
 from astrbot.core.provider.provider import TTSProvider
@@ -100,7 +103,9 @@ async def run_agent(
         step_idx += 1
 
         if step_idx == max_step + 1:
-            logger.warning(t("agent-max-steps-reached", max_step=max_step))
+            logger.warning(
+                t("msg-6b326889", max_step=max_step)
+            )
             if not agent_runner.done():
                 # 拔掉所有工具
                 if agent_runner.req:
@@ -156,7 +161,7 @@ async def run_agent(
                             msg_chain, tool_name_by_call_id
                         )
                         await astr_event.send(
-                            MessageChain(type="tool_call").message(status_msg)
+                            MessageChain(type="tool_call").message(t("msg-bb15e9c7", status_msg=status_msg))
                         )
                     # 对于其他情况，暂时先不处理
                     continue
@@ -232,13 +237,19 @@ async def run_agent(
                     await stop_watcher
                 except asyncio.CancelledError:
                     pass
-            logger.error(traceback.format_exc())
+            logger.error(t("msg-78b9c276", res=traceback.format_exc()))
 
-            err_msg = t(
-                "agent-request-failed",
-                error_type=type(e).__name__,
-                error_message=str(e),
+            custom_error_message = extract_persona_custom_error_message_from_event(
+                astr_event
             )
+            if custom_error_message:
+                err_msg = custom_error_message
+            else:
+                err_msg = (
+                    f"Error occurred during AI execution.\n"
+                    f"Error Type: {type(e).__name__}\n"
+                    f"Error Message: {str(e)}"
+                )
 
             error_llm_response = LLMResponse(
                 role="err",
@@ -249,12 +260,12 @@ async def run_agent(
                     agent_runner.run_context, error_llm_response
                 )
             except Exception:
-                logger.exception(t("agent-error-in-hook"))
+                logger.exception(t("msg-9c246298"))
 
             if agent_runner.streaming:
-                yield MessageChain().message(err_msg)
+                yield MessageChain().message(t("msg-34f164d4", err_msg=err_msg))
             else:
-                astr_event.set_result(MessageEventResult().message(err_msg))
+                astr_event.set_result(MessageEventResult().message(t("msg-34f164d4", err_msg=err_msg)))
             return
 
 
@@ -302,9 +313,11 @@ async def run_live_agent(
 
     support_stream = tts_provider.support_stream()
     if support_stream:
-        logger.info(t("live-agent-stream-tts"))
+        logger.info(t("msg-6d9553b2"))
     else:
-        logger.info(t("live-agent-tts-info", provider_type=tts_provider.meta().type))
+        logger.info(
+            t("msg-becf71bf", res=tts_provider.meta().type)
+        )
 
     # 统计数据初始化
     tts_start_time = time.time()
@@ -368,7 +381,7 @@ async def run_live_agent(
             yield chain
 
     except Exception as e:
-        logger.error(t("live-agent-runtime-error", error=str(e)), exc_info=True)
+        logger.error(t("msg-21723afb", e=e), exc_info=True)
     finally:
         # 清理任务
         if not feeder_task.done():
@@ -402,7 +415,7 @@ async def run_live_agent(
                 )
             )
     except Exception as e:
-        logger.error(t("tts-stats-send-failed", error=str(e)))
+        logger.error(t("msg-ca1bf0d7", e=e))
 
 
 async def _run_agent_feeder(
@@ -448,12 +461,7 @@ async def _run_agent_feeder(
 
                         if len(temp_buffer) >= 10:
                             if temp_buffer.strip():
-                                logger.info(
-                                    t(
-                                        "live-agent-feeder-sentence",
-                                        sentence=temp_buffer,
-                                    )
-                                )
+                                logger.info(t("msg-5ace3d96", temp_buffer=temp_buffer))
                                 await text_queue.put(temp_buffer)
                             temp_buffer = ""
 
@@ -465,7 +473,7 @@ async def _run_agent_feeder(
             await text_queue.put(buffer)
 
     except Exception as e:
-        logger.error(t("live-agent-feeder-error", error=str(e)), exc_info=True)
+        logger.error(t("msg-bc1826ea", e=e), exc_info=True)
     finally:
         # 发送结束信号
         await text_queue.put(None)
@@ -480,7 +488,7 @@ async def _safe_tts_stream_wrapper(
     try:
         await tts_provider.get_audio_stream(text_queue, audio_queue)
     except Exception as e:
-        logger.error(t("live-tts-stream-error", error=str(e)), exc_info=True)
+        logger.error(t("msg-a92774c9", e=e), exc_info=True)
     finally:
         await audio_queue.put(None)
 
@@ -506,11 +514,11 @@ async def _simulated_stream_tts(
                     await audio_queue.put((text, audio_data))
             except Exception as e:
                 logger.error(
-                    t("live-tts-simulated-error", text_preview=text[:20], error=str(e))
+                    t("msg-d7b3bbae", res=text[:20], e=e)
                 )
                 # 继续处理下一句
 
     except Exception as e:
-        logger.error(t("live-tts-simulated-critical", error=str(e)), exc_info=True)
+        logger.error(t("msg-035bca5f", e=e), exc_info=True)
     finally:
         await audio_queue.put(None)

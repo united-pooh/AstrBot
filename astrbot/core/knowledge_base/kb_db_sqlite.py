@@ -1,3 +1,4 @@
+from astrbot.core.lang import t
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -167,7 +168,7 @@ class KBSQLiteDatabase:
     async def close(self) -> None:
         """关闭数据库连接"""
         await self.engine.dispose()
-        logger.info(f"知识库数据库已关闭: {self.db_path}")
+        logger.info(t("msg-b850e5d8", res=self.db_path))
 
     async def get_kb_by_id(self, kb_id: str) -> KnowledgeBase | None:
         """根据 ID 获取知识库"""
@@ -255,6 +256,46 @@ class KBSQLiteDatabase:
                 "document": row[0],
                 "knowledge_base": row[1],
             }
+
+    async def get_documents_with_metadata_batch(
+        self, doc_ids: set[str]
+    ) -> dict[str, dict]:
+        """批量获取文档及其所属知识库元数据
+
+        Args:
+            doc_ids: 文档 ID 集合
+
+        Returns:
+            dict: doc_id -> {"document": KBDocument, "knowledge_base": KnowledgeBase}
+
+        """
+        if not doc_ids:
+            return {}
+
+        metadata_map: dict[str, dict] = {}
+        # SQLite 参数上限为 999，分片查询避免超限
+        chunk_size = 900
+        doc_id_list = list(doc_ids)
+
+        async with self.get_db() as session:
+            for i in range(0, len(doc_id_list), chunk_size):
+                chunk = doc_id_list[i : i + chunk_size]
+                stmt = (
+                    select(KBDocument, KnowledgeBase)
+                    .join(
+                        KnowledgeBase,
+                        col(KBDocument.kb_id) == col(KnowledgeBase.kb_id),
+                    )
+                    .where(col(KBDocument.doc_id).in_(chunk))
+                )
+                result = await session.execute(stmt)
+                for row in result.all():
+                    metadata_map[row[0].doc_id] = {
+                        "document": row[0],
+                        "knowledge_base": row[1],
+                    }
+
+        return metadata_map
 
     async def delete_document_by_id(self, doc_id: str, vec_db: FaissVecDB) -> None:
         """删除单个文档及其相关数据"""

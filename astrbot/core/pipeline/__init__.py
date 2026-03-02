@@ -6,9 +6,10 @@ resolution for backward compatibility.
 """
 
 from __future__ import annotations
+from astrbot.core.lang import t
 
 from importlib import import_module
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from astrbot.core.message.message_event_result import (
     EventResultType,
@@ -16,6 +17,17 @@ from astrbot.core.message.message_event_result import (
 )
 
 from .stage_order import STAGES_ORDER
+
+if TYPE_CHECKING:
+    from .content_safety_check.stage import ContentSafetyCheckStage
+    from .preprocess_stage.stage import PreProcessStage
+    from .process_stage.stage import ProcessStage
+    from .rate_limit_check.stage import RateLimitStage
+    from .respond.stage import RespondStage
+    from .result_decorate.stage import ResultDecorateStage
+    from .session_status_check.stage import SessionStatusCheckStage
+    from .waking_check.stage import WakingCheckStage
+    from .whitelist_check.stage import WhitelistCheckStage
 
 _LAZY_EXPORTS = {
     "ContentSafetyCheckStage": (
@@ -56,6 +68,18 @@ _LAZY_EXPORTS = {
     ),
 }
 
+# Type-checking imports to satisfy static analyzers for __all__ exports
+if TYPE_CHECKING:
+    from .content_safety_check.stage import ContentSafetyCheckStage
+    from .preprocess_stage.stage import PreProcessStage
+    from .process_stage.stage import ProcessStage
+    from .rate_limit_check.stage import RateLimitStage
+    from .respond.stage import RespondStage
+    from .result_decorate.stage import ResultDecorateStage
+    from .session_status_check.stage import SessionStatusCheckStage
+    from .waking_check.stage import WakingCheckStage
+    from .whitelist_check.stage import WhitelistCheckStage
+
 __all__ = [
     "ContentSafetyCheckStage",
     "EventResultType",
@@ -74,7 +98,7 @@ __all__ = [
 
 def __getattr__(name: str) -> Any:
     if name not in _LAZY_EXPORTS:
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+        raise AttributeError(t("msg-1c9fc93d", __name__=__name__, name=name))
     module_path, attr_name = _LAZY_EXPORTS[name]
     module = import_module(module_path)
     value = getattr(module, attr_name)

@@ -1,3 +1,4 @@
+from astrbot.core.lang import t
 import asyncio
 import datetime
 
@@ -5,7 +6,7 @@ import jwt
 from quart import request
 
 from astrbot import logger
-from astrbot.core import DEMO_MODE, t
+from astrbot.core import DEMO_MODE
 
 from .route import Response, Route, RouteContext
 
@@ -31,7 +32,7 @@ class AuthRoute(Route):
                 and not DEMO_MODE
             ):
                 change_pwd_hint = True
-                logger.warning(t("dashboard-auth-default-pwd-tip"))
+                logger.warning(t("msg-ee9cf260"))
 
             return (
                 Response()
@@ -45,35 +46,39 @@ class AuthRoute(Route):
                 .__dict__
             )
         await asyncio.sleep(3)
-        return Response().error(t("dashboard-auth-invalid-creds")).__dict__
+        return Response().error(t("msg-87f936b8")).__dict__
 
     async def edit_account(self):
         if DEMO_MODE:
-            return Response().error(t("dashboard-auth-demo-mode-denied")).__dict__
+            return (
+                Response()
+                .error(t("msg-1198c327"))
+                .__dict__
+            )
 
         password = self.config["dashboard"]["password"]
         post_data = await request.json
 
         if post_data["password"] != password:
-            return Response().error(t("dashboard-auth-wrong-old-pwd")).__dict__
+            return Response().error(t("msg-25562cd3")).__dict__
 
         new_pwd = post_data.get("new_password", None)
         new_username = post_data.get("new_username", None)
         if not new_pwd and not new_username:
-            return Response().error(t("dashboard-auth-empty-fields")).__dict__
+            return Response().error(t("msg-d31087d2")).__dict__
 
         # Verify password confirmation
         if new_pwd:
             confirm_pwd = post_data.get("confirm_password", None)
             if confirm_pwd != new_pwd:
-                return Response().error("两次输入的新密码不一致").__dict__
+                return Response().error(t("msg-b512c27e")).__dict__
             self.config["dashboard"]["password"] = new_pwd
         if new_username:
             self.config["dashboard"]["username"] = new_username
 
         self.config.save_config()
 
-        return Response().ok(None, t("dashboard-auth-edit-success")).__dict__
+        return Response().ok(None, "修改成功").__dict__
 
     def generate_jwt(self, username):
         payload = {
@@ -82,6 +87,6 @@ class AuthRoute(Route):
         }
         jwt_token = self.config["dashboard"].get("jwt_secret", None)
         if not jwt_token:
-            raise ValueError(t("dashboard-auth-jwt-secret-not-found"))
+            raise ValueError(t("msg-7b947d8b"))
         token = jwt.encode(payload, jwt_token, algorithm="HS256")
         return token

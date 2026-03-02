@@ -3,6 +3,7 @@
 在 AstrBot 中, 会话和对话是独立的, 会话用于标记对话窗口, 例如群聊"123456789"可以建立一个会话,
 在一个会话中可以建立多个对话, 并且支持对话的切换和删除
 """
+from astrbot.core.lang import t
 
 import json
 from collections.abc import Awaitable, Callable
@@ -11,6 +12,7 @@ from astrbot.core import sp
 from astrbot.core.agent.message import AssistantMessageSegment, UserMessageSegment
 from astrbot.core.db import BaseDatabase
 from astrbot.core.db.po import Conversation, ConversationV2
+from astrbot.core.utils.datetime_utils import to_utc_timestamp
 
 
 class ConversationManager:
@@ -53,13 +55,15 @@ class ConversationManager:
                 from astrbot.core import logger
 
                 logger.error(
-                    f"会话删除回调执行失败 (session: {unified_msg_origin}): {e}",
+                    t("msg-86f404dd", unified_msg_origin=unified_msg_origin, e=e),
                 )
 
     def _convert_conv_from_v2_to_v1(self, conv_v2: ConversationV2) -> Conversation:
         """将 ConversationV2 对象转换为 Conversation 对象"""
-        created_at = int(conv_v2.created_at.timestamp())
-        updated_at = int(conv_v2.updated_at.timestamp())
+        created_ts = to_utc_timestamp(conv_v2.created_at)
+        updated_ts = to_utc_timestamp(conv_v2.updated_at)
+        created_at = int(created_ts) if created_ts is not None else 0
+        updated_at = int(updated_ts) if updated_ts is not None else 0
         return Conversation(
             platform_id=conv_v2.platform_id,
             user_id=conv_v2.user_id,
@@ -344,7 +348,7 @@ class ConversationManager:
         """
         conv = await self.db.get_conversation_by_id(cid=cid)
         if not conv:
-            raise Exception(f"Conversation with id {cid} not found")
+            raise Exception(t("msg-57dcc41f", cid=cid))
         history = conv.content or []
         if isinstance(user_message, UserMessageSegment):
             user_msg_dict = user_message.model_dump()

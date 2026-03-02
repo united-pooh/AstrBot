@@ -1,9 +1,12 @@
+from astrbot.core.lang import t
 import asyncio
 import inspect
 import json
 import traceback
 import typing as T
 import uuid
+from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 
 import mcp
 
@@ -26,6 +29,7 @@ from astrbot.core.astr_main_agent_resources import (
     SEND_MESSAGE_TO_USER_TOOL,
 )
 from astrbot.core.cron.events import CronMessageEvent
+from astrbot.core.message.components import Image
 from astrbot.core.message.message_event_result import (
     CommandResult,
     MessageChain,
@@ -34,11 +38,86 @@ from astrbot.core.message.message_event_result import (
 from astrbot.core.platform.message_session import MessageSession
 from astrbot.core.provider.entites import ProviderRequest
 from astrbot.core.provider.register import llm_tools
+from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.history_saver import persist_agent_history
-from astrbot.core import t
+from astrbot.core.utils.image_ref_utils import is_supported_image_ref
+from astrbot.core.utils.string_utils import normalize_and_dedupe_strings
 
 
 class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
+    @classmethod
+    def _collect_image_urls_from_args(cls, image_urls_raw: T.Any) -> list[str]:
+        if image_urls_raw is None:
+            return []
+
+        if isinstance(image_urls_raw, str):
+            return [image_urls_raw]
+
+        if isinstance(image_urls_raw, (Sequence, AbstractSet)) and not isinstance(
+            image_urls_raw, (str, bytes, bytearray)
+        ):
+            return [item for item in image_urls_raw if isinstance(item, str)]
+
+        logger.debug(
+            "Unsupported image_urls type in handoff tool args: %s",
+            type(image_urls_raw).__name__,
+        )
+        return []
+
+    @classmethod
+    async def _collect_image_urls_from_message(
+        cls, run_context: ContextWrapper[AstrAgentContext]
+    ) -> list[str]:
+        urls: list[str] = []
+        event = getattr(run_context.context, "event", None)
+        message_obj = getattr(event, "message_obj", None)
+        message = getattr(message_obj, "message", None)
+        if message:
+            for idx, component in enumerate(message):
+                if not isinstance(component, Image):
+                    continue
+                try:
+                    path = await component.convert_to_file_path()
+                    if path:
+                        urls.append(path)
+                except Exception as e:
+                    logger.error(
+                        "Failed to convert handoff image component at index %d: %s",
+                        idx,
+                        e,
+                        exc_info=True,
+                    )
+        return urls
+
+    @classmethod
+    async def _collect_handoff_image_urls(
+        cls,
+        run_context: ContextWrapper[AstrAgentContext],
+        image_urls_raw: T.Any,
+    ) -> list[str]:
+        candidates: list[str] = []
+        candidates.extend(cls._collect_image_urls_from_args(image_urls_raw))
+        candidates.extend(await cls._collect_image_urls_from_message(run_context))
+
+        normalized = normalize_and_dedupe_strings(candidates)
+        extensionless_local_roots = (get_astrbot_temp_path(),)
+        sanitized = [
+            item
+            for item in normalized
+            if is_supported_image_ref(
+                item,
+                allow_extensionless_existing_local_file=True,
+                extensionless_local_roots=extensionless_local_roots,
+            )
+        ]
+        dropped_count = len(normalized) - len(sanitized)
+        if dropped_count > 0:
+            logger.debug(
+                "Dropped %d invalid image_urls entries in handoff image inputs.",
+                dropped_count,
+            )
+        return sanitized
+
     @classmethod
     async def execute(cls, tool, run_context, **tool_args):
         """执行函数调用。
@@ -81,7 +160,7 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
                     )
                 except Exception as e:  # noqa: BLE001
                     logger.error(
-                        t("background-task-failed", task_id=task_id, error=str(e)),
+                        t("msg-e5f2fb34", task_id=task_id, e=e),
                         exc_info=True,
                     )
 
@@ -162,10 +241,28 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
         cls,
         tool: HandoffTool,
         run_context: ContextWrapper[AstrAgentContext],
-        **tool_args,
+        *,
+        image_urls_prepared: bool = False,
+        **tool_args: T.Any,
     ):
+        tool_args = dict(tool_args)
         input_ = tool_args.get("input")
-        image_urls = tool_args.get("image_urls")
+        if image_urls_prepared:
+            prepared_image_urls = tool_args.get("image_urls")
+            if isinstance(prepared_image_urls, list):
+                image_urls = prepared_image_urls
+            else:
+                logger.debug(
+                    "Expected prepared handoff image_urls as list[str], got %s.",
+                    type(prepared_image_urls).__name__,
+                )
+                image_urls = []
+        else:
+            image_urls = await cls._collect_handoff_image_urls(
+                run_context,
+                tool_args.get("image_urls"),
+            )
+        tool_args["image_urls"] = image_urls
 
         # Build handoff toolset from registered tools plus runtime computer tools.
         toolset = cls._build_handoff_toolset(run_context, tool.agent.tools)
@@ -195,6 +292,9 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
                 except Exception:
                     continue
 
+        prov_settings: dict = ctx.get_config(umo=umo).get("provider_settings", {})
+        agent_max_step = int(prov_settings.get("max_agent_step", 30))
+        stream = prov_settings.get("streaming_response", False)
         llm_resp = await ctx.tool_loop_agent(
             event=event,
             chat_provider_id=prov_id,
@@ -203,9 +303,8 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
             system_prompt=tool.agent.instructions,
             tools=toolset,
             contexts=contexts,
-            max_steps=30,
-            run_hooks=tool.agent.run_hooks,
-            stream=ctx.get_config().get("provider_settings", {}).get("stream", False),
+            max_steps=agent_max_step,
+            stream=stream,
         )
         yield mcp.types.CallToolResult(
             content=[mcp.types.TextContent(type="text", text=llm_resp.completion_text)]
@@ -238,7 +337,7 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
                 )
             except Exception as e:  # noqa: BLE001
                 logger.error(
-                    f"Background handoff {task_id} ({tool.name}) failed: {e!s}",
+                    t("msg-c54b2335", task_id=task_id, res=tool.name, e=e),
                     exc_info=True,
                 )
 
@@ -264,8 +363,18 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
     ) -> None:
         """Run the subagent handoff and, on completion, wake the main agent."""
         result_text = ""
+        tool_args = dict(tool_args)
+        tool_args["image_urls"] = await cls._collect_handoff_image_urls(
+            run_context,
+            tool_args.get("image_urls"),
+        )
         try:
-            async for r in cls._execute_handoff(tool, run_context, **tool_args):
+            async for r in cls._execute_handoff(
+                tool,
+                run_context,
+                image_urls_prepared=True,
+                **tool_args,
+            ):
                 if isinstance(r, mcp.types.CallToolResult):
                     for content in r.content:
                         if isinstance(content, mcp.types.TextContent):
@@ -412,7 +521,7 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
             event=cron_event, plugin_context=ctx, config=config, req=req
         )
         if not result:
-            logger.error(t("background-task-build-failed", tool_name=tool_name))
+            logger.error(t("msg-8c2fe51d", tool_name=tool_name))
             return
 
         runner = result.agent_runner
@@ -437,7 +546,7 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
             summary_note=summary_note,
         )
         if not llm_resp:
-            logger.warning(t("background-task-no-response"))
+            logger.warning(t("msg-c6d4e4a6"))
             return
 
     @classmethod
@@ -451,7 +560,7 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
     ):
         event = run_context.context.event
         if not event:
-            raise ValueError("Event must be provided for local function tools.")
+            raise ValueError(t("msg-0b3711f1"))
 
         is_override_call = False
         for ty in type(tool).mro():
@@ -461,7 +570,7 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
 
         # 检查 tool 下有没有 run 方法
         if not tool.handler and not hasattr(tool, "run") and not is_override_call:
-            raise ValueError("Tool must have a valid handler or override 'run' method.")
+            raise ValueError(t("msg-8c19e27a"))
 
         awaitable = None
         method_name = ""
@@ -475,7 +584,7 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
             awaitable = getattr(tool, "run")
             method_name = "run"
         if awaitable is None:
-            raise ValueError("Tool must have a valid handler or override 'run' method.")
+            raise ValueError(t("msg-8c19e27a"))
 
         wrapper = call_local_llm_tool(
             context=run_context,
@@ -513,21 +622,13 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
                                 )
                             except Exception as e:
                                 logger.error(
-                                    t(
-                                        "tool-send-message-failed",
-                                        error=str(e),
-                                        traceback=traceback.format_exc(),
-                                    ),
+                                    t("msg-24053a5f", e=e),
                                     exc_info=True,
                                 )
                     yield None
             except asyncio.TimeoutError:
                 raise Exception(
-                    t(
-                        "tool-execution-timeout",
-                        tool_name=tool.name,
-                        timeout=tool_call_timeout or run_context.tool_call_timeout,
-                    )
+                    t("msg-f940b51e", res=tool.name, res_2=tool_call_timeout or run_context.tool_call_timeout),
                 )
             except StopAsyncIteration:
                 break
@@ -569,9 +670,9 @@ async def call_local_llm_tool(
         elif method_name == "call":
             ready_to_call = handler(context, *args, **kwargs)
         else:
-            raise ValueError(t("unknown-method-name", method_name=method_name))
+            raise ValueError(t("msg-7e22fc8e", method_name=method_name))
     except ValueError as e:
-        raise Exception(t("tool-execution-value-error", error=str(e))) from e
+        raise Exception(t("msg-c285315c", e=e)) from e
     except TypeError as e:
         # 获取函数的签名（包括类型），除了第一个 event/context 参数。
         try:
@@ -602,13 +703,11 @@ async def call_local_llm_tool(
             handler_param_str = "(unable to inspect signature)"
 
         raise Exception(
-            t("tool-parameter-mismatch", handler_param_str=handler_param_str)
+            t("msg-41366b74", handler_param_str=handler_param_str, e=e)
         ) from e
     except Exception as e:
         trace_ = traceback.format_exc()
-        raise Exception(
-            t("tool-execution-error", error=str(e), traceback=trace_)
-        ) from e
+        raise Exception(t("msg-e8cadf8e", e=e, trace_=trace_)) from e
 
     if not ready_to_call:
         return
@@ -632,7 +731,7 @@ async def call_local_llm_tool(
                 # 如果这个异步生成器没有执行到 yield 分支
                 yield
         except Exception as e:
-            logger.error(t("previous-error", traceback=trace_))
+            logger.error(t("msg-d7b4aa84", trace_=trace_))
             raise e
     elif inspect.iscoroutine(ready_to_call):
         # 如果只是一个协程, 直接执行

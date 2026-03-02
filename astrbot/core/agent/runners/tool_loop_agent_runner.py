@@ -1,9 +1,10 @@
+import asyncio
 import copy
 import sys
 import time
 import traceback
 import typing as T
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from mcp.types import (
     BlobResourceContents,
@@ -18,9 +19,13 @@ from astrbot import logger
 from astrbot.core.agent.message import ImageURLPart, TextPart, ThinkPart
 from astrbot.core.agent.tool import ToolSet
 from astrbot.core.agent.tool_image_cache import tool_image_cache
+from astrbot.core.lang import t
 from astrbot.core.message.components import Json
 from astrbot.core.message.message_event_result import (
     MessageChain,
+)
+from astrbot.core.persona_error_reply import (
+    extract_persona_custom_error_message_from_event,
 )
 from astrbot.core.provider.entities import (
     LLMResponse,
@@ -68,7 +73,20 @@ class _HandleFunctionToolsResult:
         return cls(kind="cached_image", cached_image=image)
 
 
+@dataclass(slots=True)
+class FollowUpTicket:
+    seq: int
+    text: str
+    consumed: bool = False
+    resolved: asyncio.Event = field(default_factory=asyncio.Event)
+
+
 class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
+    def _get_persona_custom_error_message(self) -> str | None:
+        """Read persona-level custom error message from event extras when available."""
+        event = getattr(self.run_context.context, "event", None)
+        return extract_persona_custom_error_message_from_event(event)
+
     @override
     async def reset(
         self,
@@ -139,6 +157,8 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         self.run_context = run_context
         self._stop_requested = False
         self._aborted = False
+        self._pending_follow_ups: list[FollowUpTicket] = []
+        self._follow_up_seq = 0
 
         # These two are used for tool schema mode handling
         # We now have two modes:
@@ -214,9 +234,11 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             is_last_candidate = idx == total_candidates - 1
             if idx > 0:
                 logger.warning(
-                    "Switched from %s to fallback chat provider: %s",
-                    self.provider.provider_config.get("id", "<unknown>"),
-                    candidate_id,
+                    t(
+                        "msg-ec018aef",
+                        res=self.provider.provider_config.get("id", "<unknown>"),
+                        candidate_id=candidate_id,
+                    ),
                 )
             self.provider = candidate
             has_stream_output = False
@@ -234,8 +256,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                     ):
                         last_err_response = resp
                         logger.warning(
-                            "Chat Model %s returns error response, trying fallback to next provider.",
-                            candidate_id,
+                            t("msg-24b29511", candidate_id=candidate_id),
                         )
                         break
 
@@ -247,9 +268,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             except Exception as exc:  # noqa: BLE001
                 last_exception = exc
                 logger.warning(
-                    "Chat Model %s request error: %s",
-                    candidate_id,
-                    exc,
+                    t("msg-9af066fa", candidate_id=candidate_id, exc=exc),
                     exc_info=True,
                 )
                 continue
@@ -275,7 +294,56 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         roles = []
         for message in self.run_context.messages:
             roles.append(message.role)
-        logger.debug(f"{tag} RunCtx.messages -> [{len(roles)}] {','.join(roles)}")
+        logger.debug(t("msg-81b2aeae", tag=tag, res=len(roles), res_2=",".join(roles)))
+
+    def follow_up(
+        self,
+        *,
+        message_text: str,
+    ) -> FollowUpTicket | None:
+        """Queue a follow-up message for the next tool result."""
+        if self.done():
+            return None
+        text = (message_text or "").strip()
+        if not text:
+            return None
+        ticket = FollowUpTicket(seq=self._follow_up_seq, text=text)
+        self._follow_up_seq += 1
+        self._pending_follow_ups.append(ticket)
+        return ticket
+
+    def _resolve_unconsumed_follow_ups(self) -> None:
+        if not self._pending_follow_ups:
+            return
+        follow_ups = self._pending_follow_ups
+        self._pending_follow_ups = []
+        for ticket in follow_ups:
+            ticket.resolved.set()
+
+    def _consume_follow_up_notice(self) -> str:
+        if not self._pending_follow_ups:
+            return ""
+        follow_ups = self._pending_follow_ups
+        self._pending_follow_ups = []
+        for ticket in follow_ups:
+            ticket.consumed = True
+            ticket.resolved.set()
+        follow_up_lines = "\n".join(
+            f"{idx}. {ticket.text}" for idx, ticket in enumerate(follow_ups, start=1)
+        )
+        return (
+            "\n\n[SYSTEM NOTICE] User sent follow-up messages while tool execution "
+            "was in progress. Prioritize these follow-up instructions in your next "
+            "actions. In your very next action, briefly acknowledge to the user "
+            "that their follow-up message(s) were received before continuing.\n"
+            f"{follow_up_lines}"
+        )
+
+    def _merge_follow_up_notice(self, content: str) -> str:
+        notice = self._consume_follow_up_notice()
+        if not notice:
+            return content
+        return f"{content}{notice}"
 
     @override
     async def step(self):
@@ -283,13 +351,13 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         This method should return the result of the step.
         """
         if not self.req:
-            raise ValueError("Request is not set. Please call reset() first.")
+            raise ValueError(t("msg-55333301"))
 
         if self._state == AgentState.IDLE:
             try:
                 await self.agent_hooks.on_agent_begin(self.run_context)
             except Exception as e:
-                logger.error(f"Error in on_agent_begin hook: {e}", exc_info=True)
+                logger.error(t("msg-d3b77736", e=e), exc_info=True)
 
         # 开始处理，转换到运行状态
         self._transition_state(AgentState.RUNNING)
@@ -355,7 +423,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                 return
 
         if self._stop_requested:
-            logger.info("Agent execution was requested to stop by user.")
+            logger.info(t("msg-61de315c"))
             llm_resp = llm_resp_result
             if llm_resp.role != "assistant":
                 llm_resp = LLMResponse(
@@ -385,12 +453,13 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             try:
                 await self.agent_hooks.on_agent_done(self.run_context, llm_resp)
             except Exception as e:
-                logger.error(f"Error in on_agent_done hook: {e}", exc_info=True)
+                logger.error(t("msg-8eb53be3", e=e), exc_info=True)
 
             yield AgentResponse(
                 type="aborted",
                 data=AgentResponseData(chain=MessageChain(type="aborted")),
             )
+            self._resolve_unconsumed_follow_ups()
             return
 
         # 处理 LLM 响应
@@ -401,12 +470,15 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             self.final_llm_resp = llm_resp
             self.stats.end_time = time.time()
             self._transition_state(AgentState.ERROR)
+            self._resolve_unconsumed_follow_ups()
+            custom_error_message = self._get_persona_custom_error_message()
+            error_text = custom_error_message or (
+                f"LLM 响应错误: {llm_resp.completion_text or '未知错误'}"
+            )
             yield AgentResponse(
                 type="err",
                 data=AgentResponseData(
-                    chain=MessageChain().message(
-                        f"LLM 响应错误: {llm_resp.completion_text or '未知错误'}",
-                    ),
+                    chain=MessageChain().message(t("msg-76945a59", error_text=error_text)),
                 ),
             )
             return
@@ -429,16 +501,15 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             if llm_resp.completion_text:
                 parts.append(TextPart(text=llm_resp.completion_text))
             if len(parts) == 0:
-                logger.warning(
-                    "LLM returned empty assistant message with no tool calls."
-                )
+                logger.warning(t("msg-ed80313d"))
             self.run_context.messages.append(Message(role="assistant", content=parts))
 
             # call the on_agent_done hook
             try:
                 await self.agent_hooks.on_agent_done(self.run_context, llm_resp)
             except Exception as e:
-                logger.error(f"Error in on_agent_done hook: {e}", exc_info=True)
+                logger.error(t("msg-8eb53be3", e=e), exc_info=True)
+            self._resolve_unconsumed_follow_ups()
 
         # 返回 LLM 结果
         if llm_resp.result_chain:
@@ -539,9 +610,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                         self.run_context.messages.append(
                             Message(role="user", content=image_parts)
                         )
-                        logger.debug(
-                            f"Appended {len(cached_images)} cached image(s) to context for LLM review"
-                        )
+                        logger.debug(t("msg-970947ae", res=len(cached_images)))
 
             self.req.append_tool_calls_result(tool_calls_result)
 
@@ -557,9 +626,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
 
         #  如果循环结束了但是 agent 还没有完成，说明是达到了 max_step
         if not self.done():
-            logger.warning(
-                f"Agent reached max steps ({max_step}), forcing a final response."
-            )
+            logger.warning(t("msg-6b326889", max_step=max_step))
             # 拔掉所有工具
             if self.req:
                 self.req.func_tool = None
@@ -581,7 +648,16 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
     ) -> T.AsyncGenerator[_HandleFunctionToolsResult, None]:
         """处理函数工具调用。"""
         tool_call_result_blocks: list[ToolCallMessageSegment] = []
-        logger.info(f"Agent 使用工具: {llm_response.tools_call_name}")
+        logger.info(t("msg-948ea4b7", res=llm_response.tools_call_name))
+
+        def _append_tool_call_result(tool_call_id: str, content: str) -> None:
+            tool_call_result_blocks.append(
+                ToolCallMessageSegment(
+                    role="tool",
+                    tool_call_id=tool_call_id,
+                    content=self._merge_follow_up_notice(content),
+                ),
+            )
 
         # 执行函数调用
         for func_tool_name, func_tool_args, func_tool_id in zip(
@@ -618,16 +694,19 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                 else:
                     func_tool = req.func_tool.get_tool(func_tool_name)
 
-                logger.info(f"使用工具：{func_tool_name}，参数：{func_tool_args}")
+                logger.info(
+                    t(
+                        "msg-a27ad3d1",
+                        func_tool_name=func_tool_name,
+                        func_tool_args=func_tool_args,
+                    )
+                )
 
                 if not func_tool:
-                    logger.warning(f"未找到指定的工具: {func_tool_name}，将跳过。")
-                    tool_call_result_blocks.append(
-                        ToolCallMessageSegment(
-                            role="tool",
-                            tool_call_id=func_tool_id,
-                            content=f"error: Tool {func_tool_name} not found.",
-                        ),
+                    logger.warning(t("msg-812ad241", func_tool_name=func_tool_name))
+                    _append_tool_call_result(
+                        func_tool_id,
+                        f"error: Tool {func_tool_name} not found.",
                     )
                     continue
 
@@ -636,7 +715,11 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                 # 获取实际的 handler 函数
                 if func_tool.handler:
                     logger.debug(
-                        f"工具 {func_tool_name} 期望的参数: {func_tool.parameters}",
+                        t(
+                            "msg-20b4f143",
+                            func_tool_name=func_tool_name,
+                            res=func_tool.parameters,
+                        ),
                     )
                     if func_tool.parameters and func_tool.parameters.get("properties"):
                         expected_params = set(func_tool.parameters["properties"].keys())
@@ -653,7 +736,11 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                     )
                     if ignored_params:
                         logger.warning(
-                            f"工具 {func_tool_name} 忽略非期望参数: {ignored_params}",
+                            t(
+                                "msg-78f6833c",
+                                func_tool_name=func_tool_name,
+                                ignored_params=ignored_params,
+                            ),
                         )
                 else:
                     # 如果没有 handler（如 MCP 工具），使用所有参数
@@ -666,7 +753,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                         valid_params,
                     )
                 except Exception as e:
-                    logger.error(f"Error in on_tool_start hook: {e}", exc_info=True)
+                    logger.error(t("msg-2b523f8c", e=e), exc_info=True)
 
                 executor = self.tool_executor.execute(
                     tool=func_tool,
@@ -680,12 +767,9 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                         res = resp
                         _final_resp = resp
                         if isinstance(res.content[0], TextContent):
-                            tool_call_result_blocks.append(
-                                ToolCallMessageSegment(
-                                    role="tool",
-                                    tool_call_id=func_tool_id,
-                                    content=res.content[0].text,
-                                ),
+                            _append_tool_call_result(
+                                func_tool_id,
+                                res.content[0].text,
                             )
                         elif isinstance(res.content[0], ImageContent):
                             # Cache the image instead of sending directly
@@ -696,15 +780,12 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                                 index=0,
                                 mime_type=res.content[0].mimeType or "image/png",
                             )
-                            tool_call_result_blocks.append(
-                                ToolCallMessageSegment(
-                                    role="tool",
-                                    tool_call_id=func_tool_id,
-                                    content=(
-                                        f"Image returned and cached at path='{cached_img.file_path}'. "
-                                        f"Review the image below. Use send_message_to_user to send it to the user if satisfied, "
-                                        f"with type='image' and path='{cached_img.file_path}'."
-                                    ),
+                            _append_tool_call_result(
+                                func_tool_id,
+                                (
+                                    f"Image returned and cached at path='{cached_img.file_path}'. "
+                                    f"Review the image below. Use send_message_to_user to send it to the user if satisfied, "
+                                    f"with type='image' and path='{cached_img.file_path}'."
                                 ),
                             )
                             # Yield image info for LLM visibility (will be handled in step())
@@ -714,12 +795,9 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                         elif isinstance(res.content[0], EmbeddedResource):
                             resource = res.content[0].resource
                             if isinstance(resource, TextResourceContents):
-                                tool_call_result_blocks.append(
-                                    ToolCallMessageSegment(
-                                        role="tool",
-                                        tool_call_id=func_tool_id,
-                                        content=resource.text,
-                                    ),
+                                _append_tool_call_result(
+                                    func_tool_id,
+                                    resource.text,
                                 )
                             elif (
                                 isinstance(resource, BlobResourceContents)
@@ -734,15 +812,12 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                                     index=0,
                                     mime_type=resource.mimeType,
                                 )
-                                tool_call_result_blocks.append(
-                                    ToolCallMessageSegment(
-                                        role="tool",
-                                        tool_call_id=func_tool_id,
-                                        content=(
-                                            f"Image returned and cached at path='{cached_img.file_path}'. "
-                                            f"Review the image below. Use send_message_to_user to send it to the user if satisfied, "
-                                            f"with type='image' and path='{cached_img.file_path}'."
-                                        ),
+                                _append_tool_call_result(
+                                    func_tool_id,
+                                    (
+                                        f"Image returned and cached at path='{cached_img.file_path}'. "
+                                        f"Review the image below. Use send_message_to_user to send it to the user if satisfied, "
+                                        f"with type='image' and path='{cached_img.file_path}'."
                                     ),
                                 )
                                 # Yield image info for LLM visibility
@@ -750,41 +825,30 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                                     cached_img
                                 )
                             else:
-                                tool_call_result_blocks.append(
-                                    ToolCallMessageSegment(
-                                        role="tool",
-                                        tool_call_id=func_tool_id,
-                                        content="The tool has returned a data type that is not supported.",
-                                    ),
+                                _append_tool_call_result(
+                                    func_tool_id,
+                                    "The tool has returned a data type that is not supported.",
                                 )
 
                     elif resp is None:
                         # Tool 直接请求发送消息给用户
                         # 这里我们将直接结束 Agent Loop
                         # 发送消息逻辑在 ToolExecutor 中处理了
-                        logger.warning(
-                            f"{func_tool_name} 没有返回值，或者已将结果直接发送给用户。"
-                        )
+                        logger.warning(t("msg-ec868b73", func_tool_name=func_tool_name))
                         self._transition_state(AgentState.DONE)
                         self.stats.end_time = time.time()
-                        tool_call_result_blocks.append(
-                            ToolCallMessageSegment(
-                                role="tool",
-                                tool_call_id=func_tool_id,
-                                content="The tool has no return value, or has sent the result directly to the user.",
-                            ),
+                        _append_tool_call_result(
+                            func_tool_id,
+                            "The tool has no return value, or has sent the result directly to the user.",
                         )
                     else:
                         # 不应该出现其他类型
                         logger.warning(
-                            f"Tool 返回了不支持的类型: {type(resp)}。",
+                            t("msg-6b61e4f1", res=type(resp)),
                         )
-                        tool_call_result_blocks.append(
-                            ToolCallMessageSegment(
-                                role="tool",
-                                tool_call_id=func_tool_id,
-                                content="*The tool has returned an unsupported type. Please tell the user to check the definition and implementation of this tool.*",
-                            ),
+                        _append_tool_call_result(
+                            func_tool_id,
+                            "*The tool has returned an unsupported type. Please tell the user to check the definition and implementation of this tool.*",
                         )
 
                 try:
@@ -795,15 +859,12 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                         _final_resp,
                     )
                 except Exception as e:
-                    logger.error(f"Error in on_tool_end hook: {e}", exc_info=True)
+                    logger.error(t("msg-34c13e02", e=e), exc_info=True)
             except Exception as e:
-                logger.warning(traceback.format_exc())
-                tool_call_result_blocks.append(
-                    ToolCallMessageSegment(
-                        role="tool",
-                        tool_call_id=func_tool_id,
-                        content=f"error: {e!s}",
-                    ),
+                logger.warning(t("msg-78b9c276", res=traceback.format_exc()))
+                _append_tool_call_result(
+                    func_tool_id,
+                    f"error: {e!s}",
                 )
 
         # yield the last tool call result
@@ -823,7 +884,13 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                     ],
                 )
             )
-            logger.info(f"Tool `{func_tool_name}` Result: {last_tcr_content}")
+            logger.info(
+                t(
+                    "msg-a1493b6d",
+                    func_tool_name=func_tool_name,
+                    last_tcr_content=last_tcr_content,
+                )
+            )
 
         # 处理函数调用响应
         if tool_call_result_blocks:

@@ -1,3 +1,4 @@
+from astrbot.core.lang import t
 import argparse
 import asyncio
 import mimetypes
@@ -9,7 +10,7 @@ import runtime_bootstrap
 
 runtime_bootstrap.initialize_runtime_bootstrap()
 
-from astrbot.core import LogBroker, LogManager, db_helper, logger, t  # noqa: E402
+from astrbot.core import LogBroker, LogManager, db_helper, logger  # noqa: E402
 from astrbot.core.config.default import VERSION  # noqa: E402
 from astrbot.core.initial_loader import InitialLoader  # noqa: E402
 from astrbot.core.utils.astrbot_path import (  # noqa: E402
@@ -42,7 +43,7 @@ logo_tmpl = r"""
 
 def check_env() -> None:
     if not (sys.version_info.major == 3 and sys.version_info.minor >= 10):
-        logger.error(t("main-python-version-error"))
+        logger.error(t("msg-5e25709f"))
         exit()
 
     astrbot_root = get_astrbot_root()
@@ -70,9 +71,9 @@ async def check_dashboard_files(webui_dir: str | None = None):
     # 指定webui目录
     if webui_dir:
         if os.path.exists(webui_dir):
-            logger.info(t("main-use-specified-webui", webui_dir=webui_dir))
+            logger.info(t("msg-afd0ab81", webui_dir=webui_dir))
             return webui_dir
-        logger.warning(t("main-webui-not-found", webui_dir=webui_dir))
+        logger.warning(t("msg-7765f00f", webui_dir=webui_dir))
 
     data_dist_path = os.path.join(get_astrbot_data_path(), "dist")
     if os.path.exists(data_dist_path):
@@ -80,22 +81,24 @@ async def check_dashboard_files(webui_dir: str | None = None):
         if v is not None:
             # 存在文件
             if v == f"v{VERSION}":
-                logger.info(t("main-webui-latest"))
+                logger.info(t("msg-9af20e37"))
             else:
                 logger.warning(
-                    t("main-webui-version-mismatch", v=v, version=VERSION),
+                    t("msg-9dd5c1d2", v=v, VERSION=VERSION),
                 )
         return data_dist_path
 
-    logger.info(t("main-downloading-dashboard"))
+    logger.info(
+        t("msg-ec714d4e"),
+    )
 
     try:
         await download_dashboard(version=f"v{VERSION}", latest=False)
     except Exception as e:
-        logger.critical(t("main-download-dashboard-failed", e=e))
+        logger.critical(t("msg-c5170c27", e=e))
         return None
 
-    logger.info(t("main-download-dashboard-success"))
+    logger.info(t("msg-e1592ad1"))
     return data_dist_path
 
 
@@ -104,7 +107,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--webui-dir",
         type=str,
-        help=t("main-argparse-webui-dir-help"),
+        help="指定 WebUI 静态文件目录路径",
         default=None,
     )
     args = parser.parse_args()
@@ -121,7 +124,7 @@ if __name__ == "__main__":
     db = db_helper
 
     # 打印 logo
-    logger.info(logo_tmpl)
+    logger.info(t("msg-fe494da6", logo_tmpl=logo_tmpl))
 
     core_lifecycle = InitialLoader(db, log_broker)
     core_lifecycle.webui_dir = webui_dir

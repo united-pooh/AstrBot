@@ -1,3 +1,4 @@
+from astrbot.core.lang import t
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -5,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from quart import g, request
 
 from astrbot.core.db import BaseDatabase
+from astrbot.core.utils.datetime_utils import normalize_datetime_utc
 
 from .route import Response, Route, RouteContext
 
@@ -25,11 +27,7 @@ class ApiKeyRoute(Route):
 
     @staticmethod
     def _normalize_utc(dt: datetime | None) -> datetime | None:
-        if dt is None:
-            return None
-        if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
-            return dt.replace(tzinfo=timezone.utc)
-        return dt.astimezone(timezone.utc)
+        return normalize_datetime_utc(dt)
 
     @classmethod
     def _serialize_datetime(cls, dt: datetime | None) -> str | None:
@@ -86,9 +84,9 @@ class ApiKeyRoute(Route):
             ]
             normalized_scopes = list(dict.fromkeys(normalized_scopes))
             if not normalized_scopes:
-                return Response().error("At least one valid scope is required").__dict__
+                return Response().error(t("msg-8e0249fa")).__dict__
         else:
-            return Response().error("Invalid scopes").__dict__
+            return Response().error(t("msg-1b79360d")).__dict__
 
         expires_at = None
         expires_in_days = post_data.get("expires_in_days")
@@ -96,10 +94,10 @@ class ApiKeyRoute(Route):
             try:
                 expires_in_days_int = int(expires_in_days)
             except (TypeError, ValueError):
-                return Response().error("expires_in_days must be an integer").__dict__
+                return Response().error(t("msg-d6621696")).__dict__
             if expires_in_days_int <= 0:
                 return (
-                    Response().error("expires_in_days must be greater than 0").__dict__
+                    Response().error(t("msg-33605d95")).__dict__
                 )
             expires_at = datetime.now(timezone.utc) + timedelta(
                 days=expires_in_days_int
@@ -127,20 +125,20 @@ class ApiKeyRoute(Route):
         post_data = await request.json or {}
         key_id = post_data.get("key_id")
         if not key_id:
-            return Response().error("Missing key: key_id").__dict__
+            return Response().error(t("msg-209030fe")).__dict__
 
         success = await self.db.revoke_api_key(key_id)
         if not success:
-            return Response().error("API key not found").__dict__
+            return Response().error(t("msg-24513a81")).__dict__
         return Response().ok().__dict__
 
     async def delete_api_key(self):
         post_data = await request.json or {}
         key_id = post_data.get("key_id")
         if not key_id:
-            return Response().error("Missing key: key_id").__dict__
+            return Response().error(t("msg-209030fe")).__dict__
 
         success = await self.db.delete_api_key(key_id)
         if not success:
-            return Response().error("API key not found").__dict__
+            return Response().error(t("msg-24513a81")).__dict__
         return Response().ok().__dict__

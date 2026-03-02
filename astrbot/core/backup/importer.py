@@ -6,13 +6,14 @@
 - 小版本（第三位）不同时提示警告，用户可选择强制导入
 - 版本匹配时也需要用户确认
 """
+from astrbot.core.lang import t
 
 import json
 import os
 import shutil
 import zipfile
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -61,6 +62,69 @@ def _get_major_version(version_str: str) -> str:
 
 CMD_CONFIG_FILE_PATH = os.path.join(get_astrbot_data_path(), "cmd_config.json")
 KB_PATH = get_astrbot_knowledge_base_path()
+DEFAULT_PLATFORM_STATS_INVALID_COUNT_WARN_LIMIT = 5
+PLATFORM_STATS_INVALID_COUNT_WARN_LIMIT_ENV = (
+    "ASTRBOT_PLATFORM_STATS_INVALID_COUNT_WARN_LIMIT"
+)
+
+
+def _load_platform_stats_invalid_count_warn_limit() -> int:
+    raw_value = os.getenv(PLATFORM_STATS_INVALID_COUNT_WARN_LIMIT_ENV)
+    if raw_value is None:
+        return DEFAULT_PLATFORM_STATS_INVALID_COUNT_WARN_LIMIT
+
+    try:
+        value = int(raw_value)
+        if value < 0:
+            raise ValueError("negative")
+        return value
+    except (TypeError, ValueError):
+        logger.warning(
+            "Invalid env %s=%r, fallback to default %d",
+            PLATFORM_STATS_INVALID_COUNT_WARN_LIMIT_ENV,
+            raw_value,
+            DEFAULT_PLATFORM_STATS_INVALID_COUNT_WARN_LIMIT,
+        )
+        return DEFAULT_PLATFORM_STATS_INVALID_COUNT_WARN_LIMIT
+
+
+PLATFORM_STATS_INVALID_COUNT_WARN_LIMIT = (
+    _load_platform_stats_invalid_count_warn_limit()
+)
+
+
+class _InvalidCountWarnLimiter:
+    """Rate-limit warnings for invalid platform_stats count values."""
+
+    def __init__(self, limit: int) -> None:
+        self.limit = limit
+        self._count = 0
+        self._suppression_logged = False
+
+    def warn_invalid_count(self, value: Any, key_for_log: tuple[Any, ...]) -> None:
+        if self.limit > 0:
+            if self._count < self.limit:
+                logger.warning(
+                    "platform_stats count 非法，已按 0 处理: value=%r, key=%s",
+                    value,
+                    key_for_log,
+                )
+                self._count += 1
+                if self._count == self.limit and not self._suppression_logged:
+                    logger.warning(
+                        "platform_stats 非法 count 告警已达到上限 (%d)，后续将抑制",
+                        self.limit,
+                    )
+                    self._suppression_logged = True
+            return
+
+        if not self._suppression_logged:
+            # limit <= 0: emit only one suppression warning.
+            logger.warning(
+                "platform_stats 非法 count 告警已达到上限 (%d)，后续将抑制",
+                self.limit,
+            )
+            self._suppression_logged = True
 
 
 @dataclass
@@ -120,12 +184,12 @@ class ImportResult:
 
     def add_warning(self, msg: str) -> None:
         self.warnings.append(msg)
-        logger.warning(msg)
+        logger.warning(t("msg-c046b6e4", msg=msg))
 
     def add_error(self, msg: str) -> None:
         self.errors.append(msg)
         self.success = False
-        logger.error(msg)
+        logger.error(t("msg-c046b6e4", msg=msg))
 
     def to_dict(self) -> dict:
         return {
@@ -136,6 +200,10 @@ class ImportResult:
             "warnings": self.warnings,
             "errors": self.errors,
         }
+
+
+class DatabaseClearError(RuntimeError):
+    """Raised when clearing the main database in replace mode fails."""
 
 
 class AstrBotImporter:
@@ -301,7 +369,7 @@ class AstrBotImporter:
             result.add_error(f"备份文件不存在: {zip_path}")
             return result
 
-        logger.info(f"开始从 {zip_path} 导入备份")
+        logger.info(t("msg-0e6f1f5d", zip_path=zip_path))
 
         try:
             with zipfile.ZipFile(zip_path, "r") as zf:
@@ -342,6 +410,9 @@ class AstrBotImporter:
 
                     imported = await self._import_main_database(main_data)
                     result.imported_tables.update(imported)
+                except DatabaseClearError as e:
+                    result.add_error(f"清空主数据库失败: {e}")
+                    return result
                 except Exception as e:
                     result.add_error(f"导入主数据库失败: {e}")
                     return result
@@ -413,7 +484,7 @@ class AstrBotImporter:
                 if progress_callback:
                     await progress_callback("directories", 100, 100, "目录导入完成")
 
-            logger.info(f"备份导入完成: {result.to_dict()}")
+            logger.info(t("msg-2bf97ca0", res=result.to_dict()))
             return result
 
         except zipfile.BadZipFile:
@@ -431,7 +502,7 @@ class AstrBotImporter:
         """
         backup_version = manifest.get("astrbot_version")
         if not backup_version:
-            raise ValueError("备份文件缺少版本信息")
+            raise ValueError(t("msg-e67dda98"))
 
         # 使用新的版本兼容性检查
         version_check = self._check_version_compatibility(backup_version)
@@ -441,7 +512,7 @@ class AstrBotImporter:
 
         # minor_diff 和 match 都允许导入
         if version_check["status"] == "minor_diff":
-            logger.warning(f"版本差异警告: {version_check['message']}")
+            logger.warning(t("msg-8f871d9f", res=version_check['message']))
 
     async def _clear_main_db(self) -> None:
         """清空主数据库所有表"""
@@ -450,9 +521,9 @@ class AstrBotImporter:
                 for table_name, model_class in MAIN_DB_MODELS.items():
                     try:
                         await session.execute(delete(model_class))
-                        logger.debug(f"已清空表 {table_name}")
+                        logger.debug(t("msg-2d6da12a", table_name=table_name))
                     except Exception as e:
-                        logger.warning(f"清空表 {table_name} 失败: {e}")
+                        logger.warning(t("msg-7d21b23a", table_name=table_name, e=e))
 
     async def _clear_kb_data(self) -> None:
         """清空知识库数据"""
@@ -465,9 +536,9 @@ class AstrBotImporter:
                 for table_name, model_class in KB_METADATA_MODELS.items():
                     try:
                         await session.execute(delete(model_class))
-                        logger.debug(f"已清空知识库表 {table_name}")
+                        logger.debug(t("msg-ab0f09db", table_name=table_name))
                     except Exception as e:
-                        logger.warning(f"清空知识库表 {table_name} 失败: {e}")
+                        logger.warning(t("msg-7bcdfaee", table_name=table_name, e=e))
 
         # 删除知识库文件目录
         for kb_id in list(self.kb_manager.kb_insts.keys()):
@@ -477,7 +548,7 @@ class AstrBotImporter:
                 if kb_helper.kb_dir.exists():
                     shutil.rmtree(kb_helper.kb_dir)
             except Exception as e:
-                logger.warning(f"清理知识库 {kb_id} 失败: {e}")
+                logger.warning(t("msg-43f008f1", kb_id=kb_id, e=e))
 
         self.kb_manager.kb_insts.clear()
 
@@ -492,11 +563,12 @@ class AstrBotImporter:
                 for table_name, rows in data.items():
                     model_class = MAIN_DB_MODELS.get(table_name)
                     if not model_class:
-                        logger.warning(f"未知的表: {table_name}")
+                        logger.warning(t("msg-985cae66", table_name=table_name))
                         continue
+                    normalized_rows = self._preprocess_main_table_rows(table_name, rows)
 
                     count = 0
-                    for row in rows:
+                    for row in normalized_rows:
                         try:
                             # 转换 datetime 字符串为 datetime 对象
                             row = self._convert_datetime_fields(row, model_class)
@@ -504,12 +576,124 @@ class AstrBotImporter:
                             session.add(obj)
                             count += 1
                         except Exception as e:
-                            logger.warning(f"导入记录到 {table_name} 失败: {e}")
+                            logger.warning(t("msg-dfa8b605", table_name=table_name, e=e))
 
                     imported[table_name] = count
-                    logger.debug(f"导入表 {table_name}: {count} 条记录")
+                    logger.debug(t("msg-89a2120c", table_name=table_name, count=count))
 
         return imported
+
+    def _preprocess_main_table_rows(
+        self, table_name: str, rows: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        if table_name == "platform_stats":
+            normalized_rows = self._merge_platform_stats_rows(rows)
+            duplicate_count = len(rows) - len(normalized_rows)
+            if duplicate_count > 0:
+                logger.warning(
+                    "检测到 %s 重复键 %d 条，已在导入前聚合",
+                    table_name,
+                    duplicate_count,
+                )
+            return normalized_rows
+        return rows
+
+    def _merge_platform_stats_rows(
+        self, rows: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """Merge duplicate platform_stats rows by normalized timestamp/platform key.
+
+        Note:
+        - Invalid/empty timestamps are kept as distinct rows to avoid accidental merging.
+        - Non-string platform_id/platform_type are kept as distinct rows.
+        - Invalid count warnings are rate-limited per function invocation.
+        """
+        merged: dict[tuple[str, str, str], dict[str, Any]] = {}
+        result: list[dict[str, Any]] = []
+        warn_limiter = _InvalidCountWarnLimiter(PLATFORM_STATS_INVALID_COUNT_WARN_LIMIT)
+
+        for row in rows:
+            normalized_row, normalized_timestamp, count = (
+                self._normalize_platform_stats_entry(row, warn_limiter)
+            )
+            platform_id = normalized_row.get("platform_id")
+            platform_type = normalized_row.get("platform_type")
+
+            if (
+                normalized_timestamp is None
+                or not isinstance(platform_id, str)
+                or not isinstance(platform_type, str)
+            ):
+                result.append(normalized_row)
+                continue
+
+            merge_key = (normalized_timestamp, platform_id, platform_type)
+            existing = merged.get(merge_key)
+            if existing is None:
+                merged[merge_key] = normalized_row
+                result.append(normalized_row)
+            else:
+                existing["count"] += count
+
+        return result
+
+    def _normalize_platform_stats_entry(
+        self,
+        row: dict[str, Any],
+        warn_limiter: _InvalidCountWarnLimiter,
+    ) -> tuple[dict[str, Any], str | None, int]:
+        normalized_row = dict(row)
+        raw_timestamp = normalized_row.get("timestamp")
+        normalized_timestamp = self._normalize_platform_stats_timestamp(raw_timestamp)
+
+        if normalized_timestamp is not None:
+            normalized_row["timestamp"] = normalized_timestamp
+        elif isinstance(raw_timestamp, str):
+            normalized_row["timestamp"] = raw_timestamp.strip()
+        elif raw_timestamp is None:
+            normalized_row["timestamp"] = ""
+        else:
+            normalized_row["timestamp"] = str(raw_timestamp)
+
+        raw_count = normalized_row.get("count", 0)
+        try:
+            count = int(raw_count)
+        except (TypeError, ValueError):
+            key_for_log = (
+                normalized_row.get("timestamp"),
+                repr(normalized_row.get("platform_id")),
+                repr(normalized_row.get("platform_type")),
+            )
+            warn_limiter.warn_invalid_count(raw_count, key_for_log)
+            count = 0
+
+        normalized_row["count"] = count
+        return normalized_row, normalized_timestamp, count
+
+    def _normalize_platform_stats_timestamp(self, value: Any) -> str | None:
+        if isinstance(value, datetime):
+            dt = value
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            else:
+                dt = dt.astimezone(timezone.utc)
+            return dt.isoformat()
+        if isinstance(value, str):
+            timestamp = value.strip()
+            if not timestamp:
+                return None
+            if timestamp.endswith("Z"):
+                timestamp = f"{timestamp[:-1]}+00:00"
+            try:
+                dt = datetime.fromisoformat(timestamp)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                else:
+                    dt = dt.astimezone(timezone.utc)
+                return dt.isoformat()
+            except ValueError:
+                return None
+        return None
 
     async def _import_knowledge_bases(
         self,
@@ -537,7 +721,7 @@ class AstrBotImporter:
                             session.add(obj)
                             count += 1
                         except Exception as e:
-                            logger.warning(f"导入知识库记录到 {table_name} 失败: {e}")
+                            logger.warning(t("msg-f1dec753", table_name=table_name, e=e))
 
                     result.imported_tables[f"kb_{table_name}"] = count
 
@@ -610,7 +794,7 @@ class AstrBotImporter:
                         metadata=json.loads(doc.get("metadata", "{}")),
                     )
                 except Exception as e:
-                    logger.warning(f"导入文档块失败: {e}")
+                    logger.warning(t("msg-9807bcd8", e=e))
         finally:
             await doc_storage.close()
 
@@ -647,7 +831,7 @@ class AstrBotImporter:
                         dst.write(src.read())
                     count += 1
                 except Exception as e:
-                    logger.warning(f"导入附件 {name} 失败: {e}")
+                    logger.warning(t("msg-98a66293", name=name, e=e))
 
         return count
 
@@ -672,7 +856,7 @@ class AstrBotImporter:
         # 检查备份版本是否支持目录备份（需要版本 >= 1.1）
         backup_version = manifest.get("version", "1.0")
         if VersionComparator.compare_version(backup_version, "1.1") < 0:
-            logger.info("备份版本不支持目录备份，跳过目录导入")
+            logger.info(t("msg-39f2325f"))
             return dir_stats
 
         backed_up_dirs = manifest.get("directories", [])
@@ -705,7 +889,7 @@ class AstrBotImporter:
                     if backup_path.exists():
                         shutil.rmtree(backup_path)
                     shutil.move(str(target_dir), str(backup_path))
-                    logger.debug(f"已备份现有目录 {target_dir} 到 {backup_path}")
+                    logger.debug(t("msg-689050b6", target_dir=target_dir, backup_path=backup_path))
 
                 # 创建目标目录
                 target_dir.mkdir(parents=True, exist_ok=True)
@@ -728,7 +912,7 @@ class AstrBotImporter:
                         result.add_warning(f"导入文件 {name} 失败: {e}")
 
                 dir_stats[dir_name] = file_count
-                logger.debug(f"导入目录 {dir_name}: {file_count} 个文件")
+                logger.debug(t("msg-d51b3536", dir_name=dir_name, file_count=file_count))
 
             except Exception as e:
                 result.add_warning(f"导入目录 {dir_name} 失败: {e}")

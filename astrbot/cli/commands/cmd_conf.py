@@ -1,3 +1,4 @@
+from astrbot.core.lang import t
 import hashlib
 import json
 import zoneinfo
@@ -5,8 +6,6 @@ from collections.abc import Callable
 from typing import Any
 
 import click
-
-from astrbot.core import t
 
 from ..utils import check_astrbot_root, get_astrbot_root
 
@@ -16,7 +15,7 @@ def _validate_log_level(value: str) -> str:
     value = value.upper()
     if value not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
         raise click.ClickException(
-            t("invalid-log-level"),
+            t("msg-635b8763"),
         )
     return value
 
@@ -26,23 +25,23 @@ def _validate_dashboard_port(value: str) -> int:
     try:
         port = int(value)
         if port < 1 or port > 65535:
-            raise click.ClickException(t("invalid-dashboard-port", min=1, max=65535))
+            raise click.ClickException(t("msg-ebc250dc"))
         return port
     except ValueError:
-        raise click.ClickException(t("invalid-dashboard-port-value"))
+        raise click.ClickException(t("msg-6ec400b6"))
 
 
 def _validate_dashboard_username(value: str) -> str:
     """验证 Dashboard 用户名"""
     if not value:
-        raise click.ClickException(t("invalid-dashboard-username"))
+        raise click.ClickException(t("msg-0b62b5ce"))
     return value
 
 
 def _validate_dashboard_password(value: str) -> str:
     """验证 Dashboard 密码"""
     if not value:
-        raise click.ClickException(t("invalid-dashboard-password"))
+        raise click.ClickException(t("msg-89b5d3d5"))
     return hashlib.md5(value.encode()).hexdigest()
 
 
@@ -51,14 +50,14 @@ def _validate_timezone(value: str) -> str:
     try:
         zoneinfo.ZoneInfo(value)
     except Exception:
-        raise click.ClickException(t("invalid-timezone", value=value))
+        raise click.ClickException(t("msg-92e7c8ad", value=value))
     return value
 
 
 def _validate_callback_api_base(value: str) -> str:
     """验证回调接口基址"""
     if not value.startswith("http://") and not value.startswith("https://"):
-        raise click.ClickException(t("invalid-callback-api-base"))
+        raise click.ClickException(t("msg-e470e37d"))
     return value
 
 
@@ -78,7 +77,7 @@ def _load_config() -> dict[str, Any]:
     root = get_astrbot_root()
     if not check_astrbot_root(root):
         raise click.ClickException(
-            t("invalid-astrbot-root", root=root),
+            t("msg-6b615721", root=root),
         )
 
     config_path = root / "data" / "cmd_config.json"
@@ -93,7 +92,7 @@ def _load_config() -> dict[str, Any]:
     try:
         return json.loads(config_path.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as e:
-        raise click.ClickException(t("config-parse-failed", error=str(e)))
+        raise click.ClickException(t("msg-f74c517c", e=e))
 
 
 def _save_config(config: dict[str, Any]) -> None:
@@ -114,7 +113,7 @@ def _set_nested_item(obj: dict[str, Any], path: str, value: Any) -> None:
             obj[part] = {}
         elif not isinstance(obj[part], dict):
             raise click.ClickException(
-                t("config-path-conflict", path=".".join(parts[: parts.index(part) + 1]))
+                t("msg-d7c58bcc", res='.'.join(parts[:parts.index(part) + 1])),
             )
         obj = obj[part]
     obj[parts[-1]] = value
@@ -154,7 +153,7 @@ def conf() -> None:
 def set_config(key: str, value: str) -> None:
     """设置配置项的值"""
     if key not in CONFIG_VALIDATORS:
-        raise click.ClickException(t("invalid-config-key", k=key))
+        raise click.ClickException(t("msg-e16816cc", key=key))
 
     config = _load_config()
 
@@ -164,20 +163,18 @@ def set_config(key: str, value: str) -> None:
         _set_nested_item(config, key, validated_value)
         _save_config(config)
 
-        click.echo(t("config-updated", k=key))
+        click.echo(t("msg-e9cce750", key=key))
         if key == "dashboard.password":
-            click.echo(t("value-remains-intact-for-security"))
-            click.echo(t("config-restart-reminder"))
+            click.echo(t("msg-1ed565aa"))
+            click.echo(t("msg-1bf9569a"))
         else:
-            click.echo(t("value-remains-intact", old_value=old_value))
-            click.echo(
-                t("config-restart-reminder-observable", validated_value=validated_value)
-            )
+            click.echo(t("msg-f2a20ab3", old_value=old_value))
+            click.echo(t("msg-0c104905", validated_value=validated_value))
 
     except KeyError:
-        raise click.ClickException(t("unknown-config-key", k=key))
+        raise click.ClickException(t("msg-ea9b4e2c", key=key))
     except Exception as e:
-        raise click.UsageError(t("set-config-failed", error=str(e)))
+        raise click.UsageError(t("msg-4450e3b1", e=e))
 
 
 @conf.command(name="get")
@@ -188,19 +185,19 @@ def get_config(key: str | None = None) -> None:
 
     if key:
         if key not in CONFIG_VALIDATORS:
-            raise click.ClickException(t("invalid-config-key", k=key))
+            raise click.ClickException(t("msg-e16816cc", key=key))
 
         try:
             value = _get_nested_item(config, key)
             if key == "dashboard.password":
                 value = "********"
-            click.echo(t("get-config-value", k=key, value=value))
+            click.echo(t("msg-ba464bee", key=key, value=value))
         except KeyError:
-            raise click.ClickException(t("unknown-config-key", k=key))
+            raise click.ClickException(t("msg-ea9b4e2c", key=key))
         except Exception as e:
-            raise click.UsageError(t("get-config-failed", error=str(e)))
+            raise click.UsageError(t("msg-72aab576", e=e))
     else:
-        click.echo(t("current-config"))
+        click.echo(t("msg-c1693d1d"))
         for key in CONFIG_VALIDATORS:
             try:
                 value = (
@@ -208,6 +205,6 @@ def get_config(key: str | None = None) -> None:
                     if key == "dashboard.password"
                     else _get_nested_item(config, key)
                 )
-                click.echo(t("get-config-value", k=key, value=value))
+                click.echo(t("msg-50be9b74", key=key, value=value))
             except (KeyError, TypeError):
                 pass

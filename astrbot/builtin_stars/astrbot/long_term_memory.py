@@ -1,3 +1,4 @@
+from astrbot.core.lang import t
 import datetime
 import random
 import uuid
@@ -9,7 +10,6 @@ from astrbot.api.event import AstrMessageEvent
 from astrbot.api.message_components import At, Image, Plain
 from astrbot.api.platform import MessageType
 from astrbot.api.provider import LLMResponse, Provider, ProviderRequest
-from astrbot.core import t
 from astrbot.core.astrbot_config_mgr import AstrBotConfigManager
 
 """
@@ -29,7 +29,7 @@ class LongTermMemory:
         try:
             max_cnt = int(cfg["provider_ltm_settings"]["group_message_max_cnt"])
         except BaseException as e:
-            logger.error(t("builtin-stars-astrbot-ltm-invalid-max-count", error=str(e)))
+            logger.error(t("msg-5bdf8f5c", e=e))
             max_cnt = 300
         image_caption_prompt = cfg["provider_settings"]["image_caption_prompt"]
         image_caption_provider_id = cfg["provider_ltm_settings"].get(
@@ -75,19 +75,9 @@ class LongTermMemory:
         else:
             provider = self.context.get_provider_by_id(image_caption_provider_id)
             if not provider:
-                raise Exception(
-                    t(
-                        "builtin-stars-astrbot-ltm-provider-not-found",
-                        provider_id=image_caption_provider_id,
-                    )
-                )
+                raise Exception(t("msg-8e11fa57", image_caption_provider_id=image_caption_provider_id))
         if not isinstance(provider, Provider):
-            raise Exception(
-                t(
-                    "builtin-stars-astrbot-ltm-provider-type-invalid",
-                    provider_type=str(type(provider)),
-                )
-            )
+            raise Exception(t("msg-8ebaa397", res=type(provider)))
         response = await provider.text_chat(
             prompt=image_caption_prompt,
             session_id=uuid.uuid4().hex,
@@ -139,9 +129,7 @@ class LongTermMemory:
                         try:
                             url = comp.url if comp.url else comp.file
                             if not url:
-                                raise Exception(
-                                    t("builtin-stars-astrbot-ltm-empty-image-url")
-                                )
+                                raise Exception(t("msg-30954f77"))
                             caption = await self.get_image_caption(
                                 url,
                                 cfg["image_caption_provider_id"],
@@ -149,25 +137,14 @@ class LongTermMemory:
                             )
                             parts.append(f" [Image: {caption}]")
                         except Exception as e:
-                            logger.error(
-                                t(
-                                    "builtin-stars-astrbot-ltm-image-caption-failed",
-                                    error=str(e),
-                                )
-                            )
+                            logger.error(t("msg-62de0c3e", e=e))
                     else:
                         parts.append(" [Image]")
                 elif isinstance(comp, At):
                     parts.append(f" [At: {comp.name}]")
 
             final_message = "".join(parts)
-            logger.debug(
-                t(
-                    "builtin-stars-astrbot-ltm-recorded-message",
-                    umo=event.unified_msg_origin,
-                    message=final_message,
-                )
-            )
+            logger.debug(t("msg-d0647999", res=event.unified_msg_origin, final_message=final_message))
             self.session_chats[event.unified_msg_origin].append(final_message)
             if len(self.session_chats[event.unified_msg_origin]) > cfg["max_cnt"]:
                 self.session_chats[event.unified_msg_origin].pop(0)
@@ -204,11 +181,7 @@ class LongTermMemory:
         if llm_resp.completion_text:
             final_message = f"[You/{datetime.datetime.now().strftime('%H:%M:%S')}]: {llm_resp.completion_text}"
             logger.debug(
-                t(
-                    "builtin-stars-astrbot-ltm-recorded-ai-response",
-                    umo=event.unified_msg_origin,
-                    message=final_message,
-                )
+                t("msg-133c1f1d", res=event.unified_msg_origin, final_message=final_message)
             )
             self.session_chats[event.unified_msg_origin].append(final_message)
             cfg = self.cfg(event)
