@@ -6,7 +6,6 @@ from fluent.runtime import FluentLocalization, FluentResourceLoader
 
 from astrbot.core.utils.astrbot_path import get_astrbot_path
 
-from astrbot.dashboard.routes.lang_route import LOGLANG
 
 class Lang:
     def __init__(
@@ -45,8 +44,8 @@ class Lang:
     @staticmethod
     def _validate_namespace(namespace: str) -> None:
         if not namespace:
-            if "." in namespace:
-                raise ValueError(t("msg-f66527da"))
+        if "." in namespace:
+            raise ValueError(t("msg-f66527da"))
 
     @staticmethod
     def _collect_files(base_dir: Path, files: list[str] | None) -> list[str]:
@@ -121,8 +120,6 @@ class Lang:
         namespace_paths: dict[str, str | Path] | None = None,
         namespace_files: dict[str, list[str]] | None = None,
     ):
-        if locale == self.locale:
-            return
         with self._lock:
             if namespace_paths is not None:
                 self.namespace_paths = {
@@ -223,4 +220,4 @@ class Lang:
         return l10n.format_value(real_key, kwargs)
 
 
-t = Lang(locale="zh-cn" if LOGLANG is None else LOGLANG)
+t = Lang(locale="zh-cn")
