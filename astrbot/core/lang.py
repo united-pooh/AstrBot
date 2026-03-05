@@ -44,8 +44,8 @@ class Lang:
     @staticmethod
     def _validate_namespace(namespace: str) -> None:
         if not namespace:
-        if "." in namespace:
-            raise ValueError(t("msg-f66527da"))
+            if "." in namespace:
+                raise ValueError(t("msg-f66527da"))
 
     @staticmethod
     def _collect_files(base_dir: Path, files: list[str] | None) -> list[str]:
