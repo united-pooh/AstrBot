@@ -1,6 +1,7 @@
+from quart import request
+
 from astrbot.core.lang import t
 from astrbot.dashboard.routes.route import Response, Route, RouteContext
-from quart import request
 
 
 class LangRoute(Route):
@@ -16,9 +17,19 @@ class LangRoute(Route):
         lang = data.get("lang")
         if lang is None:
             return Response().error(t("msg-bf610e68")).__dict__
+
+        normalized_lang = t.normalize_locale(str(lang).lower())
+        if normalized_lang is None:
+            return Response().error(t("msg-fd2f74bc", locale=lang)).__dict__
+
         try:
-            t.load_locale(locale=lang.lower(), files=None)
+            t.load_locale(locale=normalized_lang, files=None)
         except ValueError as exc:
             return Response().error(str(exc)).__dict__
-        payload = {"lang": lang.lower(), "message": f"语言已设置为 {lang}"}
+
+        i18n_config = self.config.setdefault("i18n", {})
+        i18n_config["locale"] = normalized_lang
+        self.config.save_config()
+
+        payload = {"lang": normalized_lang, "message": f"语言已设置为 {lang}"}
         return Response().ok(payload).__dict__
